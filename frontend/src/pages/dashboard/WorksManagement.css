@@ -1,0 +1,132 @@
+.works-page__head {
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.works-page__head p {
+  color: var(--text-light);
+}
+
+.works-create {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px;
+  margin-bottom: 14px;
+  width: min(920px, 100%);
+}
+
+.works-create__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.works-create__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.works-create__grid input,
+.works-create__grid textarea {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.works-create__grid textarea {
+  min-height: 70px;
+}
+
+.works-create__sub-images {
+  grid-column: 1 / -1;
+}
+
+.works-create__check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.works-btn {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.works-btn--primary {
+  border-color: rgba(var(--primary-rgb), 0.25);
+  color: var(--primary);
+}
+
+.works-btn--danger {
+  color: #b71c1c;
+  border-color: rgba(183, 28, 28, 0.3);
+}
+
+.works-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.works-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.works-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.works-card__content {
+  padding: 10px;
+}
+
+.works-card__content p {
+  color: var(--text-light);
+  font-size: 0.85rem;
+}
+
+.works-card__actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.works-state {
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+}
+
+.works-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.36);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+@media (max-width: 768px) {
+  .works-create__grid {
+    grid-template-columns: 1fr;
+  }
+}

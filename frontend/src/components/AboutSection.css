@@ -1,0 +1,123 @@
+.about-section {
+  background: var(--bg);
+}
+
+.about-section__badge {
+  color: var(--primary);
+  font-style: italic;
+}
+
+.about-section__title {
+  white-space: pre-line;
+}
+
+.about-section__paragraphs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px 48px;
+  margin-bottom: 48px;
+}
+
+.about-section__p {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--text);
+}
+
+.about-section__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.about-section__img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+}
+
+.about-section__features {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.about-section__feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.about-section__check {
+  flex-shrink: 0;
+  color: var(--primary);
+}
+
+.about-section__avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: var(--bg-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-light);
+  margin-top: 24px;
+}
+
+.about-section__card {
+  background: var(--bg-dark);
+  color: var(--text-white);
+  padding: 24px;
+  border-radius: var(--radius-lg);
+}
+
+.about-section__card-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.about-section__days {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.about-section__day {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.about-section__day--off .about-section__off {
+  color: var(--primary);
+}
+
+@media (max-width: 992px) {
+  .about-section__paragraphs {
+    grid-template-columns: 1fr;
+  }
+
+  .about-section__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .about-section__col--image {
+    order: 1;
+  }
+
+  .about-section__col--features {
+    order: 2;
+  }
+
+  .about-section__col--hours {
+    order: 3;
+  }
+}

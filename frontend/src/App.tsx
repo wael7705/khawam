@@ -1,0 +1,87 @@
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import type { ReactElement } from 'react';
+import { I18nProvider } from './i18n/index';
+import { Navbar } from './components/Navbar';
+import { Footer } from './components/Footer';
+import { Home } from './pages/Home';
+import { Login } from './pages/Login';
+import { Register } from './pages/Register';
+import { Settings } from './pages/Settings';
+import { ServicesCatalog } from './pages/ServicesCatalog';
+import { Portfolio } from './pages/Portfolio';
+import { createDevSession, getStoredUser, isAuthenticated, isDevAuthBypassEnabled } from './lib/auth';
+import { DashboardLayout } from './pages/dashboard/DashboardLayout';
+import { DashboardHome } from './pages/dashboard/DashboardHome';
+import { OrdersManagement } from './pages/dashboard/OrdersManagement';
+import { Analytics } from './pages/dashboard/Analytics';
+import { CustomersManagement } from './pages/dashboard/CustomersManagement';
+import { FinancePricing } from './pages/dashboard/FinancePricing';
+import { ServicesManagement } from './pages/dashboard/ServicesManagement';
+import { WorksManagement } from './pages/dashboard/WorksManagement';
+import { Archive } from './pages/dashboard/Archive';
+import './index.css';
+
+function PublicLayout() {
+  return (
+    <>
+      <Navbar />
+      <Outlet />
+      <Footer />
+    </>
+  );
+}
+
+function DashboardGuard({ children }: { children: ReactElement }) {
+  if (isDevAuthBypassEnabled() && !isAuthenticated()) {
+    createDevSession();
+  }
+
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const user = getStoredUser();
+  if (!user || !['مدير', 'موظف'].includes(user.role)) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
+
+export default function App() {
+  return (
+    <I18nProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/order" element={<Navigate to="/services" replace />} />
+            <Route path="/services" element={<ServicesCatalog />} />
+            <Route path="/services/:category" element={<ServicesCatalog />} />
+            <Route path="/portfolio" element={<Portfolio />} />
+          </Route>
+
+          <Route
+            path="/dashboard"
+            element={
+              <DashboardGuard>
+                <DashboardLayout />
+              </DashboardGuard>
+            }
+          >
+            <Route index element={<DashboardHome />} />
+            <Route path="orders" element={<OrdersManagement />} />
+            <Route path="customers" element={<CustomersManagement />} />
+            <Route path="services" element={<ServicesManagement />} />
+            <Route path="works" element={<WorksManagement />} />
+            <Route path="archive" element={<Archive />} />
+            <Route path="finance" element={<FinancePricing />} />
+            <Route path="analytics" element={<Analytics />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </I18nProvider>
+  );
+}

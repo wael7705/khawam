@@ -1,0 +1,24 @@
+node_modules/
+.pnpm-store/
+package-lock.json
+yarn.lock
+dist/
+.env
+.env.local
+.env.*.local
+*.log
+uploads/*
+!uploads/.gitkeep
+.DS_Store
+Thumbs.db
+coverage/
+.turbo/
+*.tsbuildinfo
+frontend/dist/
+
+# مجلد التصاميم (صور ثقيلة — رفع لاحقاً عبر LFS أو يدوياً)
+/Design/
+
+# مجلدات مشاريع فرعية (مستودعات مضمّنة - لا تُرفع مع المستودع الرئيسي)
+/khawam/
+/khawam-pro/

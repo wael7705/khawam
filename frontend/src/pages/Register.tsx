@@ -1,0 +1,177 @@
+import { useState, FormEvent } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Chrome, Smartphone } from 'lucide-react';
+import { useTranslation } from '../i18n/index';
+import { authAPI } from '../lib/api';
+import { storeAuth } from '../lib/auth';
+import type { UserData } from '../lib/auth';
+import './Register.css';
+
+type Step = 'form' | 'phone-confirm';
+
+export function Register() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [step, setStep] = useState<Step>('form');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [phoneConfirm, setPhoneConfirm] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleRegisterSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await authAPI.register({
+        name,
+        phone: phone || undefined,
+        email: email || undefined,
+        password,
+      });
+      const { data } = await authAPI.login(email || phone || name, password);
+      const token = (data as { access_token?: string }).access_token;
+      const userRes = await authAPI.getMe();
+      const user = userRes.data as UserData;
+      if (token && user) {
+        storeAuth(token, user);
+        if (!user.phone || user.phone.trim() === '') {
+          setStep('phone-confirm');
+          setLoading(false);
+        } else {
+          navigate('/');
+        }
+      } else {
+        setError('Registration failed');
+        setLoading(false);
+      }
+    } catch (err: unknown) {
+      const msg = err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
+        : null;
+      setError(typeof msg === 'string' ? msg : 'Registration failed');
+      setLoading(false);
+    }
+  };
+
+  const handleSocialLogin = () => {
+    setStep('phone-confirm');
+  };
+
+  const handlePhoneConfirm = async (e: FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await authAPI.updateProfile({ phone: phoneConfirm });
+      const userRes = await authAPI.getMe();
+      const user = userRes.data as UserData;
+      const token = localStorage.getItem('khawam_token');
+      if (token && user) {
+        storeAuth(token, user);
+      }
+      navigate('/');
+    } catch (err: unknown) {
+      const msg = err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
+        : null;
+      setError(typeof msg === 'string' ? msg : 'Failed to save phone');
+      setLoading(false);
+    }
+  };
+
+  if (step === 'phone-confirm') {
+    return (
+      <div className="register-page">
+        <div className="register-card">
+          <img src="/images/logo.jpeg" alt="" className="register-card__logo" />
+          <h1 className="register-card__title">{t.auth.confirmPhone}</h1>
+          <p className="register-card__desc">{t.auth.confirmPhoneDesc}</p>
+          <form onSubmit={handlePhoneConfirm} className="register-card__form">
+            <input
+              type="tel"
+              placeholder={t.auth.phone}
+              value={phoneConfirm}
+              onChange={(e) => setPhoneConfirm(e.target.value)}
+              className="register-card__input"
+              required
+            />
+            {error && <p className="register-card__error">{error}</p>}
+            <button type="submit" className="btn btn-primary register-card__submit" disabled={loading}>
+              {loading ? '...' : t.auth.submit}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="register-page">
+      <div className="register-card">
+        <img src="/images/logo.jpeg" alt="" className="register-card__logo" />
+        <h1 className="register-card__title">{t.auth.registerTitle}</h1>
+        <form onSubmit={handleRegisterSubmit} className="register-card__form">
+          <input
+            type="text"
+            placeholder={t.auth.name}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="register-card__input"
+            required
+            autoComplete="name"
+          />
+          <input
+            type="tel"
+            placeholder={t.auth.phone}
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="register-card__input"
+            autoComplete="tel"
+          />
+          <input
+            type="email"
+            placeholder={t.auth.email}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="register-card__input"
+            autoComplete="email"
+          />
+          <input
+            type="password"
+            placeholder={t.auth.password}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="register-card__input"
+            required
+            autoComplete="new-password"
+          />
+          {error && <p className="register-card__error">{error}</p>}
+          <button type="submit" className="btn btn-primary register-card__submit" disabled={loading}>
+            {loading ? '...' : t.auth.register}
+          </button>
+        </form>
+        <div className="register-card__divider">{t.auth.loginWith}</div>
+        <div className="register-card__social">
+          <button type="button" className="register-card__social-btn" onClick={handleSocialLogin}>
+            <Chrome size={22} />
+            {t.auth.google}
+          </button>
+          <button type="button" className="register-card__social-btn" onClick={handleSocialLogin}>
+            <Smartphone size={22} />
+            {t.auth.apple}
+          </button>
+        </div>
+        <p className="register-card__footer">
+          {t.auth.hasAccount}{' '}
+          <Link to="/login" className="register-card__link">
+            {t.auth.login}
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}

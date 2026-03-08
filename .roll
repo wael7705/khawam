@@ -1,0 +1,72 @@
+# Khawam Project Rules
+# يجب مراجعة هذا الملف قبل أي خطة أو كتابة كود
+
+## Package Manager
+- pnpm هو مدير الحزم الوحيد المسموح - إلزامي وليس اختياري
+- لا يُسمح باستخدام npm أو yarn تحت أي ظرف
+- أي ملف package-lock.json أو yarn.lock يجب حذفه فوراً
+
+## TypeScript
+- strict mode إلزامي
+- لا يُسمح باستخدام `any` نهائياً
+- كل parameter و return type يجب تحديده
+- استخدام interfaces و types بشكل مستمر
+
+## Architecture
+- Controllers تتعامل فقط مع HTTP requests
+- Services تنسق العمليات
+- Algorithms تتعامل مع الحسابات ومنطق المجال - منفصلة عن services
+- لا تكرار للكود - DRY مطلق
+- كل منطق مشترك في shared/
+
+## Security
+- كلمات المرور: argon2id فقط للتشفير الجديد
+- دعم bcrypt و pbkdf2 القديمة للتحقق فقط مع إعادة التشفير تلقائياً
+- Refresh tokens عبر httpOnly cookies - لا تُخزن في localStorage أبداً
+- Access tokens قصيرة العمر (15 دقيقة)
+- التحقق من المدخلات بـ Zod في كل endpoint
+- حماية من SSRF في أي URL خارجي
+
+## Database
+- Prisma ORM فقط
+- NanoID للمعرفات (12 حرف)
+- كل عملية كتابة حساسة داخل transaction
+- لا SERIAL IDs
+
+## IDs
+- NanoID بين 8-16 حرف
+- آمن تشفيرياً ومقاوم للتصادم
+
+## Roles
+- الأدوار تُعرّف بـ enum ثابت في الكود
+- حقل nameAr في user_types هو المرجع الأساسي للتحقق من الصلاحيات
+- القيم: "مدير" | "موظف" | "عميل"
+
+## File Upload
+- رفع الملفات متاح للجميع بدون auth (العمل قائم على رفع الملفات)
+- التحقق من نوع الملف وحجمه بسرعة فائقة بدون إبطاء
+- لا rate limit على رفع الملفات للزوار
+
+## Pricing
+- نظام التسعير معطل مؤقتاً
+- الطلبات تُقبل بدون أسعار حالياً
+- سيتم تصميم خوارزمية تسعير جديدة لاحقاً
+
+## Socket.IO
+- غرفة `staff:orders` للموظفين والمدير فقط (لوحة التحكم)
+- غرفة `customer:{userId}` لكل عميل لتتبع طلباته
+- لا يجب أن يرى العميل طلبات غيره
+
+## Caching
+- Redis ممنوع - cache داخلي فقط
+- TTL مناسب لكل نوع بيانات
+
+## Documentation
+- README.md و COMMON_ERRORS.md فقط
+- لا ملفات توثيق إضافية
+
+## Performance
+- استخدام select بدل include حيث أمكن
+- pagination لكل قوائم البيانات
+- Cache-Control headers للملفات الثابتة
+- لا worker system (Node.js async كافٍ)
