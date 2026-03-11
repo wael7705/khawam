@@ -1,0 +1,66 @@
+# Khawam Printing - Production environment
+# Run from repository root: docker compose -f deploy/docker-compose.production.yml up -d
+# Optimized for 4GB RAM VPS
+
+services:
+  postgres-production:
+    image: postgres:16-alpine
+    container_name: khawam-postgres-production
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-khawam_production}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in production/.env}
+      POSTGRES_DB: ${POSTGRES_DB:-khawam_production}
+    volumes:
+      - postgres_production_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-khawam_production} -d ${POSTGRES_DB:-khawam_production}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - khawam-production
+
+  backend-production:
+    build:
+      context: .
+      dockerfile: deploy/docker/backend.Dockerfile
+    image: khawam/backend-production:latest
+    container_name: khawam-backend-production
+    restart: always
+    ports:
+      - "127.0.0.1:4081:8000"
+    depends_on:
+      postgres-production:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 8000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-khawam_production}:${POSTGRES_PASSWORD}@postgres-production:5432/${POSTGRES_DB:-khawam_production}
+      SECRET_KEY: ${SECRET_KEY}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://example.com}
+      FRONTEND_URL: ${FRONTEND_URL:-https://example.com}
+    networks:
+      - khawam-production
+
+  frontend-production:
+    build:
+      context: .
+      dockerfile: deploy/docker/frontend.Dockerfile
+      args:
+        VITE_API_URL: /api
+    image: khawam/frontend-production:latest
+    container_name: khawam-frontend-production
+    restart: always
+    ports:
+      - "127.0.0.1:4080:80"
+    networks:
+      - khawam-production
+
+networks:
+  khawam-production:
+    driver: bridge
+
+volumes:
+  postgres_production_data:

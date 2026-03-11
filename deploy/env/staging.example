@@ -1,0 +1,7 @@
+# Copy to /opt/khawam-app/staging/.env
+POSTGRES_USER=khawam_staging
+POSTGRES_PASSWORD=change_me_strong_password
+POSTGRES_DB=khawam_staging
+SECRET_KEY=change_me_long_random_secret_for_jwt
+PUBLIC_BASE_URL=https://staging.example.com
+FRONTEND_URL=https://staging.example.com

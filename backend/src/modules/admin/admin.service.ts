@@ -535,6 +535,7 @@ export async function getAllOrders(
   const data = orders.map((o: OrderWithRelations) => ({
     id: o.id,
     order_number: o.orderNumber,
+    service_id: o.serviceId ?? undefined,
     customer_id: o.customerId,
     customer_name: o.customerName,
     customer_phone: o.customerPhone,
@@ -584,6 +585,7 @@ export async function getOrderById(orderId: string): Promise<Record<string, unkn
   return {
     id: order.id,
     order_number: order.orderNumber,
+    service_id: order.serviceId ?? undefined,
     customer_id: order.customerId,
     customer_name: order.customerName,
     customer_phone: order.customerPhone,
@@ -602,6 +604,10 @@ export async function getOrderById(orderId: string): Promise<Record<string, unkn
     is_paid: order.isPaid,
     delivery_type: order.deliveryType,
     delivery_address: order.deliveryAddress,
+    delivery_street: order.deliveryStreet,
+    delivery_neighborhood: order.deliveryNeighborhood,
+    delivery_building_floor: order.deliveryBuildingFloor,
+    delivery_extra: order.deliveryExtra,
     delivery_latitude: order.deliveryLatitude != null ? Number(order.deliveryLatitude) : null,
     delivery_longitude: order.deliveryLongitude != null ? Number(order.deliveryLongitude) : null,
     delivery_date: order.deliveryDate,
@@ -662,14 +668,20 @@ export async function verifyOrder(orderNumber: string): Promise<Record<string, u
   };
 }
 
+const ALLOWED_ORDER_STATUSES = ['pending', 'confirmed', 'processing', 'completed', 'cancelled'] as const;
+
 export async function updateOrderStatus(
   orderId: string,
   status: string,
   notes?: string,
   changedById?: string,
 ): Promise<void> {
-  const updateData: { status: string; completedAt?: Date } = { status };
-  if (status === 'completed') {
+  const normalized = status?.toLowerCase() ?? '';
+  if (!ALLOWED_ORDER_STATUSES.includes(normalized as (typeof ALLOWED_ORDER_STATUSES)[number])) {
+    throw { statusCode: 400, message: 'قيمة الحالة غير مسموحة. المسموح: pending, confirmed, processing, completed, cancelled' };
+  }
+  const updateData: { status: string; completedAt?: Date } = { status: normalized };
+  if (normalized === 'completed') {
     updateData.completedAt = new Date();
   }
 
@@ -681,7 +693,7 @@ export async function updateOrderStatus(
     prisma.orderStatusHistory.create({
       data: {
         orderId,
-        status,
+        status: normalized,
         notes: notes ?? 'تحديث الحالة',
         changedBy: changedById ?? null,
       },

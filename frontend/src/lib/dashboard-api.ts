@@ -57,6 +57,7 @@ export interface AdminOrdersResponse {
   data: Array<{
     id: string;
     order_number: string;
+    service_id?: string;
     customer_name: string;
     customer_phone: string;
     status: string;
@@ -247,6 +248,7 @@ let mockOrders: AdminOrderRow[] = [
   {
     id: 'mock-order-1',
     order_number: 'KH-24001',
+    service_id: 'svc-brochure',
     customer_name: 'أحمد الخطيب',
     customer_phone: '0999123456',
     status: 'pending',
@@ -261,6 +263,7 @@ let mockOrders: AdminOrderRow[] = [
   {
     id: 'mock-order-2',
     order_number: 'KH-24002',
+    service_id: 'svc-clothing',
     customer_name: 'سارة الحسن',
     customer_phone: '0933456789',
     status: 'processing',
@@ -764,8 +767,9 @@ async function tryOrMock<T>(request: () => Promise<T>, fallback: () => T): Promi
   }
 }
 
+/** تفعيل صريح فقط: عند VITE_DASHBOARD_MOCK=true نعرض بيانات وهمية؛ وإلا مصدر البيانات هو الـ API (البيانات المدخلة حصراً). */
 export function canUseDashboardMockData(): boolean {
-  return import.meta.env.DEV && import.meta.env.VITE_DASHBOARD_MOCK !== 'false';
+  return import.meta.env.VITE_DASHBOARD_MOCK === 'true';
 }
 
 export function advanceMockOrderStatus(orderId: string): AdminOrderRow | null {
@@ -779,6 +783,16 @@ export function advanceMockOrderStatus(orderId: string): AdminOrderRow | null {
   const nextStatus = ORDER_FLOW[currentIndex + 1];
   if (!nextStatus) return current;
   const updated: AdminOrderRow = { ...current, status: nextStatus };
+  mockOrders = mockOrders.map((o) => (o.id === orderId ? updated : o));
+  return updated;
+}
+
+export function setMockOrderCancelled(orderId: string): AdminOrderRow | null {
+  const index = mockOrders.findIndex((o) => o.id === orderId);
+  if (index < 0) return null;
+  const current = mockOrders[index];
+  if (!current) return null;
+  const updated: AdminOrderRow = { ...current, status: 'cancelled' };
   mockOrders = mockOrders.map((o) => (o.id === orderId ? updated : o));
   return updated;
 }
@@ -850,6 +864,9 @@ export const dashboardApi = {
       const { data } = await api.get<AdminOrdersResponse>('/admin/orders/all', { params: query });
       return data;
     }, () => buildMockOrdersResponse(query));
+  },
+  updateOrderStatus: async (orderId: string, status: string, notes?: string): Promise<void> => {
+    await api.put(`/admin/orders/${orderId}/status`, { status, notes });
   },
   getAnalyticsStats: async (query?: DateRangeQuery): Promise<AnalyticsStatsResponse> => {
     return tryOrMock(async () => {

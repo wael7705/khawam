@@ -8,10 +8,8 @@ import {
   calculatePriceSchema,
   createFinancialRuleSchema,
   createAdvancedPricingRuleSchema,
-  createPricingRuleSchema,
   getAdvancedPricingRulesQuerySchema,
   updateFinancialRuleSchema,
-  updatePricingRuleSchema,
 } from './pricing.schema.js';
 
 const adminPreHandler = [authenticate, requireRole('مدير', 'موظف')];
@@ -52,7 +50,7 @@ export async function pricingRoutes(app: FastifyInstance): Promise<void> {
 
   app.post('/pricing-rules', { preHandler: adminPreHandler }, async (request, reply) => {
     try {
-      const body = createPricingRuleSchema.parse(request.body);
+      const body = createFinancialRuleSchema.parse(request.body);
       const rule = await pricingService.createPricingRule(body);
       return reply.code(201).send({ success: true, rule });
     } catch (err: unknown) {
@@ -64,7 +62,7 @@ export async function pricingRoutes(app: FastifyInstance): Promise<void> {
   app.put('/pricing-rules/:ruleId', { preHandler: adminPreHandler }, async (request, reply) => {
     try {
       const params = request.params as { ruleId: string };
-      const body = updatePricingRuleSchema.parse(request.body);
+      const body = updateFinancialRuleSchema.parse(request.body);
       const rule = await pricingService.updatePricingRule(params.ruleId, body);
       return { success: true, rule };
     } catch (err: unknown) {

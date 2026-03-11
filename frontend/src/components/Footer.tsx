@@ -21,7 +21,7 @@ export function Footer() {
   };
 
   return (
-    <footer className="footer">
+    <footer id="contact" className="footer">
       <div className="footer__top">
         <div className="container footer__top-inner">
           <a href="/" className="footer__logo">

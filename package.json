@@ -5,17 +5,23 @@
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "dev": "pnpm --filter backend dev",
+    "dev:all": "concurrently -n backend,frontend -c blue,green \"pnpm --filter backend dev\" \"pnpm --filter frontend dev\"",
     "dev:backend": "pnpm --filter backend dev",
+    "dev:frontend": "pnpm --filter frontend dev",
     "build": "pnpm --filter backend build",
     "start": "pnpm --filter backend start",
     "db:generate": "pnpm --filter backend db:generate",
     "db:migrate": "pnpm --filter backend db:migrate",
     "db:push": "pnpm --filter backend db:push",
     "db:pull": "pnpm --filter backend db:pull",
-    "lint": "pnpm --filter backend lint"
+    "lint": "pnpm --filter backend lint",
+    "test:load": "k6 run load-tests/load.js"
   },
   "engines": {
     "pnpm": ">=8.0.0",
     "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
   }
 }

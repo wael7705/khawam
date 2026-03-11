@@ -14,9 +14,32 @@ export async function getServices(): Promise<Record<string, unknown>[]> {
       isVisible: true,
     },
     orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
-    include: {
+    select: {
+      id: true,
+      nameAr: true,
+      nameEn: true,
+      descriptionAr: true,
+      descriptionEn: true,
+      icon: true,
+      imageUrl: true,
+      basePrice: true,
+      isActive: true,
+      isVisible: true,
+      displayOrder: true,
+      features: true,
+      createdAt: true,
       options: {
         orderBy: { displayOrder: 'asc' },
+        select: {
+          id: true,
+          optionType: true,
+          optionNameAr: true,
+          optionNameEn: true,
+          priceModifier: true,
+          isPercentage: true,
+          isDefault: true,
+          displayOrder: true,
+        },
       },
     },
   });
@@ -56,8 +79,33 @@ export async function getServices(): Promise<Record<string, unknown>[]> {
 export async function getAllServices(): Promise<Record<string, unknown>[]> {
   const services = await prisma.service.findMany({
     orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
-    include: {
-      options: true,
+    select: {
+      id: true,
+      nameAr: true,
+      nameEn: true,
+      descriptionAr: true,
+      descriptionEn: true,
+      icon: true,
+      imageUrl: true,
+      basePrice: true,
+      isActive: true,
+      isVisible: true,
+      displayOrder: true,
+      features: true,
+      createdAt: true,
+      options: {
+        orderBy: { displayOrder: 'asc' },
+        select: {
+          id: true,
+          optionType: true,
+          optionNameAr: true,
+          optionNameEn: true,
+          priceModifier: true,
+          isPercentage: true,
+          isDefault: true,
+          displayOrder: true,
+        },
+      },
     },
   });
 

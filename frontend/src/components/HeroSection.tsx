@@ -6,6 +6,7 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
 } from 'lucide-react';
 import {
   FaPrint,
@@ -16,16 +17,18 @@ import {
   FaIdCard,
 } from 'react-icons/fa6';
 import { useTranslation } from '../i18n/index';
+import { HERO_LINKS, getHeroLinkLabel } from '../lib/servicesCatalog';
+import type { IconType } from 'react-icons';
 import './HeroSection.css';
 
-const services = [
-  { key: 'printing', slug: 'printing', Icon: FaPrint },
-  { key: 'tshirt', slug: 'tshirt', Icon: FaShirt },
-  { key: 'billboard', slug: 'billboard', Icon: FaPersonChalkboard },
-  { key: 'branding', slug: 'branding', Icon: FaSwatchbook },
-  { key: 'copyright', slug: 'copyright', Icon: FaCopyright },
-  { key: 'businessCard', slug: 'businesscard', Icon: FaIdCard },
-] as const;
+const HERO_ICONS: Record<string, IconType> = {
+  printing: FaPrint,
+  tshirt: FaShirt,
+  billboard: FaPersonChalkboard,
+  branding: FaSwatchbook,
+  copyright: FaCopyright,
+  businessCard: FaIdCard,
+};
 
 export function HeroSection() {
   const { t, locale } = useTranslation();
@@ -73,7 +76,7 @@ export function HeroSection() {
         </div>
       </div>
 
-      <div className="hero__services">
+      <div id="services" className="hero__services">
         <div className="hero__services-wrap">
           <button
             type="button"
@@ -85,14 +88,23 @@ export function HeroSection() {
           </button>
           <div className="hero__services-track" ref={servicesTrackRef}>
             <div className="hero__services-grid">
-              {services.map(({ key, slug, Icon }) => (
-                <Link key={key} to={`/services/${slug}`} className="hero__svc">
-                  <span className="hero__svc-icon">
-                    <Icon size={34} />
-                  </span>
-                  <span className="hero__svc-label">{t.services_icons[key]}</span>
-                </Link>
-              ))}
+              {HERO_LINKS.map((link) => {
+                const Icon = HERO_ICONS[link.key];
+                return (
+                  <Link key={link.key} to={`/services/${link.slug}`} className="hero__svc">
+                    <span className="hero__svc-icon">
+                      {Icon ? <Icon size={34} /> : null}
+                    </span>
+                    <span className="hero__svc-label">{getHeroLinkLabel(link, locale)}</span>
+                  </Link>
+                );
+              })}
+              <Link to="/my-orders" className="hero__svc">
+                <span className="hero__svc-icon">
+                  <ClipboardList size={34} />
+                </span>
+                <span className="hero__svc-label">{t.nav.myOrders}</span>
+              </Link>
             </div>
           </div>
           <button

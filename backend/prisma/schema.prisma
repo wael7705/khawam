@@ -187,10 +187,12 @@ model Service {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime? @updatedAt @map("updated_at")
 
-  options   ServiceOption[]
-  workflows ServiceWorkflow[]
-  financialRules FinancialRule[]
+  options       ServiceOption[]
+  workflows     ServiceWorkflow[]
+  pricingRules  PricingRule[]
 
+  @@index([isActive, isVisible])
+  @@index([displayOrder, createdAt])
   @@map("services")
 }
 
@@ -212,56 +214,41 @@ enum SizeCode {
   BOOKLET_A4
 }
 
-model FinancialRule {
+model PricingRule {
   id           String    @id @default(cuid())
   serviceId    String    @map("service_id")
-  name         String    @db.VarChar(200)
+  nameAr       String    @map("name_ar") @db.VarChar(200)
   nameEn       String?   @map("name_en") @db.VarChar(200)
   unitType     String    @map("unit_type") @db.VarChar(50)
   priority     Int       @default(0)
   isActive     Boolean   @default(true) @map("is_active")
+  displayOrder Int       @default(0) @map("display_order")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime? @updatedAt @map("updated_at")
 
-  service      Service                  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  dimensions   FinancialRuleDimension[]
+  service Service         @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  ranges  PricingRuleRange[]
 
   @@index([serviceId, isActive])
-  @@map("financial_rules")
+  @@map("pricing_rules")
 }
 
-model FinancialRuleDimension {
-  id           String    @id @default(cuid())
-  financialRuleId String @map("financial_rule_id")
-  printMode    PrintMode @map("print_mode")
-  sizeCode     SizeCode  @map("size_code")
-  displayOrder Int       @default(0) @map("display_order")
-  isActive     Boolean   @default(true) @map("is_active")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime? @updatedAt @map("updated_at")
+model PricingRuleRange {
+  id           String     @id @default(cuid())
+  ruleId       String     @map("rule_id")
+  printMode    PrintMode  @map("print_mode")
+  sizeCode     SizeCode   @map("size_code")
+  minValue     Decimal    @map("min_value") @db.Decimal(12, 4)
+  maxValue     Decimal?   @map("max_value") @db.Decimal(12, 4)
+  unitPrice    Decimal    @map("unit_price") @db.Decimal(12, 4)
+  displayOrder Int        @default(0) @map("display_order")
+  createdAt    DateTime   @default(now()) @map("created_at")
 
-  financialRule FinancialRule @relation(fields: [financialRuleId], references: [id], onDelete: Cascade)
-  ranges       FinancialRuleRange[]
+  rule PricingRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
 
-  @@unique([financialRuleId, printMode, sizeCode])
-  @@index([financialRuleId, isActive])
-  @@map("financial_rule_dimensions")
-}
-
-model FinancialRuleRange {
-  id              String    @id @default(cuid())
-  dimensionId      String    @map("dimension_id")
-  minValue         Decimal   @map("min_value") @db.Decimal(12, 4)
-  maxValue         Decimal?  @map("max_value") @db.Decimal(12, 4)
-  unitPrice        Decimal   @map("unit_price") @db.Decimal(12, 4)
-  displayOrder     Int       @default(0) @map("display_order")
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime? @updatedAt @map("updated_at")
-
-  dimension FinancialRuleDimension @relation(fields: [dimensionId], references: [id], onDelete: Cascade)
-
-  @@index([dimensionId, displayOrder])
-  @@map("financial_rule_ranges")
+  @@index([ruleId, printMode, sizeCode])
+  @@index([ruleId, displayOrder])
+  @@map("pricing_rule_ranges")
 }
 
 model ServiceOption {
@@ -284,6 +271,7 @@ model ServiceOption {
 model Order {
   id                 String    @id @default(cuid())
   orderNumber        String    @unique @map("order_number") @db.VarChar(20)
+  serviceId          String?   @map("service_id") @db.VarChar(50)
   customerId         String?   @map("customer_id")
   customerName       String?   @map("customer_name") @db.VarChar(100)
   customerPhone      String?   @map("customer_phone") @db.VarChar(20)
@@ -300,11 +288,15 @@ model Order {
   paymentMethod      String?   @default("sham_cash") @map("payment_method") @db.VarChar(50)
   paymentStatus      String?   @default("pending") @map("payment_status") @db.VarChar(20)
   isPaid             Boolean   @default(false) @map("is_paid")
-  deliveryType       String?   @default("self") @map("delivery_type") @db.VarChar(20)
-  deliveryAddress    String?   @map("delivery_address") @db.Text
-  deliveryLatitude   Decimal?  @map("delivery_latitude") @db.Decimal(10, 8)
-  deliveryLongitude  Decimal?  @map("delivery_longitude") @db.Decimal(11, 8)
-  deliveryDate       DateTime? @map("delivery_date") @db.Date
+  deliveryType           String?   @default("self") @map("delivery_type") @db.VarChar(20)
+  deliveryAddress        String?   @map("delivery_address") @db.Text
+  deliveryStreet         String?   @map("delivery_street") @db.VarChar(200)
+  deliveryNeighborhood   String?   @map("delivery_neighborhood") @db.VarChar(150)
+  deliveryBuildingFloor  String?   @map("delivery_building_floor") @db.VarChar(100)
+  deliveryExtra          String?   @map("delivery_extra") @db.Text
+  deliveryLatitude       Decimal?  @map("delivery_latitude") @db.Decimal(10, 8)
+  deliveryLongitude      Decimal?  @map("delivery_longitude") @db.Decimal(11, 8)
+  deliveryDate           DateTime? @map("delivery_date") @db.Date
   completedAt        DateTime? @map("completed_at")
   notes              String?   @db.Text
   staffNotes         String?   @map("staff_notes") @db.Text
@@ -322,6 +314,12 @@ model Order {
   statusHistory OrderStatusHistory[]
   payments      Payment[]
 
+  @@index([status])
+  @@index([createdAt])
+  @@index([customerId])
+  @@index([serviceId])
+  @@index([customerId, createdAt])
+  @@index([status, createdAt])
   @@map("orders")
 }
 
@@ -430,60 +428,6 @@ model HeroSlide {
   @@map("hero_slides")
 }
 
-model PricingRule {
-  id              String    @id @default(cuid())
-  nameAr          String    @map("name_ar") @db.VarChar(200)
-  nameEn          String?   @map("name_en") @db.VarChar(200)
-  descriptionAr   String?   @map("description_ar") @db.Text
-  descriptionEn   String?   @map("description_en") @db.Text
-  calculationType String    @map("calculation_type") @db.VarChar(20)
-  basePrice       Decimal   @map("base_price") @db.Decimal(10, 4)
-  priceMultipliers Json?    @map("price_multipliers")
-  specifications  Json?
-  unit            String?   @db.VarChar(50)
-  isActive        Boolean   @default(true) @map("is_active")
-  displayOrder    Int       @default(0) @map("display_order")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime? @updatedAt @map("updated_at")
-
-  @@map("pricing_rules")
-}
-
-model PricingCategory {
-  id           String    @id @default(cuid())
-  nameAr       String    @map("name_ar") @db.VarChar(200)
-  nameEn       String?   @map("name_en") @db.VarChar(200)
-  descriptionAr String?  @map("description_ar") @db.Text
-  descriptionEn String?  @map("description_en") @db.Text
-  icon         String?   @db.VarChar(50)
-  isActive     Boolean   @default(true) @map("is_active")
-  displayOrder Int       @default(0) @map("display_order")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime? @updatedAt @map("updated_at")
-
-  configs PricingConfig[]
-
-  @@map("pricing_categories")
-}
-
-model PricingConfig {
-  id           String    @id @default(cuid())
-  categoryId   String    @map("category_id")
-  paperSize    String    @map("paper_size") @db.VarChar(10)
-  paperType    String?   @map("paper_type") @db.VarChar(50)
-  printType    String    @map("print_type") @db.VarChar(20)
-  qualityType  String?   @map("quality_type") @db.VarChar(20)
-  pricePerPage Decimal   @map("price_per_page") @db.Decimal(10, 4)
-  unit         String?   @default("صفحة") @db.VarChar(50)
-  isActive     Boolean   @default(true) @map("is_active")
-  displayOrder Int       @default(0) @map("display_order")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime? @updatedAt @map("updated_at")
-
-  category PricingCategory @relation(fields: [categoryId], references: [id])
-
-  @@map("pricing_configs")
-}
 
 model ServiceWorkflow {
   id               String    @id @default(cuid())
@@ -613,27 +557,3 @@ model Like {
   @@map("likes")
 }
 
-model SystemSetting {
-  id           String    @id @default(cuid())
-  settingKey   String    @unique @map("setting_key") @db.VarChar(100)
-  settingValue String?   @map("setting_value") @db.Text
-  settingType  String?   @map("setting_type") @db.VarChar(20)
-  description  String?   @db.Text
-  isPublic     Boolean   @default(false) @map("is_public")
-  updatedAt    DateTime? @updatedAt @map("updated_at")
-
-  @@map("system_settings")
-}
-
-model UploadedFile {
-  id           String   @id @default(cuid())
-  originalName String   @map("original_name") @db.VarChar(255)
-  filename     String   @unique @db.VarChar(255)
-  filePath     String?  @map("file_path") @db.Text
-  fileUrl      String?  @map("file_url") @db.Text
-  fileSize     BigInt?  @map("file_size")
-  mimeType     String?  @map("mime_type") @db.VarChar(100)
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  @@map("uploaded_files")
-}

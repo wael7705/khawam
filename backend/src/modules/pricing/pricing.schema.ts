@@ -22,12 +22,20 @@ export const updatePricingRuleSchema = createPricingRuleSchema.partial();
 
 export const calculatePriceSchema = z.object({
   quantity: z.number().int().positive(),
+  service_id: z.string().optional(),
+  print_mode: printModeSchema.optional(),
+  size_code: sizeCodeSchema.optional(),
+  unit_value: z.number().nonnegative().optional(),
   specifications: z
     .object({
       color: z.string().optional(),
       sides: z.string().optional(),
       paper_size: z.string().optional(),
       unit: z.string().optional(),
+      service_id: z.string().optional(),
+      print_mode: printModeSchema.optional(),
+      size_code: sizeCodeSchema.optional(),
+      unit_value: z.number().nonnegative().optional(),
     })
     .optional(),
 });

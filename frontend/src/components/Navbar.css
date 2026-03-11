@@ -119,6 +119,15 @@
   color: var(--primary);
 }
 
+.navbar__link--staff {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.navbar__link--staff::after {
+  width: 100%;
+}
+
 .navbar__link:hover::after,
 .navbar__link--active::after {
   width: 100%;
@@ -343,6 +352,11 @@
 .navbar__drawer-link:hover {
   color: var(--primary);
   background: var(--primary-light);
+}
+
+.navbar__drawer-link--staff {
+  color: var(--primary);
+  font-weight: 600;
 }
 
 .navbar__drawer-actions {

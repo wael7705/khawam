@@ -5,6 +5,10 @@
   background: #fdfdfd;
 }
 
+.dashboard-layout--sidebar-collapsed {
+  grid-template-columns: 72px 1fr;
+}
+
 .dashboard-sidebar {
   border-inline-end: 1px solid var(--border);
   background: var(--bg);
@@ -22,12 +26,19 @@
   align-items: center;
   gap: 12px;
   padding: 8px;
+  position: relative;
 }
 
 .dashboard-sidebar__brand img {
   width: 46px;
   height: 46px;
   object-fit: contain;
+  flex-shrink: 0;
+}
+
+.dashboard-sidebar__brand-text {
+  flex: 1;
+  min-width: 0;
 }
 
 .dashboard-sidebar__brand strong {
@@ -39,6 +50,25 @@
 .dashboard-sidebar__brand span {
   color: var(--text-light);
   font-size: 0.86rem;
+}
+
+.dashboard-sidebar__collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--secondary);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.dashboard-sidebar__collapse-btn:hover {
+  background: rgba(var(--primary-rgb), 0.08);
+  color: var(--primary);
 }
 
 .dashboard-sidebar__nav,
@@ -69,6 +99,47 @@
   background: var(--primary);
   color: var(--text-white);
   box-shadow: 0 10px 24px -14px rgba(var(--primary-rgb), 0.8);
+}
+
+/* Collapsed sidebar: icons only */
+.dashboard-sidebar--collapsed {
+  width: 72px;
+  padding: 16px 10px;
+  align-items: center;
+}
+
+.dashboard-sidebar--collapsed .dashboard-sidebar__brand {
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.dashboard-sidebar--collapsed .dashboard-sidebar__brand img {
+  width: 36px;
+  height: 36px;
+}
+
+.dashboard-sidebar--collapsed .dashboard-sidebar__brand-text,
+.dashboard-sidebar--collapsed .dashboard-sidebar__link-label {
+  display: none !important;
+}
+
+.dashboard-sidebar--collapsed .dashboard-sidebar__collapse-btn {
+  margin-top: 4px;
+}
+
+.dashboard-sidebar--collapsed .dashboard-sidebar__nav {
+  align-items: center;
+}
+
+.dashboard-sidebar--collapsed .dashboard-sidebar__link {
+  justify-content: center;
+  padding: 12px;
+}
+
+.dashboard-sidebar--collapsed .dashboard-sidebar__logout {
+  justify-content: center;
+  padding: 12px;
 }
 
 .dashboard-sidebar__logout {

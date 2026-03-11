@@ -18,7 +18,29 @@ export async function ordersRoutes(app: FastifyInstance): Promise<void> {
       return result;
     } catch (err: unknown) {
       const error = err as { message?: string };
-      return reply.code(500).send({ detail: error.message ?? 'فشل رفع الملف' });
+      return reply.code(400).send({ detail: error.message ?? 'فشل رفع الملف' });
+    }
+  });
+
+  app.post('/upload-batch', async (request, reply) => {
+    try {
+      const parts = request.files();
+      const results: Awaited<ReturnType<typeof ordersService.uploadOrderFile>>[] = [];
+      for await (const part of parts) {
+        const result = await ordersService.uploadOrderFile({
+          filename: part.filename,
+          file: part.file,
+          mimetype: part.mimetype,
+        });
+        results.push(result);
+      }
+      if (results.length === 0) {
+        return reply.code(400).send({ detail: 'لم يتم إرسال أي ملفات' });
+      }
+      return { files: results };
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      return reply.code(400).send({ detail: error.message ?? 'فشل رفع الملفات' });
     }
   });
 
@@ -30,6 +52,7 @@ export async function ordersRoutes(app: FastifyInstance): Promise<void> {
     }
 
     const input: ordersService.CreateOrderInput = {
+      service_id: body.service_id as string | undefined,
       customer_id: body.customer_id as string | undefined,
       customer_name: body.customer_name as string | undefined,
       customer_phone: body.customer_phone as string | undefined,
@@ -43,6 +66,12 @@ export async function ordersRoutes(app: FastifyInstance): Promise<void> {
       payment_method: body.payment_method as string | undefined,
       delivery_type: body.delivery_type as string | undefined,
       delivery_address: body.delivery_address as string | undefined,
+      delivery_street: body.delivery_street as string | undefined,
+      delivery_neighborhood: body.delivery_neighborhood as string | undefined,
+      delivery_building_floor: body.delivery_building_floor as string | undefined,
+      delivery_extra: body.delivery_extra as string | undefined,
+      delivery_latitude: body.delivery_latitude != null ? Number(body.delivery_latitude) : undefined,
+      delivery_longitude: body.delivery_longitude != null ? Number(body.delivery_longitude) : undefined,
       delivery_date: body.delivery_date as string | undefined,
       notes: body.notes as string | undefined,
       files: body.files as string[] | undefined,

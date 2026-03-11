@@ -1,4 +1,5 @@
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useParams } from 'react-router-dom';
 import type { ReactElement } from 'react';
 import { I18nProvider } from './i18n/index';
 import { Navbar } from './components/Navbar';
@@ -9,6 +10,15 @@ import { Register } from './pages/Register';
 import { Settings } from './pages/Settings';
 import { ServicesCatalog } from './pages/ServicesCatalog';
 import { Portfolio } from './pages/Portfolio';
+import { MyOrders } from './pages/MyOrders';
+import { ReorderPage } from './pages/ReorderPage';
+
+const DeliveryLocationPage = lazy(() => import('./pages/DeliveryLocationPage').then((m) => ({ default: m.DeliveryLocationPage })));
+
+function ServicesCatalogWithOrder() {
+  const { serviceSlug } = useParams<{ serviceSlug: string }>();
+  return <ServicesCatalog initialOrderSlug={serviceSlug ?? null} />;
+}
 import { createDevSession, getStoredUser, isAuthenticated, isDevAuthBypassEnabled } from './lib/auth';
 import { DashboardLayout } from './pages/dashboard/DashboardLayout';
 import { DashboardHome } from './pages/dashboard/DashboardHome';
@@ -29,6 +39,10 @@ function PublicLayout() {
       <Footer />
     </>
   );
+}
+
+function OrderFlowLayout() {
+  return <Outlet />;
 }
 
 function DashboardGuard({ children }: { children: ReactElement }) {
@@ -52,15 +66,21 @@ export default function App() {
     <I18nProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/order" element={<OrderFlowLayout />}>
+            <Route path="location" element={<Suspense fallback={<div className="page-loading">جاري التحميل...</div>}><DeliveryLocationPage /></Suspense>} />
+            <Route path=":serviceSlug" element={<ServicesCatalogWithOrder />} />
+            <Route index element={<Navigate to="/services" replace />} />
+          </Route>
           <Route element={<PublicLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/order" element={<Navigate to="/services" replace />} />
             <Route path="/services" element={<ServicesCatalog />} />
             <Route path="/services/:category" element={<ServicesCatalog />} />
             <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/my-orders" element={<MyOrders />} />
+            <Route path="/order/reorder/:orderId" element={<ReorderPage />} />
           </Route>
 
           <Route

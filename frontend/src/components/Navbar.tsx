@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Facebook, Instagram, Linkedin } from 'lucide-react';
+import { Menu, X, Facebook } from 'lucide-react';
 import { useTranslation } from '../i18n/index';
 import { getStoredUser, clearAuth } from '../lib/auth';
 import './Navbar.css';
@@ -56,12 +56,6 @@ export function Navbar() {
             <a href="#" aria-label="Facebook">
               <Facebook size={18} />
             </a>
-            <a href="#" aria-label="Instagram">
-              <Instagram size={18} />
-            </a>
-            <a href="#" aria-label="LinkedIn">
-              <Linkedin size={18} />
-            </a>
           </div>
         </div>
       </div>
@@ -80,6 +74,16 @@ export function Navbar() {
                 {t.nav[item.key]}
               </a>
             ))}
+            {user?.role === 'مدير' && (
+              <Link to="/dashboard" className="navbar__link navbar__link--staff">
+                {t.nav.dashboard}
+              </Link>
+            )}
+            {user?.role === 'موظف' && (
+              <Link to="/dashboard/orders" className="navbar__link navbar__link--staff">
+                {t.nav.ordersManagement}
+              </Link>
+            )}
           </nav>
           <div className="navbar__actions">
             {user ? (
@@ -106,6 +110,13 @@ export function Navbar() {
                       <div className="navbar__dropdown-header">
                         {t.nav.welcome} {user.name}
                       </div>
+                      <Link
+                        to="/my-orders"
+                        className="navbar__dropdown-link"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        {t.nav.myOrders}
+                      </Link>
                       <Link
                         to="/settings"
                         className="navbar__dropdown-link"
@@ -160,6 +171,24 @@ export function Navbar() {
                 {t.nav[item.key]}
               </a>
             ))}
+            {user?.role === 'مدير' && (
+              <Link
+                to="/dashboard"
+                className="navbar__drawer-link navbar__drawer-link--staff"
+                onClick={() => setMobileOpen(false)}
+              >
+                {t.nav.dashboard}
+              </Link>
+            )}
+            {user?.role === 'موظف' && (
+              <Link
+                to="/dashboard/orders"
+                className="navbar__drawer-link navbar__drawer-link--staff"
+                onClick={() => setMobileOpen(false)}
+              >
+                {t.nav.ordersManagement}
+              </Link>
+            )}
           </nav>
           <div className="navbar__drawer-actions">
             {user ? (
@@ -167,6 +196,13 @@ export function Navbar() {
                 <div className="navbar__drawer-user">
                   {t.nav.welcome} {user.name}
                 </div>
+                <Link
+                  to="/my-orders"
+                  className="navbar__drawer-link"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {t.nav.myOrders}
+                </Link>
                 <Link
                   to="/settings"
                   className="navbar__drawer-link"

@@ -27,6 +27,7 @@ interface PricingSpecs {
 }
 
 export interface CreateOrderInput {
+  service_id?: string;
   customer_id?: string;
   customer_name?: string;
   customer_phone?: string;
@@ -40,6 +41,12 @@ export interface CreateOrderInput {
   payment_method?: string;
   delivery_type?: string;
   delivery_address?: string;
+  delivery_street?: string;
+  delivery_neighborhood?: string;
+  delivery_building_floor?: string;
+  delivery_extra?: string;
+  delivery_latitude?: number;
+  delivery_longitude?: number;
   delivery_date?: string;
   notes?: string;
   files?: string[];
@@ -50,6 +57,16 @@ export interface OrderFilters {
   customer_id?: string;
   page?: number;
   limit?: number;
+}
+
+function buildDeliveryAddress(input: CreateOrderInput): string | null {
+  const parts = [
+    input.delivery_street?.trim(),
+    input.delivery_neighborhood?.trim(),
+    input.delivery_building_floor?.trim(),
+    input.delivery_extra?.trim(),
+  ].filter(Boolean) as string[];
+  return parts.length > 0 ? parts.join('، ') : null;
 }
 
 export async function createOrder(
@@ -101,6 +118,7 @@ export async function createOrder(
     const newOrder = await tx.order.create({
       data: {
         orderNumber,
+        serviceId: input.service_id ?? null,
         customerId: input.customer_id ?? null,
         customerName: input.customer_name ?? null,
         customerPhone: input.customer_phone ?? null,
@@ -114,7 +132,13 @@ export async function createOrder(
         remainingAmount: new Decimal(computedFinalAmount),
         paymentMethod: input.payment_method ?? 'sham_cash',
         deliveryType: input.delivery_type ?? 'self',
-        deliveryAddress: input.delivery_address ?? null,
+        deliveryAddress: input.delivery_address ?? buildDeliveryAddress(input),
+        deliveryStreet: input.delivery_street ?? null,
+        deliveryNeighborhood: input.delivery_neighborhood ?? null,
+        deliveryBuildingFloor: input.delivery_building_floor ?? null,
+        deliveryExtra: input.delivery_extra ?? null,
+        deliveryLatitude: input.delivery_latitude != null ? new Decimal(input.delivery_latitude) : null,
+        deliveryLongitude: input.delivery_longitude != null ? new Decimal(input.delivery_longitude) : null,
         deliveryDate: input.delivery_date ? new Date(input.delivery_date) : null,
         notes: input.notes ?? null,
         createdById: createdById ?? null,
@@ -190,7 +214,11 @@ export async function getOrders(
   const where: Record<string, unknown> = {};
 
   if (filters.status) {
-    where['status'] = filters.status;
+    if (filters.status.toLowerCase() === 'active') {
+      where['status'] = { in: ['pending', 'confirmed', 'processing'] };
+    } else {
+      where['status'] = filters.status;
+    }
   }
 
   if (!isStaff && userId) {
@@ -222,6 +250,7 @@ export async function getOrders(
   const data = orders.map((o: OrderWithRelations) => ({
     id: o.id,
     order_number: o.orderNumber,
+    service_id: o.serviceId ?? undefined,
     customer_id: o.customerId,
     customer_name: o.customerName,
     customer_phone: o.customerPhone,
@@ -317,6 +346,7 @@ export async function getOrderById(
   return {
     id: order.id,
     order_number: order.orderNumber,
+    service_id: order.serviceId ?? undefined,
     customer_id: order.customerId,
     customer_name: order.customerName,
     customer_phone: order.customerPhone,
@@ -335,6 +365,10 @@ export async function getOrderById(
     is_paid: order.isPaid,
     delivery_type: order.deliveryType,
     delivery_address: order.deliveryAddress,
+    delivery_street: order.deliveryStreet,
+    delivery_neighborhood: order.deliveryNeighborhood,
+    delivery_building_floor: order.deliveryBuildingFloor,
+    delivery_extra: order.deliveryExtra,
     delivery_date: order.deliveryDate,
     notes: order.notes,
     staff_notes: order.staffNotes,

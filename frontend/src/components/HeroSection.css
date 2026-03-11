@@ -253,6 +253,12 @@
 
 /* ─── Responsive ─── */
 
+@media (min-width: 1400px) {
+  .hero__services-nav {
+    display: none;
+  }
+}
+
 @media (max-width: 1200px) {
   .hero__text-col { width: 50%; }
   .hero__bg-image { width: 52%; }

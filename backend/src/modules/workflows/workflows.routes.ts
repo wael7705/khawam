@@ -154,4 +154,14 @@ export async function workflowsRoutes(app: FastifyInstance): Promise<void> {
       return reply.code(error.statusCode ?? 500).send({ detail: error.message });
     }
   });
+
+  app.post('/seed-all', { preHandler: adminPreHandler }, async (_request, reply) => {
+    try {
+      const result = await workflowsService.seedAllWorkflows();
+      return reply.send(result);
+    } catch (err: unknown) {
+      const error = err as { statusCode?: number; message?: string };
+      return reply.code(error.statusCode ?? 500).send({ detail: error.message });
+    }
+  });
 }

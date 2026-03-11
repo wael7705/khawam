@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Archive as ArchiveIcon, BarChart3, ClipboardList, FolderOpen, Home, LogOut, Menu, Shapes, Users, Wallet, X } from 'lucide-react';
+import { NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Archive as ArchiveIcon, BarChart3, ChevronLeft, ChevronRight, ClipboardList, FolderOpen, Home, LogOut, Menu, Shapes, Users, Wallet, X } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import { authAPI } from '../../lib/api';
 import { clearAuth, getStoredUser } from '../../lib/auth';
@@ -15,7 +15,9 @@ interface NavItem {
 export function DashboardLayout() {
   const { locale, toggleLocale } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const user = getStoredUser();
 
   const labels = useMemo(
@@ -52,16 +54,22 @@ export function DashboardLayout() {
     [locale],
   );
 
-  const navItems: NavItem[] = [
-    { to: '/dashboard', label: labels.home, Icon: Home },
-    { to: '/dashboard/orders', label: labels.orders, Icon: ClipboardList },
-    { to: '/dashboard/customers', label: labels.customers, Icon: Users },
-    { to: '/dashboard/services', label: labels.services, Icon: Shapes },
-    { to: '/dashboard/works', label: labels.works, Icon: FolderOpen },
-    { to: '/dashboard/archive', label: labels.archive, Icon: ArchiveIcon },
-    { to: '/dashboard/finance', label: labels.finance, Icon: Wallet },
-    { to: '/dashboard/analytics', label: labels.analytics, Icon: BarChart3 },
-  ];
+  const navItems: NavItem[] = useMemo(() => {
+    const all: NavItem[] = [
+      { to: '/dashboard', label: labels.home, Icon: Home },
+      { to: '/dashboard/orders', label: labels.orders, Icon: ClipboardList },
+      { to: '/dashboard/customers', label: labels.customers, Icon: Users },
+      { to: '/dashboard/services', label: labels.services, Icon: Shapes },
+      { to: '/dashboard/works', label: labels.works, Icon: FolderOpen },
+      { to: '/dashboard/archive', label: labels.archive, Icon: ArchiveIcon },
+      { to: '/dashboard/finance', label: labels.finance, Icon: Wallet },
+      { to: '/dashboard/analytics', label: labels.analytics, Icon: BarChart3 },
+    ];
+    if (user?.role === 'موظف') {
+      return [{ to: '/dashboard/orders', label: labels.orders, Icon: ClipboardList }];
+    }
+    return all;
+  }, [user?.role, labels]);
 
   const handleLogout = async () => {
     try {
@@ -73,29 +81,45 @@ export function DashboardLayout() {
     navigate('/login');
   };
 
+  if (user?.role === 'موظف' && location.pathname !== '/dashboard/orders') {
+    return <Navigate to="/dashboard/orders" replace />;
+  }
+
   return (
-    <div className="dashboard-layout">
-      <aside className="dashboard-sidebar">
+    <div className={`dashboard-layout ${isCollapsed ? 'dashboard-layout--sidebar-collapsed' : ''}`}>
+      <aside className={`dashboard-sidebar ${isCollapsed ? 'dashboard-sidebar--collapsed' : ''}`}>
         <div className="dashboard-sidebar__brand">
           <img src="/images/logo.jpeg" alt="Khawam" />
-          <div>
+          <div className="dashboard-sidebar__brand-text">
             <strong>{labels.title}</strong>
             <span>Khawam Pro</span>
           </div>
+          <button
+            type="button"
+            className="dashboard-sidebar__collapse-btn"
+            aria-label={isCollapsed ? (locale === 'ar' ? 'توسيع القائمة' : 'Expand sidebar') : (locale === 'ar' ? 'طي القائمة' : 'Collapse sidebar')}
+            onClick={() => setIsCollapsed((c) => !c)}
+          >
+            {locale === 'ar' ? (
+              isCollapsed ? <ChevronLeft size={18} /> : <ChevronRight size={18} />
+            ) : (
+              isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />
+            )}
+          </button>
         </div>
 
         <nav className="dashboard-sidebar__nav">
           {navItems.map(({ to, label, Icon }) => (
-            <NavLink key={to} to={to} end={to === '/dashboard'} className="dashboard-sidebar__link">
+            <NavLink key={to} to={to} end={to === '/dashboard'} className="dashboard-sidebar__link" title={label}>
               <Icon size={18} />
-              <span>{label}</span>
+              <span className="dashboard-sidebar__link-label">{label}</span>
             </NavLink>
           ))}
         </nav>
 
-        <button type="button" className="dashboard-sidebar__logout" onClick={handleLogout}>
+        <button type="button" className="dashboard-sidebar__logout" onClick={handleLogout} title={labels.logout}>
           <LogOut size={18} />
-          <span>{labels.logout}</span>
+          <span className="dashboard-sidebar__link-label">{labels.logout}</span>
         </button>
       </aside>
 

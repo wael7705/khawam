@@ -1,0 +1,146 @@
+.delivery-location-page {
+  min-height: calc(100vh - var(--nav-height, 80px));
+  padding: 24px 0 48px;
+  background: var(--bg-alt);
+  font-family: var(--font-ar);
+}
+
+.delivery-location-page__header {
+  margin-bottom: 24px;
+}
+
+.delivery-location-page__header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--secondary);
+  margin-bottom: 8px;
+}
+
+.delivery-location-page__header p {
+  font-size: 0.95rem;
+  color: var(--text-light);
+}
+
+.delivery-location-page__map-wrap {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-bottom: 8px;
+  background: var(--bg);
+}
+
+.delivery-location-page__map-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 12px 14px;
+  background: var(--bg);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  border: 1px solid var(--border);
+  border-top: none;
+}
+
+.delivery-location-page__gps-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.delivery-location-page__gps-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.delivery-location-page__zone-error {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+[dir="rtl"] .delivery-location-page__map-actions {
+  justify-content: flex-start;
+}
+
+.delivery-location-page__map {
+  height: 360px;
+  width: 100%;
+  z-index: 0;
+}
+
+.delivery-location-page__map .leaflet-control-layers {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.delivery-location-page__form {
+  background: var(--bg);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.delivery-location-page__field {
+  margin-bottom: 20px;
+}
+
+.delivery-location-page__field label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.delivery-location-page__coords {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.delivery-location-page__actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.delivery-location-page__confirm {
+  min-width: 160px;
+}
+
+.delivery-location-page__back {
+  background: transparent;
+  border: 2px solid var(--border);
+  color: var(--text);
+}
+
+.delivery-location-page__back:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.delivery-location-page__confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .delivery-location-page__map {
+    height: 280px;
+  }
+
+  .delivery-location-page__coords {
+    grid-template-columns: 1fr;
+  }
+
+  .delivery-location-page__actions {
+    flex-direction: column;
+  }
+
+  .delivery-location-page__actions .btn {
+    width: 100%;
+  }
+}

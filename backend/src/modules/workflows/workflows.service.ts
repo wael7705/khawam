@@ -89,173 +89,844 @@ export async function deleteWorkflow(workflowId: string): Promise<ServiceWorkflo
   });
 }
 
+/* ──────────────────────────────────────────
+   Workflow Step Definitions per Service
+   ────────────────────────────────────────── */
+
 const LECTURE_PRINTING_STEPS: Omit<CreateWorkflowInput, 'serviceId'>[] = [
   {
     stepNumber: 1,
-    stepNameAr: 'استلام الملفات',
-    stepNameEn: 'Receive Files',
-    stepDescriptionAr: 'استلام ملفات المحاضرات من العميل',
-    stepType: 'upload',
+    stepNameAr: 'رفع الملفات',
+    stepNameEn: 'Upload Files',
+    stepDescriptionAr: 'ارفع ملفات المحاضرات (PDF أو Word)',
+    stepType: 'files',
+    stepConfig: {
+      accept: '.pdf,.doc,.docx',
+      multiple: true,
+      required: true,
+      analyze_pages: true,
+      show_quantity: true,
+      max_size_mb: 50,
+    },
     displayOrder: 0,
   },
   {
     stepNumber: 2,
-    stepNameAr: 'مراجعة الجودة',
-    stepNameEn: 'Quality Review',
-    stepDescriptionAr: 'مراجعة جودة الملفات ووضوح الطباعة',
-    stepType: 'review',
+    stepNameAr: 'خيارات الطباعة',
+    stepNameEn: 'Print Options',
+    stepDescriptionAr: 'اختر حجم الورق ونوع الطباعة',
+    stepType: 'print_options',
+    stepConfig: {
+      paper_sizes: ['A3', 'A4', 'A5', 'B5'],
+      show_booklet: true,
+      show_color: true,
+      show_quality: true,
+      show_sides: true,
+    },
     displayOrder: 1,
   },
   {
     stepNumber: 3,
-    stepNameAr: 'الطباعة',
-    stepNameEn: 'Printing',
-    stepDescriptionAr: 'طباعة المحاضرات',
-    stepType: 'print',
+    stepNameAr: 'ملاحظات',
+    stepNameEn: 'Notes',
+    stepDescriptionAr: 'أضف ملاحظات إضافية (اختياري)',
+    stepType: 'notes',
+    stepConfig: {},
     displayOrder: 2,
   },
   {
     stepNumber: 4,
-    stepNameAr: 'التجليد والتجهيز',
-    stepNameEn: 'Binding & Preparation',
-    stepDescriptionAr: 'تجليد وتجهيز الطلبات',
-    stepType: 'binding',
+    stepNameAr: 'بيانات العميل والتوصيل',
+    stepNameEn: 'Customer Info & Delivery',
+    stepDescriptionAr: 'أدخل بياناتك واختر طريقة الاستلام',
+    stepType: 'customer_info',
+    stepConfig: {
+      fields: ['name', 'whatsapp', 'phone_extra', 'shop_name'],
+      delivery: true,
+    },
     displayOrder: 3,
   },
+];
+
+const GENERIC_PRINTING_STEPS: Omit<CreateWorkflowInput, 'serviceId'>[] = [
   {
-    stepNumber: 5,
-    stepNameAr: 'التسليم',
-    stepNameEn: 'Delivery',
-    stepDescriptionAr: 'تسليم الطلب للعميل',
-    stepType: 'delivery',
-    displayOrder: 4,
+    stepNumber: 1,
+    stepNameAr: 'رفع الملفات',
+    stepNameEn: 'Upload Files',
+    stepDescriptionAr: 'ارفع ملف التصميم',
+    stepType: 'files',
+    stepConfig: {
+      accept: '.pdf,.jpg,.jpeg,.png,.ai,.psd,.eps,.svg',
+      multiple: true,
+      required: true,
+      analyze_pages: false,
+      show_quantity: true,
+      max_size_mb: 100,
+    },
+    displayOrder: 0,
+  },
+  {
+    stepNumber: 2,
+    stepNameAr: 'خيارات الطباعة',
+    stepNameEn: 'Print Options',
+    stepDescriptionAr: 'اختر حجم الورق ونوع الطباعة',
+    stepType: 'print_options',
+    stepConfig: {
+      paper_sizes: ['A3', 'A4', 'A5'],
+      show_booklet: false,
+      show_color: true,
+      show_quality: true,
+      show_sides: true,
+    },
+    displayOrder: 1,
+  },
+  {
+    stepNumber: 3,
+    stepNameAr: 'ملاحظات',
+    stepNameEn: 'Notes',
+    stepType: 'notes',
+    stepConfig: {},
+    displayOrder: 2,
+  },
+  {
+    stepNumber: 4,
+    stepNameAr: 'بيانات العميل والتوصيل',
+    stepNameEn: 'Customer Info & Delivery',
+    stepType: 'customer_info',
+    stepConfig: {
+      fields: ['name', 'whatsapp', 'phone_extra', 'shop_name'],
+      delivery: true,
+    },
+    displayOrder: 3,
   },
 ];
 
 const FLEX_PRINTING_STEPS: Omit<CreateWorkflowInput, 'serviceId'>[] = [
   {
     stepNumber: 1,
-    stepNameAr: 'استلام التصميم',
-    stepNameEn: 'Receive Design',
-    stepDescriptionAr: 'استلام ملف التصميم من العميل',
-    stepType: 'upload',
+    stepNameAr: 'رفع التصميم',
+    stepNameEn: 'Upload Design',
+    stepDescriptionAr: 'ارفع ملف التصميم بجودة عالية',
+    stepType: 'files',
+    stepConfig: {
+      accept: '.pdf,.jpg,.jpeg,.png,.ai,.psd,.eps,.svg,.webp',
+      multiple: true,
+      required: true,
+      show_quantity: true,
+      max_size_mb: 100,
+    },
     displayOrder: 0,
   },
   {
     stepNumber: 2,
-    stepNameAr: 'معاينة التصميم',
-    stepNameEn: 'Design Preview',
-    stepDescriptionAr: 'معاينة التصميم والموافقة',
-    stepType: 'preview',
+    stepNameAr: 'الأبعاد',
+    stepNameEn: 'Dimensions',
+    stepDescriptionAr: 'حدد أبعاد الطباعة بالسنتيمتر',
+    stepType: 'dimensions',
+    stepConfig: {
+      unit: 'سم',
+      show_width: true,
+      show_height: true,
+    },
     displayOrder: 1,
   },
   {
     stepNumber: 3,
-    stepNameAr: 'الطباعة على الفليكس',
-    stepNameEn: 'Flex Printing',
-    stepDescriptionAr: 'طباعة التصميم على الفليكس',
-    stepType: 'print',
+    stepNameAr: 'ملاحظات',
+    stepNameEn: 'Notes',
+    stepType: 'notes',
+    stepConfig: {},
     displayOrder: 2,
   },
   {
     stepNumber: 4,
-    stepNameAr: 'التقطيع والتشطيب',
-    stepNameEn: 'Cutting & Finishing',
-    stepDescriptionAr: 'تقطيع وتشطيب المنتج',
-    stepType: 'cutting',
+    stepNameAr: 'بيانات العميل والتوصيل',
+    stepNameEn: 'Customer Info & Delivery',
+    stepType: 'customer_info',
+    stepConfig: {
+      fields: ['name', 'whatsapp', 'phone_extra', 'shop_name'],
+      delivery: true,
+    },
     displayOrder: 3,
-  },
-  {
-    stepNumber: 5,
-    stepNameAr: 'التسليم',
-    stepNameEn: 'Delivery',
-    stepDescriptionAr: 'تسليم الطلب للعميل',
-    stepType: 'delivery',
-    displayOrder: 4,
   },
 ];
 
 const BUSINESS_CARDS_STEPS: Omit<CreateWorkflowInput, 'serviceId'>[] = [
   {
     stepNumber: 1,
-    stepNameAr: 'استلام التصميم',
-    stepNameEn: 'Receive Design',
-    stepDescriptionAr: 'استلام تصميم البطاقة',
-    stepType: 'upload',
+    stepNameAr: 'رفع التصميم',
+    stepNameEn: 'Upload Design',
+    stepDescriptionAr: 'ارفع تصميم الكرت (وجه/ظهر)',
+    stepType: 'files',
+    stepConfig: {
+      accept: '.pdf,.jpg,.jpeg,.png,.ai,.psd,.eps,.svg',
+      multiple: true,
+      required: true,
+      show_quantity: true,
+      max_size_mb: 50,
+    },
     displayOrder: 0,
   },
   {
     stepNumber: 2,
-    stepNameAr: 'مراجعة التصميم',
-    stepNameEn: 'Design Review',
-    stepDescriptionAr: 'مراجعة التصميم والموافقة',
-    stepType: 'review',
+    stepNameAr: 'خيارات الطباعة',
+    stepNameEn: 'Print Options',
+    stepType: 'print_options',
+    stepConfig: {
+      paper_sizes: ['9x5'],
+      show_booklet: false,
+      show_color: true,
+      show_quality: true,
+      show_sides: true,
+      force_color: false,
+    },
     displayOrder: 1,
   },
   {
     stepNumber: 3,
-    stepNameAr: 'الطباعة',
-    stepNameEn: 'Printing',
-    stepDescriptionAr: 'طباعة البطاقات',
-    stepType: 'print',
+    stepNameAr: 'ملاحظات',
+    stepNameEn: 'Notes',
+    stepType: 'notes',
+    stepConfig: {},
     displayOrder: 2,
   },
   {
     stepNumber: 4,
-    stepNameAr: 'التقطيع والتشطيب',
-    stepNameEn: 'Cutting & Finishing',
-    stepDescriptionAr: 'تقطيع البطاقات إلى المقاس المطلوب',
-    stepType: 'cutting',
+    stepNameAr: 'بيانات العميل والتوصيل',
+    stepNameEn: 'Customer Info & Delivery',
+    stepType: 'customer_info',
+    stepConfig: {
+      fields: ['name', 'whatsapp', 'phone_extra', 'shop_name'],
+      delivery: true,
+    },
+    displayOrder: 3,
+  },
+];
+
+const THESIS_PRINTING_STEPS: Omit<CreateWorkflowInput, 'serviceId'>[] = [
+  {
+    stepNumber: 1,
+    stepNameAr: 'رفع الملفات',
+    stepNameEn: 'Upload Files',
+    stepDescriptionAr: 'ارفع ملف الرسالة (PDF أو Word)',
+    stepType: 'files',
+    stepConfig: {
+      accept: '.pdf,.doc,.docx',
+      multiple: true,
+      required: true,
+      analyze_pages: true,
+      show_quantity: true,
+      max_size_mb: 50,
+    },
+    displayOrder: 0,
+  },
+  {
+    stepNumber: 2,
+    stepNameAr: 'خيارات الطباعة',
+    stepNameEn: 'Print Options',
+    stepType: 'print_options',
+    stepConfig: {
+      paper_sizes: ['A4'],
+      show_booklet: false,
+      show_color: true,
+      show_quality: true,
+      show_sides: true,
+    },
+    displayOrder: 1,
+  },
+  {
+    stepNumber: 3,
+    stepNameAr: 'خيارات التجليد',
+    stepNameEn: 'Thesis Binding',
+    stepDescriptionAr: 'اختر لون الغلاف ولون الخط ونوع الطباعة على الغلاف',
+    stepType: 'thesis_binding',
+    stepConfig: {
+      binding_colors: [
+        { value: 'navy', labelAr: 'كحلي', labelEn: 'Navy' },
+        { value: 'black', labelAr: 'أسود', labelEn: 'Black' },
+        { value: 'maroon', labelAr: 'خمري', labelEn: 'Maroon' },
+        { value: 'green', labelAr: 'أخضر', labelEn: 'Green' },
+      ],
+      text_colors: [
+        { value: 'gold', labelAr: 'ذهبي', labelEn: 'Gold' },
+        { value: 'silver', labelAr: 'فضي', labelEn: 'Silver' },
+        { value: 'white', labelAr: 'أبيض', labelEn: 'White' },
+      ],
+      cover_print_types: [
+        { value: 'silk', labelAr: 'حريري', labelEn: 'Silk' },
+        { value: 'emboss', labelAr: 'بارز (إمبوس)', labelEn: 'Emboss' },
+      ],
+    },
+    displayOrder: 2,
+  },
+  {
+    stepNumber: 4,
+    stepNameAr: 'ملاحظات',
+    stepNameEn: 'Notes',
+    stepType: 'notes',
+    stepConfig: {},
     displayOrder: 3,
   },
   {
     stepNumber: 5,
-    stepNameAr: 'التسليم',
-    stepNameEn: 'Delivery',
-    stepDescriptionAr: 'تسليم الطلب للعميل',
-    stepType: 'delivery',
+    stepNameAr: 'بيانات العميل والتوصيل',
+    stepNameEn: 'Customer Info & Delivery',
+    stepType: 'customer_info',
+    stepConfig: {
+      fields: ['name', 'whatsapp', 'phone_extra', 'shop_name'],
+      delivery: true,
+    },
     displayOrder: 4,
   },
 ];
 
-export async function setupLecturePrinting(serviceId: string): Promise<ServiceWorkflow[]> {
-  const existing = await prisma.serviceWorkflow.findMany({ where: { serviceId } });
-  if (existing.length > 0) {
-    await prisma.serviceWorkflow.deleteMany({ where: { serviceId } });
-  }
+const ENGINEERING_PROJECTS_STEPS: Omit<CreateWorkflowInput, 'serviceId'>[] = [
+  {
+    stepNumber: 1,
+    stepNameAr: 'رفع الملفات',
+    stepNameEn: 'Upload Files',
+    stepDescriptionAr: 'ارفع ملفات المشروع الهندسي',
+    stepType: 'files',
+    stepConfig: {
+      accept: '.pdf,.dwg,.dxf,.ai,.psd,.png,.jpg,.jpeg',
+      multiple: true,
+      required: true,
+      show_quantity: true,
+      max_size_mb: 100,
+    },
+    displayOrder: 0,
+  },
+  {
+    stepNumber: 2,
+    stepNameAr: 'الأبعاد ونوع الورق',
+    stepNameEn: 'Dimensions & Paper Type',
+    stepDescriptionAr: 'حدد الأبعاد ونوع الورق والمقياس',
+    stepType: 'paper_type',
+    stepConfig: {
+      unit: 'سم',
+      show_width: true,
+      show_height: true,
+      paper_types: [
+        { value: 'normal', labelAr: 'ورق عادي', labelEn: 'Normal Paper' },
+        { value: 'canson', labelAr: 'ورق كانسون', labelEn: 'Canson Paper' },
+      ],
+      show_color: true,
+      show_scale: true,
+    },
+    displayOrder: 1,
+  },
+  {
+    stepNumber: 3,
+    stepNameAr: 'ملاحظات',
+    stepNameEn: 'Notes',
+    stepType: 'notes',
+    stepConfig: {},
+    displayOrder: 2,
+  },
+  {
+    stepNumber: 4,
+    stepNameAr: 'بيانات العميل والتوصيل',
+    stepNameEn: 'Customer Info & Delivery',
+    stepType: 'customer_info',
+    stepConfig: {
+      fields: ['name', 'whatsapp', 'phone_extra', 'shop_name'],
+      delivery: true,
+    },
+    displayOrder: 3,
+  },
+];
 
+const BOOKS_PRINTING_STEPS: Omit<CreateWorkflowInput, 'serviceId'>[] = [
+  {
+    stepNumber: 1,
+    stepNameAr: 'رفع الملفات',
+    stepNameEn: 'Upload Files',
+    stepDescriptionAr: 'ارفع ملف الكتاب (PDF أو Word)',
+    stepType: 'files',
+    stepConfig: {
+      accept: '.pdf,.doc,.docx',
+      multiple: true,
+      required: true,
+      analyze_pages: true,
+      show_quantity: true,
+      max_size_mb: 50,
+    },
+    displayOrder: 0,
+  },
+  {
+    stepNumber: 2,
+    stepNameAr: 'خيارات الطباعة',
+    stepNameEn: 'Print Options',
+    stepType: 'print_options',
+    stepConfig: {
+      paper_sizes: ['A4', 'A5', 'B5'],
+      show_booklet: false,
+      show_color: true,
+      show_quality: true,
+      show_sides: true,
+    },
+    displayOrder: 1,
+  },
+  {
+    stepNumber: 3,
+    stepNameAr: 'خيارات التجليد',
+    stepNameEn: 'Binding Options',
+    stepDescriptionAr: 'اختر نوع التجليد ونوع الغلاف',
+    stepType: 'binding_options',
+    stepConfig: {
+      binding_types: [
+        { value: 'lamination', labelAr: 'تغليف حراري', labelEn: 'Lamination' },
+        { value: 'cover', labelAr: 'غلاف كرتوني', labelEn: 'Cardboard Cover' },
+      ],
+      cover_types: [
+        { value: 'normal_cardboard', labelAr: 'كرتون عادي', labelEn: 'Normal Cardboard' },
+        { value: 'thick_cardboard', labelAr: 'كرتون سميك', labelEn: 'Thick Cardboard' },
+      ],
+      show_cover_type_when: 'cover',
+    },
+    displayOrder: 2,
+  },
+  {
+    stepNumber: 4,
+    stepNameAr: 'ملاحظات',
+    stepNameEn: 'Notes',
+    stepType: 'notes',
+    stepConfig: {},
+    displayOrder: 3,
+  },
+  {
+    stepNumber: 5,
+    stepNameAr: 'بيانات العميل والتوصيل',
+    stepNameEn: 'Customer Info & Delivery',
+    stepType: 'customer_info',
+    stepConfig: {
+      fields: ['name', 'whatsapp', 'phone_extra', 'shop_name'],
+      delivery: true,
+    },
+    displayOrder: 4,
+  },
+];
+
+const QURAN_CERTIFICATE_STEPS: Omit<CreateWorkflowInput, 'serviceId'>[] = [
+  {
+    stepNumber: 1,
+    stepNameAr: 'رفع التصميم',
+    stepNameEn: 'Upload Design',
+    stepDescriptionAr: 'ارفع تصميم الإجازة (صورة أو PDF)',
+    stepType: 'files',
+    stepConfig: {
+      accept: '.pdf,.jpg,.jpeg,.png,.ai,.psd,.eps,.svg',
+      multiple: false,
+      required: true,
+      show_quantity: true,
+      max_size_mb: 50,
+    },
+    displayOrder: 0,
+  },
+  {
+    stepNumber: 2,
+    stepNameAr: 'الأبعاد',
+    stepNameEn: 'Dimensions',
+    stepDescriptionAr: 'حدد أبعاد الإجازة (الافتراضي 50×70 سم)',
+    stepType: 'dimensions',
+    stepConfig: {
+      unit: 'سم',
+      show_width: true,
+      show_height: true,
+      default_width: 50,
+      default_height: 70,
+      show_use_default: true,
+    },
+    displayOrder: 1,
+  },
+  {
+    stepNumber: 3,
+    stepNameAr: 'نوع البطاقة',
+    stepNameEn: 'Card Type',
+    stepDescriptionAr: 'اختر نوع الورق وطريقة الطباعة',
+    stepType: 'card_type',
+    stepConfig: {
+      card_types: [
+        { value: 'canson', labelAr: 'كرتون كانسون', labelEn: 'Canson Cardboard' },
+        { value: 'normal', labelAr: 'كرتون عادي', labelEn: 'Normal Cardboard' },
+        { value: 'glossy', labelAr: 'كرتون لامع', labelEn: 'Glossy Cardboard' },
+      ],
+      show_print_color: true,
+    },
+    displayOrder: 2,
+  },
+  {
+    stepNumber: 4,
+    stepNameAr: 'ملاحظات',
+    stepNameEn: 'Notes',
+    stepType: 'notes',
+    stepConfig: {},
+    displayOrder: 3,
+  },
+  {
+    stepNumber: 5,
+    stepNameAr: 'بيانات العميل والتوصيل',
+    stepNameEn: 'Customer Info & Delivery',
+    stepType: 'customer_info',
+    stepConfig: {
+      fields: ['name', 'whatsapp', 'phone_extra', 'shop_name'],
+      delivery: true,
+    },
+    displayOrder: 4,
+  },
+];
+
+const CLOTHING_PRINTING_STEPS: Omit<CreateWorkflowInput, 'serviceId'>[] = [
+  {
+    stepNumber: 1,
+    stepNameAr: 'مصدر الملابس',
+    stepNameEn: 'Clothing Source',
+    stepDescriptionAr: 'حدد مصدر الملابس (من عندك أو من المتجر)',
+    stepType: 'clothing_source',
+    stepConfig: {
+      sources: [
+        { value: 'customer', labelAr: 'من العميل', labelEn: 'From Customer' },
+        { value: 'store', labelAr: 'من المتجر', labelEn: 'From Store' },
+      ],
+    },
+    displayOrder: 0,
+  },
+  {
+    stepNumber: 2,
+    stepNameAr: 'التصاميم ومواقع الطباعة',
+    stepNameEn: 'Designs & Print Locations',
+    stepDescriptionAr: 'ارفع التصميم لكل موقع طباعة على الملابس',
+    stepType: 'clothing_designs',
+    stepConfig: {
+      show_quantity: true,
+      positions: [
+        { value: 'logo', labelAr: 'شعار صغير', labelEn: 'Small Logo' },
+        { value: 'front', labelAr: 'أمامي', labelEn: 'Front' },
+        { value: 'back', labelAr: 'خلفي', labelEn: 'Back' },
+        { value: 'shoulder_right', labelAr: 'كتف يمين', labelEn: 'Right Shoulder' },
+        { value: 'shoulder_left', labelAr: 'كتف يسار', labelEn: 'Left Shoulder' },
+      ],
+      accept: '.jpg,.jpeg,.png,.ai,.psd,.eps,.svg,.webp',
+      max_size_mb: 50,
+    },
+    displayOrder: 1,
+  },
+  {
+    stepNumber: 3,
+    stepNameAr: 'ملاحظات',
+    stepNameEn: 'Notes',
+    stepType: 'notes',
+    stepConfig: {},
+    displayOrder: 2,
+  },
+  {
+    stepNumber: 4,
+    stepNameAr: 'بيانات العميل والتوصيل',
+    stepNameEn: 'Customer Info & Delivery',
+    stepType: 'customer_info',
+    stepConfig: {
+      fields: ['name', 'whatsapp', 'phone_extra', 'shop_name'],
+      delivery: true,
+    },
+    displayOrder: 3,
+  },
+];
+
+const POSTER_PRINTING_STEPS: Omit<CreateWorkflowInput, 'serviceId'>[] = [
+  {
+    stepNumber: 1,
+    stepNameAr: 'رفع التصميم',
+    stepNameEn: 'Upload Design',
+    stepType: 'files',
+    stepConfig: {
+      accept: '.pdf,.jpg,.jpeg,.png,.ai,.psd,.eps,.svg,.webp',
+      multiple: true,
+      required: true,
+      show_quantity: true,
+      max_size_mb: 100,
+    },
+    displayOrder: 0,
+  },
+  {
+    stepNumber: 2,
+    stepNameAr: 'الأبعاد',
+    stepNameEn: 'Dimensions',
+    stepDescriptionAr: 'حدد أبعاد البوستر',
+    stepType: 'dimensions',
+    stepConfig: {
+      unit: 'سم',
+      show_width: true,
+      show_height: true,
+    },
+    displayOrder: 1,
+  },
+  {
+    stepNumber: 3,
+    stepNameAr: 'ملاحظات',
+    stepNameEn: 'Notes',
+    stepType: 'notes',
+    stepConfig: {},
+    displayOrder: 2,
+  },
+  {
+    stepNumber: 4,
+    stepNameAr: 'بيانات العميل والتوصيل',
+    stepNameEn: 'Customer Info & Delivery',
+    stepType: 'customer_info',
+    stepConfig: {
+      fields: ['name', 'whatsapp', 'phone_extra', 'shop_name'],
+      delivery: true,
+    },
+    displayOrder: 3,
+  },
+];
+
+const BANNER_ROLLUP_STEPS: Omit<CreateWorkflowInput, 'serviceId'>[] = [
+  {
+    stepNumber: 1,
+    stepNameAr: 'رفع التصميم',
+    stepNameEn: 'Upload Design',
+    stepType: 'files',
+    stepConfig: {
+      accept: '.pdf,.jpg,.jpeg,.png,.ai,.psd,.eps,.svg,.webp',
+      multiple: true,
+      required: true,
+      show_quantity: true,
+      max_size_mb: 100,
+    },
+    displayOrder: 0,
+  },
+  {
+    stepNumber: 2,
+    stepNameAr: 'الأبعاد',
+    stepNameEn: 'Dimensions',
+    stepType: 'dimensions',
+    stepConfig: {
+      unit: 'سم',
+      show_width: true,
+      show_height: true,
+      default_width: 80,
+      default_height: 200,
+    },
+    displayOrder: 1,
+  },
+  {
+    stepNumber: 3,
+    stepNameAr: 'ملاحظات',
+    stepNameEn: 'Notes',
+    stepType: 'notes',
+    stepConfig: {},
+    displayOrder: 2,
+  },
+  {
+    stepNumber: 4,
+    stepNameAr: 'بيانات العميل والتوصيل',
+    stepNameEn: 'Customer Info & Delivery',
+    stepType: 'customer_info',
+    stepConfig: {
+      fields: ['name', 'whatsapp', 'phone_extra', 'shop_name'],
+      delivery: true,
+    },
+    displayOrder: 3,
+  },
+];
+
+const BROCHURE_STEPS: Omit<CreateWorkflowInput, 'serviceId'>[] = [
+  {
+    stepNumber: 1,
+    stepNameAr: 'رفع التصميم',
+    stepNameEn: 'Upload Design',
+    stepType: 'files',
+    stepConfig: {
+      accept: '.pdf,.jpg,.jpeg,.png,.ai,.psd,.eps,.svg',
+      multiple: true,
+      required: true,
+      show_quantity: true,
+      max_size_mb: 50,
+    },
+    displayOrder: 0,
+  },
+  {
+    stepNumber: 2,
+    stepNameAr: 'خيارات الطباعة',
+    stepNameEn: 'Print Options',
+    stepType: 'print_options',
+    stepConfig: {
+      paper_sizes: ['A3', 'A4', 'A5'],
+      show_booklet: false,
+      show_color: true,
+      show_quality: true,
+      show_sides: true,
+      force_color: true,
+    },
+    displayOrder: 1,
+  },
+  {
+    stepNumber: 3,
+    stepNameAr: 'ملاحظات',
+    stepNameEn: 'Notes',
+    stepType: 'notes',
+    stepConfig: {},
+    displayOrder: 2,
+  },
+  {
+    stepNumber: 4,
+    stepNameAr: 'بيانات العميل والتوصيل',
+    stepNameEn: 'Customer Info & Delivery',
+    stepType: 'customer_info',
+    stepConfig: {
+      fields: ['name', 'whatsapp', 'phone_extra', 'shop_name'],
+      delivery: true,
+    },
+    displayOrder: 3,
+  },
+];
+
+const VINYL_STEPS: Omit<CreateWorkflowInput, 'serviceId'>[] = [
+  {
+    stepNumber: 1,
+    stepNameAr: 'رفع التصميم',
+    stepNameEn: 'Upload Design',
+    stepType: 'files',
+    stepConfig: {
+      accept: '.pdf,.jpg,.jpeg,.png,.ai,.psd,.eps,.svg,.webp',
+      multiple: true,
+      required: true,
+      show_quantity: true,
+      max_size_mb: 100,
+    },
+    displayOrder: 0,
+  },
+  {
+    stepNumber: 2,
+    stepNameAr: 'الأبعاد',
+    stepNameEn: 'Dimensions',
+    stepType: 'dimensions',
+    stepConfig: {
+      unit: 'سم',
+      show_width: true,
+      show_height: true,
+    },
+    displayOrder: 1,
+  },
+  {
+    stepNumber: 3,
+    stepNameAr: 'ملاحظات',
+    stepNameEn: 'Notes',
+    stepType: 'notes',
+    stepConfig: {},
+    displayOrder: 2,
+  },
+  {
+    stepNumber: 4,
+    stepNameAr: 'بيانات العميل والتوصيل',
+    stepNameEn: 'Customer Info & Delivery',
+    stepType: 'customer_info',
+    stepConfig: {
+      fields: ['name', 'whatsapp', 'phone_extra', 'shop_name'],
+      delivery: true,
+    },
+    displayOrder: 3,
+  },
+];
+
+/* Mapping: slug -> steps definition */
+const WORKFLOW_MAP: Record<string, Omit<CreateWorkflowInput, 'serviceId'>[]> = {
+  'lecture-printing': LECTURE_PRINTING_STEPS,
+  'flex-printing': FLEX_PRINTING_STEPS,
+  'business-card-printing': BUSINESS_CARDS_STEPS,
+  'thesis-printing': THESIS_PRINTING_STEPS,
+  'engineering-printing': ENGINEERING_PROJECTS_STEPS,
+  'books-printing': BOOKS_PRINTING_STEPS,
+  'quran-certificate': QURAN_CERTIFICATE_STEPS,
+  'clothing-printing': CLOTHING_PRINTING_STEPS,
+  'poster-printing': POSTER_PRINTING_STEPS,
+  'rollup-banners': BANNER_ROLLUP_STEPS,
+  'brochure-printing': BROCHURE_STEPS,
+  'vinyl-printing': VINYL_STEPS,
+  'graphic-design': GENERIC_PRINTING_STEPS,
+};
+
+async function seedServiceWorkflow(
+  serviceId: string,
+  steps: Omit<CreateWorkflowInput, 'serviceId'>[],
+): Promise<ServiceWorkflow[]> {
+  await prisma.serviceWorkflow.deleteMany({ where: { serviceId } });
   const created: ServiceWorkflow[] = [];
-  for (const step of LECTURE_PRINTING_STEPS) {
+  for (const step of steps) {
     const w = await createWorkflow({ ...step, serviceId });
     created.push(w);
   }
   return created;
+}
+
+export async function setupLecturePrinting(serviceId: string): Promise<ServiceWorkflow[]> {
+  return seedServiceWorkflow(serviceId, LECTURE_PRINTING_STEPS);
 }
 
 export async function setupFlexPrinting(serviceId: string): Promise<ServiceWorkflow[]> {
-  const existing = await prisma.serviceWorkflow.findMany({ where: { serviceId } });
-  if (existing.length > 0) {
-    await prisma.serviceWorkflow.deleteMany({ where: { serviceId } });
-  }
-
-  const created: ServiceWorkflow[] = [];
-  for (const step of FLEX_PRINTING_STEPS) {
-    const w = await createWorkflow({ ...step, serviceId });
-    created.push(w);
-  }
-  return created;
+  return seedServiceWorkflow(serviceId, FLEX_PRINTING_STEPS);
 }
 
 export async function setupBusinessCards(serviceId: string): Promise<ServiceWorkflow[]> {
-  const existing = await prisma.serviceWorkflow.findMany({ where: { serviceId } });
-  if (existing.length > 0) {
-    await prisma.serviceWorkflow.deleteMany({ where: { serviceId } });
+  return seedServiceWorkflow(serviceId, BUSINESS_CARDS_STEPS);
+}
+
+export async function setupThesisPrinting(serviceId: string): Promise<ServiceWorkflow[]> {
+  return seedServiceWorkflow(serviceId, THESIS_PRINTING_STEPS);
+}
+
+export async function setupEngineeringProjects(serviceId: string): Promise<ServiceWorkflow[]> {
+  return seedServiceWorkflow(serviceId, ENGINEERING_PROJECTS_STEPS);
+}
+
+export async function setupBooksPrinting(serviceId: string): Promise<ServiceWorkflow[]> {
+  return seedServiceWorkflow(serviceId, BOOKS_PRINTING_STEPS);
+}
+
+export async function setupQuranCertificate(serviceId: string): Promise<ServiceWorkflow[]> {
+  return seedServiceWorkflow(serviceId, QURAN_CERTIFICATE_STEPS);
+}
+
+export async function setupClothingPrinting(serviceId: string): Promise<ServiceWorkflow[]> {
+  return seedServiceWorkflow(serviceId, CLOTHING_PRINTING_STEPS);
+}
+
+export async function seedAllWorkflows(): Promise<{ seeded: number; errors: string[] }> {
+  const services = await prisma.service.findMany({ where: { isActive: true } });
+  let seeded = 0;
+  const errors: string[] = [];
+
+  const slugMap: Record<string, string> = {};
+  for (const svc of services) {
+    const slug = (svc.nameEn ?? svc.nameAr ?? '').toLowerCase().replace(/[\s()\/]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    slugMap[slug] = svc.id;
+    const nameAr = svc.nameAr ?? '';
+    if (nameAr.includes('محاضرات')) slugMap['lecture-printing'] = svc.id;
+    if (nameAr.includes('فليكس')) slugMap['flex-printing'] = svc.id;
+    if (nameAr.includes('كروت') || nameAr.includes('بطاقات') || nameAr.includes('كرت')) slugMap['business-card-printing'] = svc.id;
+    if (nameAr.includes('رسائل') || nameAr.includes('ماجستير') || nameAr.includes('دكتوراه')) slugMap['thesis-printing'] = svc.id;
+    if (nameAr.includes('هندسية') || nameAr.includes('مشاريع هندسية')) slugMap['engineering-printing'] = svc.id;
+    if (nameAr.includes('كتب')) slugMap['books-printing'] = svc.id;
+    if (nameAr.includes('إجازة') || nameAr.includes('قرآن')) slugMap['quran-certificate'] = svc.id;
+    if (nameAr.includes('ملابس') || nameAr.includes('تيشيرت')) slugMap['clothing-printing'] = svc.id;
+    if (nameAr.includes('بوستر') || nameAr.includes('كلك')) slugMap['poster-printing'] = svc.id;
+    if (nameAr.includes('بانر') || nameAr.includes('Roll')) slugMap['rollup-banners'] = svc.id;
+    if (nameAr.includes('بروشور')) slugMap['brochure-printing'] = svc.id;
+    if (nameAr.includes('فينيل')) slugMap['vinyl-printing'] = svc.id;
+    if (nameAr.includes('تصميم') && nameAr.includes('جرافيك')) slugMap['graphic-design'] = svc.id;
   }
 
-  const created: ServiceWorkflow[] = [];
-  for (const step of BUSINESS_CARDS_STEPS) {
-    const w = await createWorkflow({ ...step, serviceId });
-    created.push(w);
+  for (const [slug, steps] of Object.entries(WORKFLOW_MAP)) {
+    const svcId = slugMap[slug];
+    if (!svcId) continue;
+    try {
+      await seedServiceWorkflow(svcId, steps);
+      seeded++;
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      errors.push(`${slug}: ${e.message ?? 'unknown error'}`);
+    }
   }
-  return created;
+  return { seeded, errors };
 }
