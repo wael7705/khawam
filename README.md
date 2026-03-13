@@ -105,6 +105,8 @@ khawam/
 
 **نشر واحد على Railway:** يُبنى الـ frontend داخل صورة Docker ويُخدم من نفس الخدمة. عند فتح رابط خدمة khawam تحصل على الموقع الكامل (الواجهة + تسجيل الدخول + طلباتي + لوحة التحكم) دون الحاجة لسيرفر آخر. في هذه الحالة ضع `FRONTEND_URL` مساوياً لـ `PUBLIC_BASE_URL` (نفس رابط الخدمة).
 
+**إعداد البناء على Railway:** في لوحة المشروع → خدمة khawam → Settings: ضع **Root Directory** فارغاً أو `/` (جذر المستودع) و **Dockerfile Path** = `backend/Dockerfile`. بهذا يُبنى الـ frontend داخل الصورة وتُخدم الواجهة من نفس الخدمة.
+
 **قبل الدفع (مهم):** إذا غيّرت `package.json` أو `backend/package.json` في أي وقت، شغّل من جذر المشروع `pnpm install` ثم ارفع ملف `pnpm-lock.yaml` مع التغييرات. قبل الدفع شغّل `pnpm run build` من مجلد backend (أو `pnpm build` من الجذر) للتأكد من نجاح البناء. البناء على Railway يستخدم `--frozen-lockfile` ويتوقف إذا كان القفل غير مطابق لـ package.json.
 
 ```bash

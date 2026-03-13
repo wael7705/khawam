@@ -51,4 +51,5 @@ ENV PORT=8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s \
   CMD node -e "fetch('http://localhost:8000/api/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
 
-CMD ["node", "dist/server.js"]
+# تهيئة الجداول من schema عند البدء ثم تشغيل الخادم (قاعدة البيانات تتشكل عند أول تشغيل)
+CMD ["sh", "-c", "pnpm exec prisma db push && node dist/server.js"]
