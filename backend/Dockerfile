@@ -9,7 +9,8 @@ COPY package.json pnpm-lock.yaml* ./
 COPY backend/package.json backend/
 COPY pnpm-workspace.yaml ./
 
-RUN pnpm install --frozen-lockfile --prod
+# Install all deps (including dev) so prisma + typescript are available for generate/build
+RUN pnpm install --frozen-lockfile
 
 COPY backend/ backend/
 
