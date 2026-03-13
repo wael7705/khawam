@@ -98,6 +98,51 @@ khawam/
 
 المشروع مُهيّأ للنشر على Railway عبر Docker.
 
+**قبل الدفع (مهم):** إذا غيّرت `package.json` أو `backend/package.json` في أي وقت، شغّل من جذر المشروع `pnpm install` ثم ارفع ملف `pnpm-lock.yaml` مع التغييرات. البناء على Railway يستخدم `--frozen-lockfile` ويتوقف إذا كان القفل غير مطابق لـ package.json.
+
 ```bash
 git push origin main
 ```
+
+### متغيرات البيئة على Railway (مشروع خوام)
+
+يمكن ضبط المتغيرات من لوحة Railway (المشروع خوام → الخدمة → Variables) أو عبر **Railway CLI** أو عبر **سكربت جاهز**:
+
+**مهم:** المتغيرات (SECRET_KEY، PUBLIC_BASE_URL، FRONTEND_URL، …) تُضبط على خدمة **khawam** (التطبيق) فقط، وليس على خدمة Postgres. خدمة Postgres تبقى بمتغيراتها الافتراضية؛ وربطها بخدمة khawam يحقن `DATABASE_URL` تلقائياً في khawam.
+
+**ضبط من لوحة Railway (موصى به):** من المشروع خوام → انقر خدمة **khawam** (أيقونة GitHub) وليس Postgres → Variables → Raw Editor → الصق المتغيرات من الملف `backend/scripts/railway-variables-khawam-service.txt` (أو أضفها يدوياً). عدّل `PUBLIC_BASE_URL` و `FRONTEND_URL` إذا كان عنوان نشرك مختلفاً.
+
+**ضبط سريع عبر السكربت (من مجلد backend):**
+1. تثبيت CLI إن لزم: `npm i -g @railway/cli`
+2. مرة واحدة: `railway login` (يفتح المتصفح)، ثم `railway link` — **تأكد من اختيار خدمة khawam (التطبيق) وليس Postgres.**
+3. تشغيل السكربت: `.\scripts\railway-set-variables.ps1`  
+   السكربت يضبط `SECRET_KEY`، `PUBLIC_BASE_URL`، `FRONTEND_URL`، `NODE_ENV`، `PORT`. عدّل العنوانين داخل السكربت أو عبر `RAILWAY_PUBLIC_BASE_URL` و `RAILWAY_FRONTEND_URL` قبل التشغيل.
+
+**ضبط يدوي عبر CLI:**
+1. تثبيت CLI: `npm i -g @railway/cli`
+2. تسجيل الدخول: `railway login`
+3. الربط بالمشروع: من مجلد الباكند `cd backend` ثم `railway link` واختيار مشروع خوام ثم خدمة التطبيق (خوام).
+4. ضبط متغيرات **خدمة خوام (التطبيق)**:
+   ```bash
+   railway variables set SECRET_KEY=قيمة_قوية_32_حرف
+   railway variables set PUBLIC_BASE_URL=https://عنوان-الـapi.railway.app
+   railway variables set FRONTEND_URL=https://عنوان-الواجهة
+   railway variables set NODE_ENV=production
+   railway variables set REMOVE_BG_API_KEY=...   # اختياري
+   railway variables set UPLOAD_DIR=/data/uploads # اختياري عند استخدام Volume
+   ```
+
+**خدمة قاعدة البيانات (PostgreSQL):** لا تحتاج ضبط متغيرات يدوي — عند إضافة PostgreSQL من لوحة Railway وربطها بخدمة خوام، يُحقَن `DATABASE_URL` تلقائياً في خدمة التطبيق.
+
+| المتغير | مطلوب | الوصف |
+|---------|-------|--------|
+| `DATABASE_URL` | نعم | يُحقَن تلقائياً عند ربط خدمة PostgreSQL بخدمة التطبيق |
+| `SECRET_KEY` | نعم | مفتاح سري قوي (مثلاً 32 حرف عشوائي) للمصادقة والجلسات |
+| `PORT` | لا | المنفذ (عادة Railway يضبطه تلقائياً) |
+| `PUBLIC_BASE_URL` | نعم | عنوان الـ API العام، مثال: `https://khawam-backend.up.railway.app` |
+| `FRONTEND_URL` | نعم | عنوان الواجهة، مثال: `https://khawam.vercel.app` أو رابط النطاق الأمامي |
+| `REMOVE_BG_API_KEY` | لا | مفتاح [remove.bg](https://remove.bg) لاستديو إزالة الخلفية |
+| `UPLOAD_DIR` | لا | مجلد حفظ الملفات المرفوعة. مع Volume: `/data/uploads` |
+| `NODE_ENV` | لا | `production` في النشر |
+
+**الرفع إلى السيرفر:** الخادم يحفظ الملفات المرفوعة في المجلد المُعرّف بـ `UPLOAD_DIR`، أو في `./uploads` إن لم يُضبَط. لاستمرارية الملفات على Railway أضف Volume واربطه بمسار (مثل `/data`) ثم ضبط `UPLOAD_DIR=/data/uploads`.
