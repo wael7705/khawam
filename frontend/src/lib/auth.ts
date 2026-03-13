@@ -14,8 +14,9 @@ const DEV_USER: UserData = {
   role: 'مدير',
 };
 
+/** مغلق لأسباب أمنية — لا دخول سريع بدون سيرفر */
 export function isDevAuthBypassEnabled(): boolean {
-  return import.meta.env.DEV && import.meta.env.VITE_DEV_AUTH_BYPASS !== 'false';
+  return false;
 }
 
 export function getStoredUser(): UserData | null {

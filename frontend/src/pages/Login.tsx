@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Chrome, Smartphone } from 'lucide-react';
 import { useTranslation } from '../i18n/index';
 import { authAPI } from '../lib/api';
-import { createDevSession, storeAuth, isDevAuthBypassEnabled } from '../lib/auth';
+import { storeAuth } from '../lib/auth';
 import type { UserData } from '../lib/auth';
 import './Login.css';
 
@@ -14,7 +14,6 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const canUseDevBypass = isDevAuthBypassEnabled();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -39,11 +38,6 @@ export function Login() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDevLogin = () => {
-    createDevSession();
-    navigate('/dashboard');
   };
 
   return (
@@ -86,13 +80,6 @@ export function Login() {
             {t.auth.apple}
           </button>
         </div>
-        {canUseDevBypass && (
-          <div className="login-card__dev">
-            <button type="button" className="btn btn-outline login-card__dev-btn" onClick={handleDevLogin}>
-              {locale === 'ar' ? 'دخول محلي بدون سيرفر' : 'Local dev login (no server)'}
-            </button>
-          </div>
-        )}
         <p className="login-card__footer">
           {t.auth.noAccount}{' '}
           <Link to="/register" className="login-card__link">

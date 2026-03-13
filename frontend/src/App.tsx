@@ -19,7 +19,7 @@ function ServicesCatalogWithOrder() {
   const { serviceSlug } = useParams<{ serviceSlug: string }>();
   return <ServicesCatalog initialOrderSlug={serviceSlug ?? null} />;
 }
-import { createDevSession, getStoredUser, isAuthenticated, isDevAuthBypassEnabled } from './lib/auth';
+import { getStoredUser, isAuthenticated } from './lib/auth';
 import { DashboardLayout } from './pages/dashboard/DashboardLayout';
 import { DashboardHome } from './pages/dashboard/DashboardHome';
 import { OrdersManagement } from './pages/dashboard/OrdersManagement';
@@ -53,10 +53,6 @@ function OrderFlowLayout() {
 }
 
 function DashboardGuard({ children }: { children: ReactElement }) {
-  if (isDevAuthBypassEnabled() && !isAuthenticated()) {
-    createDevSession();
-  }
-
   if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
   }

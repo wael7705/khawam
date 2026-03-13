@@ -1,5 +1,8 @@
 import { PrismaClient } from '@prisma/client';
-import { hashPassword } from '../src/shared/utils/password.js';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const prisma = new PrismaClient();
 
@@ -9,6 +12,13 @@ const ADMIN_PASSWORD = 'w0966320114/s';
 const ADMIN_NAME = 'مدير النظام';
 
 async function main(): Promise<void> {
+  console.log('[seed] بدء تهيئة البيانات...');
+
+  const srcPath = join(__dirname, '..', 'src', 'shared', 'utils', 'password.js');
+  const distPath = join(__dirname, '..', 'dist', 'shared', 'utils', 'password.js');
+  const passwordModule = await import(srcPath).catch(() => import(distPath));
+  const hashPassword = passwordModule.hashPassword as (p: string) => Promise<string>;
+
   const userTypes = [
     { typeName: 'admin', nameAr: 'مدير', description: 'مدير النظام' },
     { typeName: 'employee', nameAr: 'موظف', description: 'موظف' },
@@ -50,13 +60,16 @@ async function main(): Promise<void> {
       isActive: true,
     },
   });
-  console.log('Admin user created: phone=%s, email=%s', ADMIN_PHONE, ADMIN_EMAIL);
+  console.log('[seed] تم إنشاء حساب المدير: هاتف=%s، بريد=%s', ADMIN_PHONE, ADMIN_EMAIL);
 }
 
 main()
-  .then(() => prisma.$disconnect())
+  .then(() => {
+    console.log('[seed] انتهت التهيئة بنجاح.');
+    return prisma.$disconnect();
+  })
   .catch((e) => {
-    console.error(e);
+    console.error('[seed] فشل:', e);
     prisma.$disconnect();
     process.exit(1);
   });
