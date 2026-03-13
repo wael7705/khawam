@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../i18n/index';
 import { authAPI } from '../lib/api';
-import { getStoredUser, storeAuth, isAuthenticated } from '../lib/auth';
+import { getStoredUser, storeAuth, isAuthenticated, getAuthToken } from '../lib/auth';
 import type { UserData } from '../lib/auth';
 import './Settings.css';
 
@@ -29,7 +29,7 @@ export function Settings() {
     try {
       const { data } = await authAPI.updateProfile({ name, phone, email });
       const updated = data.user as UserData;
-      const token = localStorage.getItem('khawam_token') ?? '';
+      const token = getAuthToken() ?? '';
       storeAuth(token, updated);
       setUser(updated);
       setMessage(data.message as string);

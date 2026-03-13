@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Chrome, Smartphone } from 'lucide-react';
 import { useTranslation } from '../i18n/index';
 import { authAPI } from '../lib/api';
-import { storeAuth } from '../lib/auth';
+import { storeAuth, getAuthToken } from '../lib/auth';
 import type { UserData } from '../lib/auth';
 import './Register.css';
 
@@ -33,20 +33,32 @@ export function Register() {
         password,
       });
       const { data } = await authAPI.login(email || phone || name, password);
-      const token = (data as { access_token?: string }).access_token;
-      const userRes = await authAPI.getMe();
-      const user = userRes.data as UserData;
-      if (token && user) {
-        storeAuth(token, user);
-        if (!user.phone || user.phone.trim() === '') {
-          setStep('phone-confirm');
-          setLoading(false);
-        } else {
-          navigate('/');
-        }
-      } else {
+      const payload = data as { access_token?: string; user?: { id: string; name: string; email: string | null; phone: string | null; role: string } };
+      const token = payload.access_token;
+      if (!token) {
         setError('Registration failed');
         setLoading(false);
+        return;
+      }
+      let user: UserData;
+      if (payload.user) {
+        user = {
+          id: payload.user.id,
+          name: payload.user.name,
+          email: payload.user.email ?? null,
+          phone: payload.user.phone ?? null,
+          role: payload.user.role,
+        };
+      } else {
+        const userRes = await authAPI.getMe();
+        user = userRes.data as UserData;
+      }
+      storeAuth(token, user);
+      if (!user.phone || user.phone.trim() === '') {
+        setStep('phone-confirm');
+        setLoading(false);
+      } else {
+        navigate('/');
       }
     } catch (err: unknown) {
       const msg = err && typeof err === 'object' && 'response' in err
@@ -69,7 +81,7 @@ export function Register() {
       await authAPI.updateProfile({ phone: phoneConfirm });
       const userRes = await authAPI.getMe();
       const user = userRes.data as UserData;
-      const token = localStorage.getItem('khawam_token');
+      const token = getAuthToken();
       if (token && user) {
         storeAuth(token, user);
       }

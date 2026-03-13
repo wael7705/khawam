@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import type { ReactElement } from 'react';
 import { I18nProvider } from './i18n/index';
@@ -19,7 +19,8 @@ function ServicesCatalogWithOrder() {
   const { serviceSlug } = useParams<{ serviceSlug: string }>();
   return <ServicesCatalog initialOrderSlug={serviceSlug ?? null} />;
 }
-import { getStoredUser, isAuthenticated } from './lib/auth';
+import { getStoredUser, isAuthenticated, setAuthToken, setStoredUser } from './lib/auth';
+import { api } from './lib/api';
 import { DashboardLayout } from './pages/dashboard/DashboardLayout';
 import { DashboardHome } from './pages/dashboard/DashboardHome';
 import { OrdersManagement } from './pages/dashboard/OrdersManagement';
@@ -52,7 +53,10 @@ function OrderFlowLayout() {
   return <Outlet />;
 }
 
-function DashboardGuard({ children }: { children: ReactElement }) {
+function DashboardGuard({ children, authReady }: { children: ReactElement; authReady: boolean }) {
+  if (!authReady) {
+    return <div className="page-loading">جاري التحميل...</div>;
+  }
   if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
   }
@@ -65,9 +69,29 @@ function DashboardGuard({ children }: { children: ReactElement }) {
 }
 
 export default function App() {
+  const [authReady, setAuthReady] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await api.post<{ access_token: string }>('/auth/refresh');
+        setAuthToken(data.access_token);
+        const { data: me } = await api.get<{ id: string; name: string; email: string | null; phone: string | null; role: string }>('/auth/me');
+        setStoredUser(me);
+      } catch {
+        // لا جلسة — المستخدم غير مسجّل دخول
+      } finally {
+        setAuthReady(true);
+      }
+    })();
+  }, []);
+
   return (
     <I18nProvider>
       <BrowserRouter>
+        {!authReady ? (
+          <div className="page-loading">جاري التحميل...</div>
+        ) : (
         <Routes>
           <Route path="/order" element={<OrderFlowLayout />}>
             <Route path="location" element={<Suspense fallback={<div className="page-loading">جاري التحميل...</div>}><DeliveryLocationPage /></Suspense>} />
@@ -89,7 +113,7 @@ export default function App() {
           <Route
             path="/dashboard"
             element={
-              <DashboardGuard>
+              <DashboardGuard authReady={authReady}>
                 <DashboardLayout />
               </DashboardGuard>
             }
@@ -107,12 +131,13 @@ export default function App() {
           <Route
             path="/studio"
             element={
-              <DashboardGuard>
+              <DashboardGuard authReady={authReady}>
                 <Studio />
               </DashboardGuard>
             }
           />
         </Routes>
+        )}
       </BrowserRouter>
     </I18nProvider>
   );

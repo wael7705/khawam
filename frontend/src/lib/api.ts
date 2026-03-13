@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAuthToken, setAuthToken, clearAuth } from './auth';
 
 const API_URL = import.meta.env.VITE_API_URL as string || 'http://localhost:8000/api';
 
@@ -8,7 +9,7 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('khawam_token');
+  const token = getAuthToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -24,12 +25,11 @@ api.interceptors.response.use(
       try {
         const { data } = await api.post('/auth/refresh');
         const newToken = data.access_token as string;
-        localStorage.setItem('khawam_token', newToken);
+        setAuthToken(newToken);
         original.headers.Authorization = `Bearer ${newToken}`;
         return api(original);
       } catch {
-        localStorage.removeItem('khawam_token');
-        localStorage.removeItem('khawam_user');
+        clearAuth();
         window.location.href = '/login';
       }
     }
@@ -78,7 +78,7 @@ function uploadWithProgress(
 ): Promise<UploadedFileResult> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    const token = localStorage.getItem('khawam_token');
+    const token = getAuthToken();
 
     xhr.upload.addEventListener('progress', (e) => {
       if (e.lengthComputable && onProgress) {

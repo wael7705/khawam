@@ -6,6 +6,10 @@ export interface UserData {
   role: string;
 }
 
+// تخزين في الذاكرة فقط — لا يُكتب التوكن أو بيانات المستخدم في localStorage
+let inMemoryToken: string | null = null;
+let inMemoryUser: UserData | null = null;
+
 const DEV_USER: UserData = {
   id: 'local-dev-admin',
   name: 'Local Admin',
@@ -19,31 +23,38 @@ export function isDevAuthBypassEnabled(): boolean {
   return false;
 }
 
+export function getAuthToken(): string | null {
+  return inMemoryToken;
+}
+
+export function setAuthToken(token: string | null): void {
+  inMemoryToken = token;
+}
+
+export function setStoredUser(user: UserData | null): void {
+  inMemoryUser = user;
+}
+
 export function getStoredUser(): UserData | null {
-  try {
-    const raw = localStorage.getItem('khawam_user');
-    if (!raw) return null;
-    return JSON.parse(raw) as UserData;
-  } catch {
-    return null;
-  }
+  return inMemoryUser;
 }
 
 export function storeAuth(token: string, user: UserData): void {
-  localStorage.setItem('khawam_token', token);
-  localStorage.setItem('khawam_user', JSON.stringify(user));
+  setAuthToken(token);
+  setStoredUser(user);
 }
 
 export function clearAuth(): void {
-  localStorage.removeItem('khawam_token');
-  localStorage.removeItem('khawam_user');
+  setAuthToken(null);
+  setStoredUser(null);
 }
 
 export function isAuthenticated(): boolean {
-  return !!localStorage.getItem('khawam_token');
+  return getAuthToken() !== null;
 }
 
 export function createDevSession(user: UserData = DEV_USER): UserData {
-  storeAuth('local-dev-token', user);
+  setAuthToken('local-dev-token');
+  setStoredUser(user);
   return user;
 }

@@ -21,14 +21,29 @@ export function Login() {
     setLoading(true);
     try {
       const { data } = await authAPI.login(username, password);
-      const token = (data as { access_token?: string }).access_token;
-      const userRes = await authAPI.getMe();
-      const user = (userRes.data as UserData);
-      if (token && user) {
+      const payload = data as { access_token?: string; user?: { id: string; name: string; email: string | null; phone: string | null; role: string } };
+      const token = payload.access_token;
+      if (!token) {
+        setError('Invalid response from server');
+        setLoading(false);
+        return;
+      }
+      let user: UserData;
+      if (payload.user) {
+        user = {
+          id: payload.user.id,
+          name: payload.user.name,
+          email: payload.user.email ?? null,
+          phone: payload.user.phone ?? null,
+          role: payload.user.role,
+        };
         storeAuth(token, user);
         navigate(['مدير', 'موظف'].includes(user.role) ? '/dashboard' : '/');
       } else {
-        setError('Invalid response from server');
+        const userRes = await authAPI.getMe();
+        user = userRes.data as UserData;
+        storeAuth(token, user);
+        navigate(['مدير', 'موظف'].includes(user.role) ? '/dashboard' : '/');
       }
     } catch (err: unknown) {
       const msg = err && typeof err === 'object' && 'response' in err
