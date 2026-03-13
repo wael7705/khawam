@@ -297,7 +297,7 @@ export function OrdersManagement() {
   function normalizeOrderDetail(raw: Record<string, unknown>): OrderDetail {
     const items = (raw.items as OrderItemDetail[] | undefined) ?? [];
     const firstItem = items[0];
-    const specs = (firstItem?.specifications as Record<string, unknown> | undefined) ?? raw.specifications ?? {};
+    const specs: Record<string, unknown> = (firstItem?.specifications as Record<string, unknown> | undefined) ?? (raw.specifications as Record<string, unknown> | undefined) ?? ({} as Record<string, unknown>);
     const designFiles = items.flatMap((i) => {
       const df = i.design_files;
       if (!df) return [];
@@ -332,7 +332,7 @@ export function OrdersManagement() {
         product_name: i.product_name,
         quantity: i.quantity,
         total_price: i.total_price,
-        specifications: i.specifications,
+        specifications: (i.specifications ?? undefined) as unknown as Record<string, unknown> | undefined,
         design_files: i.design_files,
       })),
     };

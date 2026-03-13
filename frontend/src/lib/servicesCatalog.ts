@@ -103,7 +103,7 @@ export function getNextOrderStatus(currentStatus: string): string | null {
   const normalized = currentStatus?.toLowerCase() ?? '';
   const i = ORDER_STATUS_FLOW.indexOf(normalized as OrderFlowStatus);
   if (i < 0 || i >= ORDER_STATUS_FLOW.length - 1) return null;
-  return ORDER_STATUS_FLOW[i + 1];
+  return ORDER_STATUS_FLOW[i + 1] ?? null;
 }
 
 /** نص إجراء الانتقال للحالة التالية (للعرض عند hover) */

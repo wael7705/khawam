@@ -7,15 +7,23 @@ import { config } from '../../config/index.js';
 const REFRESH_COOKIE = 'khawam_refresh';
 const COOKIE_MAX_AGE = 30 * 24 * 60 * 60 * 1000; // 30 days
 
+function cookieSecure(): boolean {
+  return config.NODE_ENV === 'production';
+}
+
 function setRefreshCookie(reply: FastifyReply, token: string): void {
+  const secure = cookieSecure();
+  const securePart = secure ? '; Secure' : '';
   void reply.header('Set-Cookie',
-    `${REFRESH_COOKIE}=${token}; HttpOnly; Secure; SameSite=Strict; Path=/api/auth/refresh; Max-Age=${COOKIE_MAX_AGE / 1000}`,
+    `${REFRESH_COOKIE}=${token}; HttpOnly${securePart}; SameSite=Strict; Path=/api/auth/refresh; Max-Age=${COOKIE_MAX_AGE / 1000}`,
   );
 }
 
 function clearRefreshCookie(reply: FastifyReply): void {
+  const secure = cookieSecure();
+  const securePart = secure ? '; Secure' : '';
   void reply.header('Set-Cookie',
-    `${REFRESH_COOKIE}=; HttpOnly; Secure; SameSite=Strict; Path=/api/auth/refresh; Max-Age=0`,
+    `${REFRESH_COOKIE}=; HttpOnly${securePart}; SameSite=Strict; Path=/api/auth/refresh; Max-Age=0`,
   );
 }
 

@@ -85,7 +85,7 @@ export function MyOrders() {
       if (statusFilter === 'completed') params.status = 'completed';
       if (statusFilter === 'cancelled') params.status = 'cancelled';
       const { data } = await ordersAPI.getOrders(params);
-      const payload = data as {
+      const payload = data as unknown as {
         data?: OrderListItem[];
         total?: number;
         page?: number;

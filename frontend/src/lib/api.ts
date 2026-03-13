@@ -120,7 +120,9 @@ export const ordersAPI = {
   ): Promise<UploadedFileResult[]> => {
     const results: UploadedFileResult[] = [];
     for (let i = 0; i < files.length; i++) {
-      const result = await ordersAPI.upload(files[i], (filePct) => {
+      const file = files[i];
+      if (!file) continue;
+      const result = await ordersAPI.upload(file, (filePct) => {
         if (onProgress) {
           const overall = Math.round(((i + filePct / 100) / files.length) * 100);
           onProgress(overall);

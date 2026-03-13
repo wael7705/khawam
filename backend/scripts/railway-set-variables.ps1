@@ -11,9 +11,9 @@ Set-Location $PSScriptRoot\..
 # مفتاح سري مبني على khawam-pmrx.v2 مع إكمال آمن (44 حرف)
 $SECRET_KEY = "khawam-pmrx.v2.KhawamPro.SecureKey.2025"
 
-# عناوين النشر (يمكن override عبر متغيرات البيئة)
+# عناوين النشر (نشر واحد = نفس الرابط للواجهة والـ API؛ يمكن override عبر متغيرات البيئة)
 $PUBLIC_BASE_URL = if ($env:RAILWAY_PUBLIC_BASE_URL) { $env:RAILWAY_PUBLIC_BASE_URL } else { "https://khawam-production.up.railway.app" }
-$FRONTEND_URL    = if ($env:RAILWAY_FRONTEND_URL)    { $env:RAILWAY_FRONTEND_URL }    else { "https://khawam.vercel.app" }
+$FRONTEND_URL    = if ($env:RAILWAY_FRONTEND_URL)    { $env:RAILWAY_FRONTEND_URL }    else { $PUBLIC_BASE_URL }
 
 Write-Host "Checking Railway link..." -ForegroundColor Cyan
 railway status

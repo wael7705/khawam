@@ -138,7 +138,7 @@ export function OrderModal({ serviceSlug, onClose, initialDeliveryData }: OrderM
           typeof err === 'object' &&
           ('message' in err && String((err as { message?: string }).message).toLowerCase().includes('network'));
         const isConnRefused = (err as { code?: string }).code === 'ERR_NETWORK' || isRefused;
-        setIsConnectionError(isConnRefused);
+        setIsConnectionError(Boolean(isConnRefused));
         setError(
           isConnRefused
             ? (locale === 'ar'

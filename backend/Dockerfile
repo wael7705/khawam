@@ -19,6 +19,30 @@ WORKDIR /app/backend
 RUN pnpm exec prisma generate
 RUN pnpm run build
 
+# ---- Frontend build (same context = repo root) ----
+FROM node:20-slim AS frontend-build
+
+RUN corepack enable && corepack prepare pnpm@8 --activate
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./
+COPY backend/package.json backend/
+COPY frontend/package.json frontend/
+RUN pnpm install --frozen-lockfile
+
+COPY frontend/ frontend/
+
+ENV VITE_API_URL=/api
+RUN pnpm --filter @khawam/frontend build
+
+# ---- Final ----
+FROM base AS final
+
+WORKDIR /app/backend
+
+COPY --from=frontend-build /app/frontend/dist ./public
+
 EXPOSE 8000
 
 ENV NODE_ENV=production

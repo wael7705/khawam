@@ -3,7 +3,9 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import fastifyStatic from '@fastify/static';
-import { join } from 'node:path';
+import { existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { config } from './config/index.js';
 import { socketPlugin } from './shared/plugins/socket.plugin.js';
 import { uploadPlugin } from './shared/plugins/upload.plugin.js';
@@ -80,6 +82,32 @@ export async function buildApp() {
   await app.register(heroSlidesRoutes, { prefix: '/api' });
   await app.register(analyticsRoutes, { prefix: '/api/analytics' });
   await app.register(notificationsRoutes, { prefix: '/api/ws' });
+
+  // Serve frontend static + SPA fallback when public exists (Railway single-service deploy)
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const publicDir = join(__dirname, '..', 'public');
+  if (existsSync(publicDir)) {
+    await app.register(fastifyStatic, {
+      root: publicDir,
+      prefix: '/',
+      decorateReply: false,
+      index: false,
+    });
+    app.setNotFoundHandler((request, reply) => {
+      if (
+        request.method === 'GET' &&
+        !request.url.startsWith('/api') &&
+        !request.url.startsWith('/uploads')
+      ) {
+        return reply.sendFile('index.html', publicDir);
+      }
+      return reply.code(404).send({
+        message: `Route ${request.method}:${request.url} not found`,
+        error: 'Not Found',
+        statusCode: 404,
+      });
+    });
+  }
 
   return app;
 }

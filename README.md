@@ -46,6 +46,11 @@ cd backend && pnpm exec prisma db push
 # 2. أنشئ migration: pnpm exec prisma migrate dev --name وصف_التغيير
 # 3. على السيرفر: pnpm exec prisma migrate deploy
 
+# بعد أول نشر أو بعد migrate deploy — إنشاء أنواع المستخدمين وحساب المدير:
+# من مجلد backend (مع ضبط DATABASE_URL في .env أو على السيرفر):
+# pnpm exec prisma db seed
+# المدير: هاتف 0966320114، إيميل waeln4457@gmail.com، كلمة مرور w0966320114/s
+
 # التشغيل في وضع التطوير
 pnpm dev          # يشغّل الخادم فقط (المنفذ 8000)
 pnpm dev:frontend # يشغّل الواجهة فقط (المنفذ 5173)
@@ -98,7 +103,9 @@ khawam/
 
 المشروع مُهيّأ للنشر على Railway عبر Docker.
 
-**قبل الدفع (مهم):** إذا غيّرت `package.json` أو `backend/package.json` في أي وقت، شغّل من جذر المشروع `pnpm install` ثم ارفع ملف `pnpm-lock.yaml` مع التغييرات. البناء على Railway يستخدم `--frozen-lockfile` ويتوقف إذا كان القفل غير مطابق لـ package.json.
+**نشر واحد على Railway:** يُبنى الـ frontend داخل صورة Docker ويُخدم من نفس الخدمة. عند فتح رابط خدمة khawam تحصل على الموقع الكامل (الواجهة + تسجيل الدخول + طلباتي + لوحة التحكم) دون الحاجة لسيرفر آخر. في هذه الحالة ضع `FRONTEND_URL` مساوياً لـ `PUBLIC_BASE_URL` (نفس رابط الخدمة).
+
+**قبل الدفع (مهم):** إذا غيّرت `package.json` أو `backend/package.json` في أي وقت، شغّل من جذر المشروع `pnpm install` ثم ارفع ملف `pnpm-lock.yaml` مع التغييرات. قبل الدفع شغّل `pnpm run build` من مجلد backend (أو `pnpm build` من الجذر) للتأكد من نجاح البناء. البناء على Railway يستخدم `--frozen-lockfile` ويتوقف إذا كان القفل غير مطابق لـ package.json.
 
 ```bash
 git push origin main
@@ -140,9 +147,16 @@ git push origin main
 | `SECRET_KEY` | نعم | مفتاح سري قوي (مثلاً 32 حرف عشوائي) للمصادقة والجلسات |
 | `PORT` | لا | المنفذ (عادة Railway يضبطه تلقائياً) |
 | `PUBLIC_BASE_URL` | نعم | عنوان الـ API العام، مثال: `https://khawam-backend.up.railway.app` |
-| `FRONTEND_URL` | نعم | عنوان الواجهة، مثال: `https://khawam.vercel.app` أو رابط النطاق الأمامي |
+| `FRONTEND_URL` | نعم | عنوان الواجهة. عند النشر الواحد (الواجهة من نفس الخدمة) ضعه مساوياً لـ `PUBLIC_BASE_URL` |
 | `REMOVE_BG_API_KEY` | لا | مفتاح [remove.bg](https://remove.bg) لاستديو إزالة الخلفية |
 | `UPLOAD_DIR` | لا | مجلد حفظ الملفات المرفوعة. مع Volume: `/data/uploads` |
 | `NODE_ENV` | لا | `production` في النشر |
 
 **الرفع إلى السيرفر:** الخادم يحفظ الملفات المرفوعة في المجلد المُعرّف بـ `UPLOAD_DIR`، أو في `./uploads` إن لم يُضبَط. لاستمرارية الملفات على Railway أضف Volume واربطه بمسار (مثل `/data`) ثم ضبط `UPLOAD_DIR=/data/uploads`.
+
+### التحقق بعد النشر
+
+- **تسجيل دخول المدير:** بعد تشغيل `prisma db seed` (من مجلد backend مع ضبط DATABASE_URL)، سجّل الدخول من الواجهة بـ 0966320114 أو waeln4457@gmail.com وكلمة المرور w0966320114/s. تحقق من عمل لوحة التحكم.
+- **إنشاء طلب:** أنشئ طلباً من الواجهة (كعميل أو ضيف). تحقق في قاعدة البيانات من وجود سجل في `orders` و `order_items` و `order_status_history` (حالة pending وملاحظة "تم إنشاء الطلب").
+- **تغيير الحالة:** من لوحة التحكم (مدير/موظف) غيّر حالة الطلب (مثلاً إلى confirmed ثم completed). تحقق من تحديث `orders.status` ووجود سجلات جديدة في `order_status_history`.
+- **تسجيل الخروج:** بعد تسجيل الخروج تحقق أن طلب `/api/auth/refresh` يرجع 401 وأن الـ cookie مُمسحة.

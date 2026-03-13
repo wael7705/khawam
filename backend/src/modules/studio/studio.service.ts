@@ -92,7 +92,7 @@ export async function createPassportPhotos(
 
   const ext = '.png';
   const outputPath = getOutputPath('passport', ext);
-  await ensureDir(join(UPLIOAD_DIR, STUDIO_DIR, 'passport'));
+  await ensureDir(join(UPLOAD_DIR, STUDIO_DIR, 'passport'));
 
   const singlePhoto = await sharp(workPath)
     .resize(PASSPORT_WIDTH, PASSPORT_HEIGHT, { fit: 'cover', position: 'bottom' })
