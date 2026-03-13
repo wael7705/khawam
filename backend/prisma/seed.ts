@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -14,9 +14,13 @@ const ADMIN_NAME = 'مدير النظام';
 async function main(): Promise<void> {
   console.log('[seed] بدء تهيئة البيانات...');
 
-  const srcPath = join(__dirname, '..', 'src', 'shared', 'utils', 'password.js');
   const distPath = join(__dirname, '..', 'dist', 'shared', 'utils', 'password.js');
-  const passwordModule = await import(srcPath).catch(() => import(distPath));
+  const srcPath = join(__dirname, '..', 'src', 'shared', 'utils', 'password.js');
+  const loadPassword = (path: string) => import(pathToFileURL(path).href);
+  const passwordModule =
+    process.env.NODE_ENV === 'production'
+      ? await loadPassword(distPath)
+      : await loadPassword(srcPath).catch(() => loadPassword(distPath));
   const hashPassword = passwordModule.hashPassword as (p: string) => Promise<string>;
 
   const userTypes = [

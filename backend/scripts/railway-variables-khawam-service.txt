@@ -1,9 +1,11 @@
 # انسخ الأسطر التالية (بدون هذا التعليق) والصقها في Raw Editor لخدمة khawam فقط
 # من لوحة Railway: اختر خدمة khawam (أيقونة GitHub) → Variables → Raw Editor → استبدل المحتوى أو الصق
 # نشر واحد: الواجهة والـ API من نفس الخدمة — FRONTEND_URL = PUBLIC_BASE_URL
+# NODE_OPTIONS يحدّ استهلاك الذاكرة ليبقى تحت حد Replica (مثلاً 512 MB)
 
 SECRET_KEY=khawam-pmrx.v2.KhawamPro.SecureKey.2025
 PUBLIC_BASE_URL=https://khawam-production.up.railway.app
 FRONTEND_URL=https://khawam-production.up.railway.app
 NODE_ENV=production
 PORT=8000
+NODE_OPTIONS=--max-old-space-size=384
