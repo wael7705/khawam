@@ -1,6 +1,8 @@
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "backend/Dockerfile"
+# Trigger deploy on any repo change (overrides dashboard watch paths if they skip commits)
+watchPatterns = ["**"]
 
 [deploy]
 restartPolicyType = "ON_FAILURE"

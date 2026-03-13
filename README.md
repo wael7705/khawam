@@ -106,6 +106,8 @@ khawam/
 
 **إعداد البناء على Railway:** في لوحة المشروع → خدمة khawam → Settings: ضع **Root Directory** فارغاً أو `/` (جذر المستودع) و **Dockerfile Path** = `backend/Dockerfile`. بهذا يُبنى الـ frontend داخل الصورة وتُخدم الواجهة من نفس الخدمة.
 
+**إذا لم تظهر النسخة الجديدة بعد الـ commit:** المشروع يستخدم `railway.toml` مع `watchPatterns = ["**"]` حتى يُنشأ نشر عند أي تغيير. إن كان النشر لا يزال لا يتحرك: (1) تأكد أن الـ push تم إلى الفرع المتصل بـ Railway (غالباً `main`)، (2) في Railway → خدمة khawam → Settings → **Build**: تحقق أن **Watch Paths** فارغة أو أن التغييرات تدخل تحت المسارات، (3) جرّب **Deploy** يدوياً من Deployments → **Deploy**.
+
 **قبل الدفع (مهم):** إذا غيّرت `package.json` أو `backend/package.json` في أي وقت، شغّل من جذر المشروع `pnpm install` ثم ارفع ملف `pnpm-lock.yaml` مع التغييرات. قبل الدفع شغّل `pnpm run build` من مجلد backend (أو `pnpm build` من الجذر) للتأكد من نجاح البناء. البناء على Railway يستخدم `--frozen-lockfile` ويتوقف إذا كان القفل غير مطابق لـ package.json.
 
 ```bash
