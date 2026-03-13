@@ -3,12 +3,12 @@ import { pipeline } from 'node:stream/promises';
 import { createWriteStream } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
+import { config } from '../../config/index.js';
 import { createId } from '../../shared/utils/nanoid.js';
 import { authenticate } from '../../shared/middleware/auth.middleware.js';
 import { isImageFile } from '../../shared/plugins/upload.plugin.js';
 import * as studioService from './studio.service.js';
 
-const UPLOAD_DIR = join(process.cwd(), 'uploads');
 const STUDIO_TEMP_DIR = 'studio/temp';
 
 async function getUploadedFilePath(request: FastifyRequest): Promise<string> {
@@ -23,9 +23,9 @@ async function getUploadedFilePath(request: FastifyRequest): Promise<string> {
   }
 
   const ext = filename.toLowerCase().includes('.') ? filename.slice(filename.lastIndexOf('.')) : '.png';
-  await mkdir(join(UPLOAD_DIR, STUDIO_TEMP_DIR), { recursive: true });
+  await mkdir(join(config.uploadDir, STUDIO_TEMP_DIR), { recursive: true });
   const safeName = `${createId()}${ext}`;
-  const filePath = join(UPLOAD_DIR, STUDIO_TEMP_DIR, safeName);
+  const filePath = join(config.uploadDir, STUDIO_TEMP_DIR, safeName);
   await pipeline(data.file, createWriteStream(filePath));
   return filePath;
 }
@@ -42,10 +42,11 @@ export async function studioRoutes(app: FastifyInstance): Promise<void> {
     }
   });
 
-  app.post('/passport-photos', { preHandler: [authenticate] }, async (request, reply) => {
+  app.post<{ Querystring: { removeBgFirst?: string } }>('/passport-photos', { preHandler: [authenticate] }, async (request, reply) => {
     try {
       const filePath = await getUploadedFilePath(request);
-      const resultPath = await studioService.createPassportPhotos(filePath);
+      const removeBgFirst = request.query?.removeBgFirst === 'true' || request.query?.removeBgFirst === '1';
+      const resultPath = await studioService.createPassportPhotos(filePath, { removeBgFirst });
       return reply.send({ path: resultPath, url: resultPath });
     } catch (err: unknown) {
       const error = err as Error;

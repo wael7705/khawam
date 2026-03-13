@@ -52,7 +52,8 @@ async function runFileCleanup(): Promise<void> {
     const { readdir, stat, unlink } = await import('node:fs/promises');
     const { join } = await import('node:path');
 
-    const tempDir = join(process.cwd(), 'uploads', 'order-temp');
+    const { config } = await import('../config/index.js');
+    const tempDir = join(config.uploadDir, 'order-temp');
     const maxAge = 24 * 60 * 60 * 1000; // 24 hours
 
     try {

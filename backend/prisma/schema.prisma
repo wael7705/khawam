@@ -50,46 +50,9 @@ model User {
   ordersAssigned     Order[]               @relation("AssignedOrders")
   statusChanges      OrderStatusHistory[]
   visitorTracking    VisitorTracking[]
-  sessions           UserSession[]
-  customerProfile    CustomerProfile?
   studioProjects     StudioProject[]
-  reviews            Review[]
-  likes              Like[]
 
   @@map("users")
-}
-
-model UserSession {
-  id           String    @id @default(cuid())
-  userId       String    @map("user_id")
-  sessionToken String    @unique @map("session_token") @db.VarChar(255)
-  ipAddress    String?   @map("ip_address") @db.VarChar(45)
-  userAgent    String?   @map("user_agent") @db.Text
-  expiresAt    DateTime  @map("expires_at")
-  createdAt    DateTime  @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("user_sessions")
-}
-
-model CustomerProfile {
-  id                     String   @id @default(cuid())
-  userId                 String   @unique @map("user_id")
-  companyName            String?  @map("company_name") @db.VarChar(100)
-  businessType           String?  @map("business_type") @db.VarChar(50)
-  taxNumber              String?  @map("tax_number") @db.VarChar(50)
-  creditLimit            Decimal? @map("credit_limit") @db.Decimal(12, 2)
-  paymentTerms           Int?     @map("payment_terms")
-  preferredContactMethod String?  @map("preferred_contact_method") @db.VarChar(20)
-  marketingConsent       Boolean? @default(false) @map("marketing_consent")
-  notes                  String?  @db.Text
-  createdAt              DateTime @default(now()) @map("created_at")
-  updatedAt              DateTime? @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("customer_profiles")
 }
 
 model ProductCategory {
@@ -132,8 +95,6 @@ model Product {
   category   ProductCategory? @relation(fields: [categoryId], references: [id])
   sizes      ProductSize[]
   orderItems OrderItem[]
-  reviews    Review[]
-  likes      Like[]
 
   @@map("products")
 }
@@ -155,22 +116,6 @@ model ProductSize {
   @@map("product_sizes")
 }
 
-model MaterialType {
-  id          String   @id @default(cuid())
-  name        String   @db.VarChar(100)
-  nameAr      String?  @map("name_ar") @db.VarChar(100)
-  category    String?  @db.VarChar(50)
-  weightGsm   Int?     @map("weight_gsm")
-  thicknessMm Decimal? @map("thickness_mm") @db.Decimal(4, 2)
-  color       String?  @db.VarChar(50)
-  finish      String?  @db.VarChar(50)
-  pricePSqm   Decimal? @map("price_per_sqm") @db.Decimal(8, 2)
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  @@map("material_types")
-}
-
 model Service {
   id           String   @id @default(cuid())
   nameAr       String   @map("name_ar") @db.VarChar(200)
@@ -190,6 +135,7 @@ model Service {
   options       ServiceOption[]
   workflows     ServiceWorkflow[]
   pricingRules  PricingRule[]
+  orders        Order[]            @relation("OrderService")
 
   @@index([isActive, isVisible])
   @@index([displayOrder, createdAt])
@@ -310,6 +256,7 @@ model Order {
   customer      User?              @relation("CustomerOrders", fields: [customerId], references: [id])
   createdBy     User?              @relation("CreatorOrders", fields: [createdById], references: [id])
   assignedTo    User?              @relation("AssignedOrders", fields: [assignedToId], references: [id])
+  service       Service?           @relation("OrderService", fields: [serviceId], references: [id])
   items         OrderItem[]
   statusHistory OrderStatusHistory[]
   payments      Payment[]
@@ -409,9 +356,6 @@ model PortfolioWork {
   displayOrder Int       @default(0) @map("display_order")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime? @updatedAt @map("updated_at")
-
-  reviews Review[]
-  likes   Like[]
 
   @@map("portfolio_works")
 }
@@ -523,37 +467,5 @@ model ImageProcessingLog {
   project StudioProject? @relation(fields: [projectId], references: [id])
 
   @@map("image_processing_logs")
-}
-
-model Review {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  productId String?  @map("product_id")
-  workId    String?  @map("work_id")
-  rating    Int
-  comment   String?  @db.Text
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user    User           @relation(fields: [userId], references: [id])
-  product Product?       @relation(fields: [productId], references: [id])
-  work    PortfolioWork? @relation(fields: [workId], references: [id])
-
-  @@map("reviews")
-}
-
-model Like {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  productId String?  @map("product_id")
-  workId    String?  @map("work_id")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user    User           @relation(fields: [userId], references: [id])
-  product Product?       @relation(fields: [productId], references: [id])
-  work    PortfolioWork? @relation(fields: [workId], references: [id])
-
-  @@unique([userId, productId])
-  @@unique([userId, workId])
-  @@map("likes")
 }
 

@@ -1,0 +1,8 @@
+# انسخ الأسطر التالية (بدون هذا التعليق) والصقها في Raw Editor لخدمة khawam فقط
+# من لوحة Railway: اختر خدمة khawam (أيقونة GitHub) → Variables → Raw Editor → استبدل المحتوى أو الصق
+
+SECRET_KEY=khawam-pmrx.v2.KhawamPro.SecureKey.2025
+PUBLIC_BASE_URL=https://khawam-production.up.railway.app
+FRONTEND_URL=https://khawam.vercel.app
+NODE_ENV=production
+PORT=8000

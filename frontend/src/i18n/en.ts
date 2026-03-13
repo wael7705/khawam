@@ -14,6 +14,7 @@ export const en = {
     welcome: 'Welcome',
     dashboard: 'Dashboard',
     ordersManagement: 'Orders Management',
+    studio: 'Studio',
   },
   hero: {
     badge: 'Welcome To Our Company',

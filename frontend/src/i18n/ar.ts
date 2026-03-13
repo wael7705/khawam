@@ -14,6 +14,7 @@ export const ar = {
     welcome: 'أهلاً بك',
     dashboard: 'لوحة التحكم',
     ordersManagement: 'إدارة الطلبات',
+    studio: 'الاستديو',
   },
   hero: {
     badge: 'مرحباً بكم في خوام',

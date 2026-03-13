@@ -50,9 +50,9 @@ export async function buildApp() {
   // File upload support
   await app.register(uploadPlugin);
 
-  // Static files
+  // Static files (uploads)
   await app.register(fastifyStatic, {
-    root: join(process.cwd(), 'uploads'),
+    root: config.uploadDir,
     prefix: '/uploads/',
     decorateReply: false,
     setHeaders: (res) => {

@@ -4,6 +4,7 @@ const calculationTypeSchema = z.enum(['piece', 'area', 'page']);
 const printModeSchema = z.enum(['bw', 'color_normal', 'color_laser']);
 const sizeCodeSchema = z.enum(['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'BOOKLET_A5', 'BOOKLET_B5', 'BOOKLET_A4']);
 
+/** @deprecated لا يطابق نموذج Prisma الحالي؛ الكتابة الفعلية تتم عبر createFinancialRuleSchema */
 export const createPricingRuleSchema = z.object({
   nameAr: z.string().min(1, 'الاسم بالعربية مطلوب'),
   nameEn: z.string().optional(),
@@ -18,6 +19,7 @@ export const createPricingRuleSchema = z.object({
   displayOrder: z.number().int().optional().default(0),
 });
 
+/** @deprecated لا يطابق نموذج Prisma؛ التحديث يتم عبر updateFinancialRuleSchema */
 export const updatePricingRuleSchema = createPricingRuleSchema.partial();
 
 export const calculatePriceSchema = z.object({
@@ -40,6 +42,7 @@ export const calculatePriceSchema = z.object({
     .optional(),
 });
 
+/** @deprecated مسارات Advanced Pricing مُوقَفة (410)； استخدم financial-rules */
 export const getAdvancedPricingRulesQuerySchema = z.object({
   categoryId: z.string().optional(),
   paperSize: z.string().optional(),
@@ -48,6 +51,7 @@ export const getAdvancedPricingRulesQuerySchema = z.object({
   isActive: z.coerce.boolean().optional(),
 });
 
+/** @deprecated مسارات Advanced Pricing مُوقَفة (410) */
 export const createAdvancedPricingRuleSchema = z.object({
   categoryId: z.string().min(1),
   paperSize: z.string().min(1),
@@ -60,6 +64,7 @@ export const createAdvancedPricingRuleSchema = z.object({
   displayOrder: z.number().int().optional().default(0),
 });
 
+/** @deprecated استخدم calculateFinancialPriceSchema و POST /pricing/calculate-financial-price */
 export const calculateAdvancedPriceSchema = z.object({
   categoryId: z.string().min(1),
   quantity: z.coerce.number().int().positive(),

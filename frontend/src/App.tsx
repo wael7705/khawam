@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useParams } from 'react-router-dom';
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import type { ReactElement } from 'react';
 import { I18nProvider } from './i18n/index';
 import { Navbar } from './components/Navbar';
@@ -29,9 +29,16 @@ import { FinancePricing } from './pages/dashboard/FinancePricing';
 import { ServicesManagement } from './pages/dashboard/ServicesManagement';
 import { WorksManagement } from './pages/dashboard/WorksManagement';
 import { Archive } from './pages/dashboard/Archive';
+import { Studio } from './pages/Studio';
 import './index.css';
 
 function PublicLayout() {
+  const location = useLocation();
+  const isSettingsPage = location.pathname === '/settings';
+
+  if (isSettingsPage) {
+    return <Outlet />;
+  }
   return (
     <>
       <Navbar />
@@ -100,6 +107,15 @@ export default function App() {
             <Route path="finance" element={<FinancePricing />} />
             <Route path="analytics" element={<Analytics />} />
           </Route>
+
+          <Route
+            path="/studio"
+            element={
+              <DashboardGuard>
+                <Studio />
+              </DashboardGuard>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </I18nProvider>

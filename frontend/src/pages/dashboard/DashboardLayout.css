@@ -142,8 +142,47 @@
   padding: 12px;
 }
 
-.dashboard-sidebar__logout {
+.dashboard-sidebar__helper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin-top: auto;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+
+.dashboard-sidebar__helper-link {
+  text-decoration: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: start;
+  font: inherit;
+}
+
+.dashboard-sidebar__helper-link:hover {
+  background: rgba(var(--primary-rgb), 0.08);
+  color: var(--primary);
+}
+
+.dashboard-sidebar--collapsed .dashboard-sidebar__helper {
+  align-items: center;
+  padding-inline: 0;
+}
+
+.dashboard-sidebar--collapsed .dashboard-sidebar__helper-link {
+  justify-content: center;
+  padding: 12px;
+}
+
+.dashboard-sidebar--collapsed .dashboard-sidebar__helper .dashboard-sidebar__link-label {
+  display: none;
+}
+
+.dashboard-sidebar__logout {
+  margin-top: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -174,19 +213,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.dashboard-topbar__lang {
-  border: 1px solid rgba(var(--primary-rgb), 0.25);
-  color: var(--primary);
-  border-radius: 10px;
-  padding: 8px 12px;
-  font-weight: 700;
-  transition: background 0.2s ease;
-}
-
-.dashboard-topbar__lang:hover {
-  background: rgba(var(--primary-rgb), 0.08);
 }
 
 .dashboard-topbar__menu {
@@ -245,6 +271,30 @@
   transform: translateX(0);
 }
 
+.dashboard-drawer__helper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dashboard-drawer__helper .dashboard-sidebar__helper-link {
+  text-decoration: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: start;
+  font: inherit;
+}
+
+.dashboard-drawer__helper .dashboard-sidebar__helper-link:hover {
+  background: rgba(var(--primary-rgb), 0.08);
+  color: var(--primary);
+}
+
 .dashboard-drawer__head {
   display: flex;
   align-items: center;
@@ -263,6 +313,102 @@
   position: absolute;
   inset: 0;
   background: transparent;
+}
+
+/* Dark mode: dashboard only */
+.dashboard-layout--dark {
+  background: #1a1a1a;
+}
+
+.dashboard-layout--dark .dashboard-sidebar {
+  background: #1e1e1e;
+  border-inline-end-color: #333;
+}
+
+.dashboard-layout--dark .dashboard-sidebar__brand strong {
+  color: #f0f0f0;
+}
+
+.dashboard-layout--dark .dashboard-sidebar__brand span {
+  color: #9ca3af;
+}
+
+.dashboard-layout--dark .dashboard-sidebar__collapse-btn {
+  background: #2d2d2d;
+  border-color: #404040;
+  color: #e5e5e5;
+}
+
+.dashboard-layout--dark .dashboard-sidebar__collapse-btn:hover {
+  background: rgba(220, 38, 38, 0.2);
+  color: var(--primary);
+}
+
+.dashboard-layout--dark .dashboard-sidebar__link {
+  color: #d1d5db;
+}
+
+.dashboard-layout--dark .dashboard-sidebar__link:hover {
+  background: rgba(220, 38, 38, 0.15);
+  color: var(--primary);
+}
+
+.dashboard-layout--dark .dashboard-sidebar__link.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.dashboard-layout--dark .dashboard-sidebar__helper {
+  border-bottom-color: #404040;
+}
+
+.dashboard-layout--dark .dashboard-sidebar__logout {
+  color: var(--primary);
+  border-color: rgba(220, 38, 38, 0.5);
+}
+
+.dashboard-layout--dark .dashboard-sidebar__logout:hover {
+  background: rgba(220, 38, 38, 0.15);
+}
+
+.dashboard-layout--dark .dashboard-topbar {
+  background: #1e1e1e;
+  border-bottom-color: #333;
+}
+
+.dashboard-layout--dark .dashboard-topbar__welcome p {
+  color: #9ca3af;
+}
+
+.dashboard-layout--dark .dashboard-topbar__welcome strong {
+  color: #f0f0f0;
+}
+
+.dashboard-layout--dark .dashboard-topbar__menu {
+  border-color: #404040;
+  color: #e5e5e5;
+}
+
+.dashboard-layout--dark .dashboard-content {
+  background: #1a1a1a;
+}
+
+.dashboard-layout--dark .dashboard-drawer__panel {
+  background: #1e1e1e;
+  border-inline-end-color: #333;
+}
+
+.dashboard-layout--dark .dashboard-drawer__head {
+  color: #f0f0f0;
+}
+
+.dashboard-layout--dark .dashboard-drawer__head button {
+  border-color: #404040;
+  color: #e5e5e5;
+}
+
+.dashboard-layout--dark .dashboard-drawer__helper {
+  border-bottom-color: #404040;
 }
 
 @media (max-width: 991px) {

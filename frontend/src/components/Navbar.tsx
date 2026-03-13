@@ -6,11 +6,11 @@ import { getStoredUser, clearAuth } from '../lib/auth';
 import './Navbar.css';
 
 const navItems = [
-  { key: 'home', href: '#home' },
-  { key: 'about', href: '#about' },
-  { key: 'services', href: '#services' },
-  { key: 'works', href: '#works' },
-  { key: 'contact', href: '#contact' },
+  { key: 'home', to: '/#home' },
+  { key: 'about', to: '/#about' },
+  { key: 'services', to: '/#services' },
+  { key: 'works', to: '/#works' },
+  { key: 'contact', to: '/#contact' },
 ] as const;
 
 export function Navbar() {
@@ -66,23 +66,30 @@ export function Navbar() {
           </Link>
           <nav className="navbar__nav">
             {navItems.map((item) => (
-              <a
+              <Link
                 key={item.key}
-                href={item.href}
+                to={item.to}
                 className="navbar__link"
               >
                 {t.nav[item.key]}
-              </a>
+              </Link>
             ))}
-            {user?.role === 'مدير' && (
-              <Link to="/dashboard" className="navbar__link navbar__link--staff">
-                {t.nav.dashboard}
-              </Link>
-            )}
-            {user?.role === 'موظف' && (
-              <Link to="/dashboard/orders" className="navbar__link navbar__link--staff">
-                {t.nav.ordersManagement}
-              </Link>
+            {(user?.role === 'مدير' || user?.role === 'موظف') && (
+              <>
+                {user?.role === 'مدير' && (
+                  <Link to="/dashboard" className="navbar__link navbar__link--staff">
+                    {t.nav.dashboard}
+                  </Link>
+                )}
+                {user?.role === 'موظف' && (
+                  <Link to="/dashboard/orders" className="navbar__link navbar__link--staff">
+                    {t.nav.ordersManagement}
+                  </Link>
+                )}
+                <Link to="/studio" className="navbar__link navbar__link--staff">
+                  {t.nav.studio}
+                </Link>
+              </>
             )}
           </nav>
           <div className="navbar__actions">
@@ -162,32 +169,43 @@ export function Navbar() {
         <div className="navbar__drawer-panel">
           <nav className="navbar__drawer-nav">
             {navItems.map((item) => (
-              <a
+              <Link
                 key={item.key}
-                href={item.href}
+                to={item.to}
                 className="navbar__drawer-link"
                 onClick={() => setMobileOpen(false)}
               >
                 {t.nav[item.key]}
-              </a>
+              </Link>
             ))}
-            {user?.role === 'مدير' && (
-              <Link
-                to="/dashboard"
-                className="navbar__drawer-link navbar__drawer-link--staff"
-                onClick={() => setMobileOpen(false)}
-              >
-                {t.nav.dashboard}
-              </Link>
-            )}
-            {user?.role === 'موظف' && (
-              <Link
-                to="/dashboard/orders"
-                className="navbar__drawer-link navbar__drawer-link--staff"
-                onClick={() => setMobileOpen(false)}
-              >
-                {t.nav.ordersManagement}
-              </Link>
+            {(user?.role === 'مدير' || user?.role === 'موظف') && (
+              <>
+                {user?.role === 'مدير' && (
+                  <Link
+                    to="/dashboard"
+                    className="navbar__drawer-link navbar__drawer-link--staff"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    {t.nav.dashboard}
+                  </Link>
+                )}
+                {user?.role === 'موظف' && (
+                  <Link
+                    to="/dashboard/orders"
+                    className="navbar__drawer-link navbar__drawer-link--staff"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    {t.nav.ordersManagement}
+                  </Link>
+                )}
+                <Link
+                  to="/studio"
+                  className="navbar__drawer-link navbar__drawer-link--staff"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {t.nav.studio}
+                </Link>
+              </>
             )}
           </nav>
           <div className="navbar__drawer-actions">

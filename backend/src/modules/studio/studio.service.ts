@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { createId } from '../../shared/utils/nanoid.js';
 import { config } from '../../config/index.js';
 
-const UPLOAD_DIR = join(process.cwd(), 'uploads');
+const UPLOAD_DIR = config.uploadDir;
 const STUDIO_DIR = 'studio';
 
 export interface CropRotateOptions {
@@ -72,29 +72,55 @@ const PASSPORT_WIDTH = 413;
 const PASSPORT_HEIGHT = 567;
 const GRID_COLS = 4;
 const GRID_ROWS = 2;
+const BORDER_PX = 1;
+const RATIO = PASSPORT_WIDTH / PASSPORT_HEIGHT; // 3.5:4.8
 
-export async function createPassportPhotos(inputPath: string): Promise<string> {
+export interface PassportOptions {
+  removeBgFirst?: boolean;
+}
+
+export async function createPassportPhotos(
+  inputPath: string,
+  options: PassportOptions = {},
+): Promise<string> {
+  let workPath = inputPath;
+  if (options.removeBgFirst) {
+    const urlPath = await removeBackground(inputPath);
+    const filename = urlPath.split(/[/\\]/).pop() ?? '';
+    workPath = join(UPLOAD_DIR, STUDIO_DIR, 'remove-bg', filename);
+  }
+
   const ext = '.png';
   const outputPath = getOutputPath('passport', ext);
-  await ensureDir(join(UPLOAD_DIR, STUDIO_DIR, 'passport'));
+  await ensureDir(join(UPLIOAD_DIR, STUDIO_DIR, 'passport'));
 
-  const singlePhoto = await sharp(inputPath)
-    .resize(PASSPORT_WIDTH, PASSPORT_HEIGHT, { fit: 'cover', position: 'center' })
+  const singlePhoto = await sharp(workPath)
+    .resize(PASSPORT_WIDTH, PASSPORT_HEIGHT, { fit: 'cover', position: 'bottom' })
+    .toBuffer();
+
+  const withBorder = await sharp(singlePhoto)
+    .extend({
+      top: BORDER_PX,
+      bottom: BORDER_PX,
+      left: BORDER_PX,
+      right: BORDER_PX,
+      background: { r: 0, g: 0, b: 0 },
+    })
     .toBuffer();
 
   const composite: sharp.OverlayOptions[] = [];
   for (let row = 0; row < GRID_ROWS; row++) {
     for (let col = 0; col < GRID_COLS; col++) {
       composite.push({
-        input: singlePhoto,
-        left: col * PASSPORT_WIDTH,
-        top: row * PASSPORT_HEIGHT,
+        input: withBorder,
+        left: col * (PASSPORT_WIDTH + BORDER_PX * 2),
+        top: row * (PASSPORT_HEIGHT + BORDER_PX * 2),
       });
     }
   }
 
-  const totalWidth = GRID_COLS * PASSPORT_WIDTH;
-  const totalHeight = GRID_ROWS * PASSPORT_HEIGHT;
+  const totalWidth = GRID_COLS * (PASSPORT_WIDTH + BORDER_PX * 2);
+  const totalHeight = GRID_ROWS * (PASSPORT_HEIGHT + BORDER_PX * 2);
 
   await sharp({
     create: {

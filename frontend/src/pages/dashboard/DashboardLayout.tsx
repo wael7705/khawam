@@ -1,10 +1,12 @@
-import { useMemo, useState } from 'react';
-import { NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Archive as ArchiveIcon, BarChart3, ChevronLeft, ChevronRight, ClipboardList, FolderOpen, Home, LogOut, Menu, Shapes, Users, Wallet, X } from 'lucide-react';
+import { useMemo, useState, useEffect } from 'react';
+import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Archive as ArchiveIcon, BarChart3, ChevronLeft, ChevronRight, ClipboardList, FolderOpen, Globe, Home, LogOut, Menu, Moon, Shapes, Sun, Users, Wallet, X } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import { authAPI } from '../../lib/api';
 import { clearAuth, getStoredUser } from '../../lib/auth';
 import './DashboardLayout.css';
+
+const DASHBOARD_THEME_KEY = 'khawam_dashboard_theme';
 
 interface NavItem {
   to: string;
@@ -18,7 +20,23 @@ export function DashboardLayout() {
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    try {
+      const v = localStorage.getItem(DASHBOARD_THEME_KEY);
+      return v === 'dark';
+    } catch {
+      return false;
+    }
+  });
   const user = getStoredUser();
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(DASHBOARD_THEME_KEY, isDarkMode ? 'dark' : 'light');
+    } catch {
+      // ignore
+    }
+  }, [isDarkMode]);
 
   const labels = useMemo(
     () =>
@@ -36,6 +54,7 @@ export function DashboardLayout() {
             langSwitch: 'English',
             analytics: 'التحليلات',
             logout: 'تسجيل الخروج',
+            backToSite: 'العودة للموقع',
           }
         : {
             title: 'Dashboard',
@@ -50,6 +69,7 @@ export function DashboardLayout() {
             langSwitch: 'العربية',
             analytics: 'Analytics',
             logout: 'Logout',
+            backToSite: 'Back to site',
           },
     [locale],
   );
@@ -81,12 +101,15 @@ export function DashboardLayout() {
     navigate('/login');
   };
 
-  if (user?.role === 'موظف' && location.pathname !== '/dashboard/orders') {
+  const employeeAllowedPaths = ['/dashboard/orders'];
+  if (user?.role === 'موظف' && !employeeAllowedPaths.includes(location.pathname)) {
     return <Navigate to="/dashboard/orders" replace />;
   }
 
   return (
-    <div className={`dashboard-layout ${isCollapsed ? 'dashboard-layout--sidebar-collapsed' : ''}`}>
+    <div
+      className={`dashboard-layout ${isCollapsed ? 'dashboard-layout--sidebar-collapsed' : ''} ${isDarkMode ? 'dashboard-layout--dark' : ''}`}
+    >
       <aside className={`dashboard-sidebar ${isCollapsed ? 'dashboard-sidebar--collapsed' : ''}`}>
         <div className="dashboard-sidebar__brand">
           <img src="/images/logo.jpeg" alt="Khawam" />
@@ -117,6 +140,33 @@ export function DashboardLayout() {
           ))}
         </nav>
 
+        <div className="dashboard-sidebar__helper">
+          <Link to="/" className="dashboard-sidebar__link dashboard-sidebar__helper-link" title={labels.backToSite}>
+            <Home size={18} />
+            <span className="dashboard-sidebar__link-label">{labels.backToSite}</span>
+          </Link>
+          <button
+            type="button"
+            className="dashboard-sidebar__link dashboard-sidebar__helper-link"
+            onClick={() => setIsDarkMode((d) => !d)}
+            title={isDarkMode ? (locale === 'ar' ? 'الوضع الفاتح' : 'Light mode') : (locale === 'ar' ? 'الوضع الليلي' : 'Dark mode')}
+          >
+            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+            <span className="dashboard-sidebar__link-label">
+              {isDarkMode ? (locale === 'ar' ? 'وضع فاتح' : 'Light') : (locale === 'ar' ? 'وضع ليلي' : 'Dark')}
+            </span>
+          </button>
+          <button
+            type="button"
+            className="dashboard-sidebar__link dashboard-sidebar__helper-link"
+            onClick={toggleLocale}
+            title={labels.langSwitch}
+          >
+            <Globe size={18} />
+            <span className="dashboard-sidebar__link-label">{labels.langSwitch}</span>
+          </button>
+        </div>
+
         <button type="button" className="dashboard-sidebar__logout" onClick={handleLogout} title={labels.logout}>
           <LogOut size={18} />
           <span className="dashboard-sidebar__link-label">{labels.logout}</span>
@@ -137,9 +187,6 @@ export function DashboardLayout() {
             <p>{labels.welcome}</p>
             <strong>{user?.name ?? '—'}</strong>
           </div>
-          <button type="button" className="dashboard-topbar__lang" onClick={toggleLocale}>
-            {labels.langSwitch}
-          </button>
         </header>
 
         <main className="dashboard-content">
@@ -169,6 +216,32 @@ export function DashboardLayout() {
               </NavLink>
             ))}
           </nav>
+          <div className="dashboard-drawer__helper">
+            <Link
+              to="/"
+              className="dashboard-sidebar__link dashboard-sidebar__helper-link"
+              onClick={() => setDrawerOpen(false)}
+            >
+              <Home size={18} />
+              <span>{labels.backToSite}</span>
+            </Link>
+            <button
+              type="button"
+              className="dashboard-sidebar__link dashboard-sidebar__helper-link"
+              onClick={() => { setIsDarkMode((d) => !d); setDrawerOpen(false); }}
+            >
+              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+              <span>{isDarkMode ? (locale === 'ar' ? 'وضع فاتح' : 'Light') : (locale === 'ar' ? 'وضع ليلي' : 'Dark')}</span>
+            </button>
+            <button
+              type="button"
+              className="dashboard-sidebar__link dashboard-sidebar__helper-link"
+              onClick={() => { toggleLocale(); setDrawerOpen(false); }}
+            >
+              <Globe size={18} />
+              <span>{labels.langSwitch}</span>
+            </button>
+          </div>
           <button type="button" className="dashboard-sidebar__logout" onClick={handleLogout}>
             <LogOut size={18} />
             <span>{labels.logout}</span>

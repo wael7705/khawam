@@ -3,12 +3,9 @@ import { authenticate, requireRole } from '../../shared/middleware/auth.middlewa
 import * as pricingService from './pricing.service.js';
 import {
   bulkUpdatePricesSchema,
-  calculateAdvancedPriceSchema,
   calculateFinancialPriceSchema,
   calculatePriceSchema,
   createFinancialRuleSchema,
-  createAdvancedPricingRuleSchema,
-  getAdvancedPricingRulesQuerySchema,
   updateFinancialRuleSchema,
 } from './pricing.schema.js';
 
@@ -117,44 +114,22 @@ export async function pricingRoutes(app: FastifyInstance): Promise<void> {
     }
   });
 
-  app.get('/advanced-pricing-rules', { preHandler: adminPreHandler }, async (request, reply) => {
-    try {
-      const query = getAdvancedPricingRulesQuerySchema.parse(request.query);
-      const rules = await pricingService.getAdvancedPricingRules(query);
-      return { success: true, rules, count: rules.length };
-    } catch (err: unknown) {
-      const error = err as { statusCode?: number; message?: string };
-      return reply.code(error.statusCode ?? 400).send({ detail: error.message ?? 'تعذر جلب قواعد التسعير المتقدمة' });
-    }
+  app.get('/advanced-pricing-rules', { preHandler: adminPreHandler }, async (_request, reply) => {
+    return reply.code(410).send({
+      detail: 'تم إيقاف قواعد التسعير المتقدمة؛ استخدم /pricing/financial-rules و /pricing/calculate-financial-price',
+    });
   });
 
-  app.post('/advanced-pricing-rules', { preHandler: adminPreHandler }, async (request, reply) => {
-    try {
-      const body = createAdvancedPricingRuleSchema.parse(request.body);
-      const rule = await pricingService.createAdvancedPricingRule(body);
-      return reply.code(201).send({ success: true, rule });
-    } catch (err: unknown) {
-      const error = err as { statusCode?: number; message?: string };
-      return reply.code(error.statusCode ?? 400).send({ detail: error.message ?? 'تعذر إنشاء قاعدة متقدمة' });
-    }
+  app.post('/advanced-pricing-rules', { preHandler: adminPreHandler }, async (_request, reply) => {
+    return reply.code(410).send({
+      detail: 'تم إيقاف إنشاء قواعد التسعير المتقدمة؛ استخدم POST /pricing/financial-rules',
+    });
   });
 
-  app.get('/calculate-price-advanced', { preHandler: adminPreHandler }, async (request, reply) => {
-    try {
-      const query = calculateAdvancedPriceSchema.parse(request.query);
-      const result = await pricingService.calculateAdvancedPriceFromRules(query);
-      return {
-        success: true,
-        total_price: result.totalPrice,
-        unit_price: result.unitPrice,
-        config_id: result.configId,
-        category_name_ar: result.categoryNameAr,
-        paper_size: result.paperSize,
-      };
-    } catch (err: unknown) {
-      const error = err as { statusCode?: number; message?: string };
-      return reply.code(error.statusCode ?? 400).send({ detail: error.message ?? 'تعذر حساب السعر المتقدم' });
-    }
+  app.get('/calculate-price-advanced', { preHandler: adminPreHandler }, async (_request, reply) => {
+    return reply.code(410).send({
+      detail: 'تم إيقاف حساب السعر المتقدم؛ استخدم POST /pricing/calculate-financial-price',
+    });
   });
 
   app.post('/bulk-update-prices', { preHandler: adminPreHandler }, async (request, reply) => {

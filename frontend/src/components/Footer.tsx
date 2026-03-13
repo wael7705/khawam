@@ -1,13 +1,14 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from '../i18n/index';
 import { Phone, Mail, MapPin, Facebook, Send } from 'lucide-react';
 import './Footer.css';
 
 const QUICK_LINKS = [
-  { key: 'home' as const, href: '#home' },
-  { key: 'services' as const, href: '#services' },
-  { key: 'works' as const, href: '#works' },
-  { key: 'contact' as const, href: '#contact' },
+  { key: 'home' as const, to: '/#home' },
+  { key: 'services' as const, to: '/#services' },
+  { key: 'works' as const, to: '/#works' },
+  { key: 'contact' as const, to: '/#contact' },
 ];
 
 const MAP_URL = 'https://maps.google.com/?q=33.509361,36.287889';
@@ -55,9 +56,9 @@ export function Footer() {
           <div className="footer__col">
             <h3 className="footer__col-title">{t.footer.linksTitle}</h3>
             <ul className="footer__links">
-              {QUICK_LINKS.map(({ key, href }) => (
+              {QUICK_LINKS.map(({ key, to }) => (
                 <li key={key}>
-                  <a href={href}>{t.nav[key]}</a>
+                  <Link to={to}>{t.nav[key]}</Link>
                 </li>
               ))}
             </ul>

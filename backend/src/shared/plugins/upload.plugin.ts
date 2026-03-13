@@ -5,6 +5,7 @@ import { mkdir } from 'node:fs/promises';
 import { join, extname } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { Transform } from 'node:stream';
+import { config } from '../../config/index.js';
 import { createId } from '../utils/nanoid.js';
 import { validateMagicBytes, compressImage, getFileSizeLimit } from '../utils/file-validation.js';
 
@@ -22,7 +23,7 @@ function createSizeLimitStream(maxBytes: number): Transform {
   });
 }
 
-const UPLOAD_DIR = join(process.cwd(), 'uploads');
+const UPLOAD_DIR = config.uploadDir;
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
 const ALLOWED_EXTENSIONS = new Set([

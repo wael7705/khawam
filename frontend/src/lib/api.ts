@@ -138,3 +138,66 @@ export const ordersAPI = {
   getReorderData: (orderId: string) =>
     api.get<Record<string, unknown>>(`/orders/${orderId}/reorder-data`),
 };
+
+const studioBaseUrl = (() => {
+  const u = import.meta.env.VITE_API_URL as string || 'http://localhost:8000/api';
+  return u.replace(/\/api\/?$/, '') || u;
+})();
+
+export function getStudioImageUrl(path: string): string {
+  if (path.startsWith('http')) return path;
+  return `${studioBaseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+}
+
+export const studioAPI = {
+  removeBackground: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post<{ path: string; url: string }>('/studio/remove-background', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  passportPhotos: (file: File, removeBgFirst?: boolean) => {
+    const form = new FormData();
+    form.append('file', file);
+    const q = removeBgFirst ? '?removeBgFirst=true' : '';
+    return api.post<{ path: string; url: string }>(`/studio/passport-photos${q}`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  cropRotate: (
+    file: File,
+    options: { left?: number; top?: number; width?: number; height?: number; rotate?: number },
+  ) => {
+    const form = new FormData();
+    form.append('file', file);
+    const params = new URLSearchParams();
+    if (options.left != null) params.set('left', String(options.left));
+    if (options.top != null) params.set('top', String(options.top));
+    if (options.width != null) params.set('width', String(options.width));
+    if (options.height != null) params.set('height', String(options.height));
+    if (options.rotate != null) params.set('rotate', String(options.rotate));
+    const q = params.toString();
+    return api.post<{ path: string; url: string }>(
+      `/studio/crop-rotate${q ? `?${q}` : ''}`,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+  },
+  addDpi: (file: File, dpi: number) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post<{ path: string; url: string }>(`/studio/add-dpi?dpi=${dpi}`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  applyFilter: (file: File, filter: 'grayscale' | 'sepia' | 'blur', blurSigma?: number) => {
+    const form = new FormData();
+    form.append('file', file);
+    let url = `/studio/apply-filter?filter=${filter}`;
+    if (blurSigma != null) url += `&blurSigma=${blurSigma}`;
+    return api.post<{ path: string; url: string }>(url, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+};
