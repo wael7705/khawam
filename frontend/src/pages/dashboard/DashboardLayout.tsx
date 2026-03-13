@@ -38,6 +38,21 @@ export function DashboardLayout() {
     }
   }, [isDarkMode]);
 
+  useEffect(() => {
+    const className = 'dashboard-dark-mode';
+    if (isDarkMode) {
+      document.body.classList.add(className);
+      document.documentElement.classList.add(className);
+    } else {
+      document.body.classList.remove(className);
+      document.documentElement.classList.remove(className);
+    }
+    return () => {
+      document.body.classList.remove(className);
+      document.documentElement.classList.remove(className);
+    };
+  }, [isDarkMode]);
+
   const labels = useMemo(
     () =>
       locale === 'ar'

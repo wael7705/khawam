@@ -40,7 +40,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 10px;
-  background: #fff;
+  background: var(--bg);
 }
 
 .archive-stats {
@@ -53,7 +53,7 @@
 .archive-stats article {
   border: 1px solid var(--border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--bg);
   padding: 12px;
   display: flex;
   align-items: center;
@@ -63,7 +63,7 @@
 .archive-card {
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--bg);
   padding: 12px;
   margin-bottom: 12px;
 }

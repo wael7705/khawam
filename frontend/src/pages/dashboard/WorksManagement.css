@@ -13,7 +13,7 @@
 .works-create {
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--bg);
   padding: 12px;
   margin-bottom: 14px;
   width: min(920px, 100%);
@@ -83,7 +83,7 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
-  background: #fff;
+  background: var(--bg);
 }
 
 .works-card img {

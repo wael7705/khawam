@@ -54,6 +54,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html.dashboard-dark-mode,
+body.dashboard-dark-mode {
+  background: #1a1a1a;
+  color: #e5e5e5;
+}
+
 [dir="ltr"] body {
   direction: ltr;
   text-align: left;

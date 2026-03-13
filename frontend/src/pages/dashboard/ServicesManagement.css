@@ -23,7 +23,7 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px 12px;
-  background: #fff;
+  background: var(--bg);
 }
 
 .services-search input {
@@ -44,7 +44,7 @@
 
 .services-tab {
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--bg);
   color: var(--text);
   border-radius: 999px;
   padding: 8px 12px;
@@ -66,7 +66,7 @@
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 14px;
-  background: #fff;
+  background: var(--bg);
   box-shadow: 0 12px 28px -24px rgba(var(--secondary-rgb), 0.4);
 }
 
@@ -163,7 +163,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 10px;
-  background: #fff;
+  background: var(--bg);
 }
 
 @media (max-width: 768px) {
