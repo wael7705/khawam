@@ -46,10 +46,10 @@ cd backend && pnpm exec prisma db push
 # 2. أنشئ migration: pnpm exec prisma migrate dev --name وصف_التغيير
 # 3. على السيرفر: pnpm exec prisma migrate deploy
 
-# بعد أول نشر أو بعد migrate deploy — إنشاء أنواع المستخدمين وحساب المدير:
-# من مجلد backend (مع ضبط DATABASE_URL في .env أو على السيرفر):
-# pnpm exec prisma db seed
-# المدير: هاتف 0966320114، إيميل waeln4457@gmail.com، كلمة مرور w0966320114/s
+# إنشاء المدير: يُنفَّذ تلقائياً عند بدء الحاوية (db push ثم db seed). إن فشل، شغّل يدوياً:
+# من جهازك (بعد railway link): cd backend ثم railway run pnpm exec prisma db seed
+# أو من Railway: Deployments → النشر النشط → Shell ثم: cd backend && pnpm exec prisma db seed
+# بيانات المدير: هاتف 0966320114، إيميل waeln4457@gmail.com، كلمة مرور w0966320114/s
 
 # التشغيل في وضع التطوير
 pnpm dev          # يشغّل الخادم فقط (المنفذ 8000)
