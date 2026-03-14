@@ -79,12 +79,13 @@ async function main(): Promise<void> {
 }
 
 main()
-  .then(() => {
+  .then(async () => {
     console.log('[seed] انتهت التهيئة بنجاح.');
-    return prisma.$disconnect();
+    await prisma.$disconnect();
+    process.exit(0);
   })
-  .catch((e) => {
+  .catch(async (e) => {
     console.error('[seed] فشل:', e);
-    prisma.$disconnect();
+    await prisma.$disconnect();
     process.exit(1);
   });
