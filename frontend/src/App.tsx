@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import type { ReactElement } from 'react';
 import { I18nProvider } from './i18n/index';
@@ -70,8 +70,12 @@ function DashboardGuard({ children, authReady }: { children: ReactElement; authR
 
 export default function App() {
   const [authReady, setAuthReady] = useState(false);
+  const authBootstrapStartedRef = useRef(false);
 
   useEffect(() => {
+    if (authBootstrapStartedRef.current) return;
+    authBootstrapStartedRef.current = true;
+
     (async () => {
       try {
         const { data } = await api.post<{ access_token: string }>('/auth/refresh');

@@ -20,6 +20,13 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
+
+    if (error.response?.status === 429 && !original._retry429) {
+      original._retry429 = true;
+      await new Promise((r) => setTimeout(r, 2000));
+      return api(original);
+    }
+
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       try {

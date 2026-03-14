@@ -44,11 +44,6 @@ export async function buildApp() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   });
 
-  await app.register(rateLimit, {
-    max: 200,
-    timeWindow: '1 minute',
-  });
-
   // File upload support
   await app.register(uploadPlugin);
 
@@ -65,23 +60,32 @@ export async function buildApp() {
   // Socket.IO
   await app.register(socketPlugin);
 
-  // Health check
+  // Health check (not rate-limited)
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
   app.get('/api/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 
-  // API routes
-  await app.register(authRoutes, { prefix: '/api/auth' });
-  await app.register(ordersRoutes, { prefix: '/api/orders' });
-  await app.register(productsRoutes, { prefix: '/api/products' });
-  await app.register(servicesRoutes, { prefix: '/api/services' });
-  await app.register(adminRoutes, { prefix: '/api/admin' });
-  await app.register(portfolioRoutes, { prefix: '/api/portfolio' });
-  await app.register(studioRoutes, { prefix: '/api/studio' });
-  await app.register(workflowsRoutes, { prefix: '/api/workflows' });
-  await app.register(pricingRoutes, { prefix: '/api' });
-  await app.register(heroSlidesRoutes, { prefix: '/api' });
-  await app.register(analyticsRoutes, { prefix: '/api/analytics' });
-  await app.register(notificationsRoutes, { prefix: '/api/ws' });
+  // API routes: rate limit applies only here (not to static files or health)
+  await app.register(
+    async (apiApp) => {
+      await apiApp.register(rateLimit, {
+        max: 400,
+        timeWindow: '1 minute',
+      });
+      await apiApp.register(authRoutes, { prefix: '/auth' });
+      await apiApp.register(ordersRoutes, { prefix: '/orders' });
+      await apiApp.register(productsRoutes, { prefix: '/products' });
+      await apiApp.register(servicesRoutes, { prefix: '/services' });
+      await apiApp.register(adminRoutes, { prefix: '/admin' });
+      await apiApp.register(portfolioRoutes, { prefix: '/portfolio' });
+      await apiApp.register(studioRoutes, { prefix: '/studio' });
+      await apiApp.register(workflowsRoutes, { prefix: '/workflows' });
+      await apiApp.register(pricingRoutes, { prefix: '/' });
+      await apiApp.register(heroSlidesRoutes, { prefix: '/' });
+      await apiApp.register(analyticsRoutes, { prefix: '/analytics' });
+      await apiApp.register(notificationsRoutes, { prefix: '/ws' });
+    },
+    { prefix: '/api' },
+  );
 
   // Serve frontend static + SPA fallback when public exists (Railway single-service deploy)
   const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -92,6 +96,7 @@ export async function buildApp() {
       prefix: '/',
       decorateReply: false,
       index: ['index.html'],
+      wildcard: false,
     });
     app.setNotFoundHandler(async (request, reply) => {
       const pathname = request.url.split('?')[0] ?? '';
