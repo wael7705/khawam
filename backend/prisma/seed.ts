@@ -76,6 +76,20 @@ async function main(): Promise<void> {
     legacy.updated,
     legacy.workflows,
   );
+
+  // تطبيق خوارزميات الـ workflow الكاملة من WORKFLOW_MAP (stepType + stepConfig)
+  const { seedAllWorkflows } = await import(
+    '../src/modules/workflows/workflows.service.js'
+  );
+  const wfResult = await seedAllWorkflows();
+  console.log(
+    '[seed] تطبيق خوارزميات الـ workflow: seeded=%s, errors=%s',
+    wfResult.seeded,
+    wfResult.errors?.length ?? 0,
+  );
+  if (wfResult.errors?.length) {
+    wfResult.errors.forEach((err) => console.warn('[seed] workflow error:', err));
+  }
 }
 
 main()
