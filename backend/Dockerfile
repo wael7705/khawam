@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-# Use BuildKit for cache mounts (faster rebuilds)
 FROM node:20-slim AS base
 
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/* \
@@ -12,8 +10,7 @@ COPY backend/package.json backend/
 COPY frontend/package.json frontend/
 
 # Install only backend deps (faster than full workspace install)
-RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
-  pnpm install --frozen-lockfile --filter @khawam/backend
+RUN pnpm install --frozen-lockfile --filter @khawam/backend
 
 COPY backend/ backend/
 
@@ -34,8 +31,7 @@ COPY backend/package.json backend/
 COPY frontend/package.json frontend/
 
 # Install only frontend deps (faster than full workspace install)
-RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
-  pnpm install --frozen-lockfile --filter @khawam/frontend
+RUN pnpm install --frozen-lockfile --filter @khawam/frontend
 
 COPY frontend/ frontend/
 
