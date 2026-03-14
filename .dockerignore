@@ -1,0 +1,30 @@
+# Dependencies and build outputs (reinstalled in image)
+node_modules
+**/node_modules
+frontend/dist
+backend/dist
+backend/public
+
+# Git and IDE
+.git
+.gitignore
+.cursor
+.vscode
+*.md
+!README.md
+
+# Env and secrets (set at deploy)
+.env
+.env.*
+!.env.example
+
+# Tests and tooling
+**/*.test.ts
+**/*.spec.ts
+load-tests
+coverage
+*.log
+
+# Misc
+.DS_Store
+*.tgz
