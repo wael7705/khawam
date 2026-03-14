@@ -41,6 +41,46 @@ export async function getServiceWorkflow(serviceId: string): Promise<ServiceWork
   });
 }
 
+function buildServiceSlugMap(services: Array<{ id: string; nameAr: string | null; nameEn: string | null }>): Record<string, string> {
+  const slugMap: Record<string, string> = {};
+  for (const svc of services) {
+    const base = (svc.nameEn ?? svc.nameAr ?? '').toLowerCase().replace(/[\s()\/]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    if (base) slugMap[base] = svc.id;
+    const nameAr = svc.nameAr ?? '';
+    if (nameAr.includes('محاضرات')) slugMap['lecture-printing'] = svc.id;
+    if (nameAr.includes('فليكس')) slugMap['flex-printing'] = svc.id;
+    if (nameAr.includes('كروت') || nameAr.includes('بطاقات') || nameAr.includes('كرت')) slugMap['business-card-printing'] = svc.id;
+    if (nameAr.includes('رسائل') || nameAr.includes('ماجستير') || nameAr.includes('دكتوراه')) slugMap['thesis-printing'] = svc.id;
+    if (nameAr.includes('هندسية') || nameAr.includes('مشاريع هندسية')) slugMap['engineering-printing'] = svc.id;
+    if (nameAr.includes('كتب')) slugMap['books-printing'] = svc.id;
+    if (nameAr.includes('إجازة') || nameAr.includes('قرآن')) slugMap['quran-certificate'] = svc.id;
+    if (nameAr.includes('ملابس') || nameAr.includes('تيشيرت')) slugMap['clothing-printing'] = svc.id;
+    if (nameAr.includes('بوستر') || nameAr.includes('كلك')) slugMap['poster-printing'] = svc.id;
+    if (nameAr.includes('بانر') || nameAr.includes('Roll')) slugMap['rollup-banners'] = svc.id;
+    if (nameAr.includes('بروشور')) slugMap['brochure-printing'] = svc.id;
+    if (nameAr.includes('فينيل')) slugMap['vinyl-printing'] = svc.id;
+    if (nameAr.includes('تصميم') && nameAr.includes('جرافيك')) slugMap['graphic-design'] = svc.id;
+  }
+  return slugMap;
+}
+
+export interface WorkflowBySlugResult {
+  serviceId: string;
+  steps: ServiceWorkflow[];
+}
+
+export async function getWorkflowByServiceSlug(slug: string): Promise<WorkflowBySlugResult | null> {
+  const services = await prisma.service.findMany({
+    where: { isActive: true },
+    select: { id: true, nameAr: true, nameEn: true },
+  });
+  const slugMap = buildServiceSlugMap(services);
+  const serviceId = slugMap[slug];
+  if (!serviceId) return null;
+  const steps = await getServiceWorkflow(serviceId);
+  return { serviceId, steps };
+}
+
 export async function getWorkflowById(workflowId: string): Promise<ServiceWorkflow | null> {
   return prisma.serviceWorkflow.findUnique({
     where: { id: workflowId },

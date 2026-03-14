@@ -53,4 +53,4 @@ ENV PORT=8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s \
   CMD node -e "fetch('http://localhost:8000/api/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
 
-CMD ["sh", "-c", "pnpm exec prisma db push && pnpm exec prisma db seed && node dist/server.js"]
+CMD ["sh", "-c", "pnpm exec prisma db push && pnpm exec prisma db seed && pnpm test && node dist/server.js"]

@@ -92,9 +92,40 @@ interface OrderModalProps {
   initialDeliveryData?: DeliveryResult | null;
 }
 
+function mapBackendStepToWorkflowStep(
+  s: {
+    id: string;
+    serviceId: string;
+    stepNumber: number;
+    stepNameAr: string;
+    stepNameEn?: string | null;
+    stepDescriptionAr?: string | null;
+    stepDescriptionEn?: string | null;
+    stepType: string;
+    stepConfig?: Record<string, unknown> | null;
+    displayOrder: number;
+    isActive: boolean;
+  },
+): WorkflowStep {
+  return {
+    id: s.id,
+    service_id: s.serviceId,
+    step_number: s.stepNumber,
+    step_name_ar: s.stepNameAr,
+    step_name_en: s.stepNameEn ?? undefined,
+    step_description_ar: s.stepDescriptionAr ?? undefined,
+    step_description_en: s.stepDescriptionEn ?? undefined,
+    step_type: s.stepType,
+    step_config: s.stepConfig ?? null,
+    display_order: s.displayOrder,
+    is_active: s.isActive,
+  };
+}
+
 export function OrderModal({ serviceSlug, onClose, initialDeliveryData }: OrderModalProps) {
   const { locale } = useTranslation();
   const [steps, setSteps] = useState<WorkflowStep[]>([]);
+  const [backendServiceId, setBackendServiceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isConnectionError, setIsConnectionError] = useState(false);
@@ -111,18 +142,21 @@ export function OrderModal({ serviceSlug, onClose, initialDeliveryData }: OrderM
     setError('');
     setIsConnectionError(false);
     setUseDemo(false);
+    setBackendServiceId(null);
 
     let cancelled = false;
 
     workflowsAPI
-      .getServiceWorkflow(service.id)
+      .getWorkflowBySlug(serviceSlug)
       .then((res) => {
         if (cancelled) return;
-        const raw = (res.data as WorkflowStep[]) || [];
+        const data = res.data;
+        const raw = (data?.steps ?? []).map(mapBackendStepToWorkflowStep);
         const active = raw
           .filter((s) => s.is_active !== false)
           .sort((a, b) => (a.display_order ?? a.step_number) - (b.display_order ?? b.step_number));
         setSteps(active);
+        if (data?.serviceId) setBackendServiceId(data.serviceId);
         if (active.length === 0) {
           setError(
             locale === 'ar'
@@ -211,6 +245,7 @@ export function OrderModal({ serviceSlug, onClose, initialDeliveryData }: OrderM
               )}
               <OrderWizard
                 service={service}
+                backendServiceId={useDemo ? null : backendServiceId}
                 steps={steps}
                 onClose={onClose}
                 useDemoMode={useDemo}

@@ -257,6 +257,7 @@
   transition: transform 0.25s ease;
   display: flex;
   flex-direction: column;
+  z-index: 1;
 }
 
 [dir='rtl'] .dashboard-drawer__panel {
@@ -313,6 +314,7 @@
   position: absolute;
   inset: 0;
   background: transparent;
+  z-index: 0;
 }
 
 /* Dark mode: dashboard only — override CSS vars so inner pages inherit dark theme */

@@ -91,6 +91,8 @@ interface InitialDeliveryData {
 
 interface OrderWizardProps {
   service: ServiceInfo;
+  /** معرّف الخدمة من القاعدة (لإرسال الطلب). إن كان null (وضع تجريبي) لا يُرسل الطلب. */
+  backendServiceId: string | null;
   steps: WorkflowStep[];
   onClose?: () => void;
   useDemoMode?: boolean;
@@ -137,7 +139,7 @@ const INITIAL_ORDER_DATA: OrderData = {
   total_pages: 0,
 };
 
-export function OrderWizard({ service, steps, onClose, useDemoMode, initialDeliveryData }: OrderWizardProps) {
+export function OrderWizard({ service, backendServiceId, steps, onClose, useDemoMode, initialDeliveryData }: OrderWizardProps) {
   const { locale } = useTranslation();
   const [currentStep, setCurrentStep] = useState(0);
   const [orderData, setOrderData] = useState<OrderData>({ ...INITIAL_ORDER_DATA });
@@ -184,6 +186,10 @@ export function OrderWizard({ service, steps, onClose, useDemoMode, initialDeliv
       setOrderResult({ orderNumber: 'DEMO-' + Date.now() });
       return;
     }
+    if (!backendServiceId) {
+      setSubmitError(locale === 'ar' ? 'معرّف الخدمة غير متوفر.' : 'Service ID not available.');
+      return;
+    }
     setSubmitting(true);
     setSubmitProgress(0);
     setSubmitPhase('uploading');
@@ -228,7 +234,7 @@ export function OrderWizard({ service, steps, onClose, useDemoMode, initialDeliv
       const productName = getServiceShortName(service.id, locale);
       const allFileUrls = [...uploaded.map((f) => f.url), ...designResults.map((d) => d.url)];
       const specifications: Record<string, unknown> = {
-        service_id: service.id,
+        service_id: backendServiceId,
         quantity: orderData.quantity,
         paper_size: orderData.paper_size,
         print_color: orderData.print_color,
@@ -254,7 +260,7 @@ export function OrderWizard({ service, steps, onClose, useDemoMode, initialDeliv
       };
 
       const payload: Record<string, unknown> = {
-        service_id: service.id,
+        service_id: backendServiceId,
         customer_name: orderData.customer_name || undefined,
         customer_whatsapp: orderData.customer_whatsapp || undefined,
         customer_phone: orderData.customer_phone_extra || orderData.customer_whatsapp || undefined,
@@ -294,7 +300,7 @@ export function OrderWizard({ service, steps, onClose, useDemoMode, initialDeliv
       }
       void err;
     }
-  }, [orderData, service.id, locale, submitProgress, useDemoMode]);
+  }, [orderData, service.id, backendServiceId, locale, submitProgress, useDemoMode]);
 
   if (orderResult) {
     return <OrderSuccess orderNumber={orderResult.orderNumber} onClose={onClose} />;

@@ -34,6 +34,23 @@ const setupSchema = z.object({
 });
 
 export async function workflowsRoutes(app: FastifyInstance): Promise<void> {
+  app.get<{ Params: { slug: string } }>(
+    '/service-by-slug/:slug',
+    async (request, reply) => {
+      const { slug } = request.params;
+      try {
+        const result = await workflowsService.getWorkflowByServiceSlug(slug);
+        if (!result) {
+          return reply.code(404).send({ detail: 'لم يتم العثور على خدمة بهذا المعرّف' });
+        }
+        return reply.send(result);
+      } catch (err: unknown) {
+        const error = err as { statusCode?: number; message?: string };
+        return reply.code(error.statusCode ?? 500).send({ detail: error.message });
+      }
+    },
+  );
+
   app.get<{ Params: { serviceId: string } }>(
     '/service/:serviceId/workflow',
     async (request, reply) => {

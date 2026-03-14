@@ -15,6 +15,9 @@
     "db:push": "pnpm --filter backend db:push",
     "db:pull": "pnpm --filter backend db:pull",
     "lint": "pnpm --filter backend lint",
+    "test": "pnpm -r run test",
+    "test:unit": "pnpm --filter backend test && pnpm --filter @khawam/frontend test",
+    "test:e2e": "playwright test",
     "test:load": "k6 run load-tests/load.js"
   },
   "engines": {
@@ -22,6 +25,7 @@
     "node": ">=20.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.0",
     "concurrently": "^9.1.0"
   }
 }

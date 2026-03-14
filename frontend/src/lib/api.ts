@@ -72,9 +72,28 @@ export const servicesAPI = {
   getAll: () => api.get('/services'),
 };
 
+export interface WorkflowBySlugResponse {
+  serviceId: string;
+  steps: Array<{
+    id: string;
+    serviceId: string;
+    stepNumber: number;
+    stepNameAr: string;
+    stepNameEn?: string | null;
+    stepDescriptionAr?: string | null;
+    stepDescriptionEn?: string | null;
+    stepType: string;
+    stepConfig?: Record<string, unknown> | null;
+    displayOrder: number;
+    isActive: boolean;
+  }>;
+}
+
 export const workflowsAPI = {
   getServiceWorkflow: (serviceId: string) =>
     api.get(`/workflows/service/${serviceId}/workflow`),
+  getWorkflowBySlug: (slug: string) =>
+    api.get<WorkflowBySlugResponse>(`/workflows/service-by-slug/${encodeURIComponent(slug)}`),
 };
 
 export interface UploadedFileResult {

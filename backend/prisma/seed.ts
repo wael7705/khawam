@@ -48,23 +48,34 @@ async function main(): Promise<void> {
   const existingByPhone = await prisma.user.findFirst({
     where: { phone: ADMIN_PHONE },
   });
-  if (existingByEmail ?? existingByPhone) {
+  if (!existingByEmail && !existingByPhone) {
+    const passwordHash = await hashPassword(ADMIN_PASSWORD);
+    await prisma.user.create({
+      data: {
+        name: ADMIN_NAME,
+        phone: ADMIN_PHONE,
+        email: ADMIN_EMAIL.toLowerCase(),
+        passwordHash,
+        userTypeId: adminType.id,
+        isActive: true,
+      },
+    });
+    console.log('[seed] تم إنشاء حساب المدير: هاتف=%s، بريد=%s', ADMIN_PHONE, ADMIN_EMAIL);
+  } else {
     console.log('Admin user already exists (by email or phone), skipping create.');
-    return;
   }
 
-  const passwordHash = await hashPassword(ADMIN_PASSWORD);
-  await prisma.user.create({
-    data: {
-      name: ADMIN_NAME,
-      phone: ADMIN_PHONE,
-      email: ADMIN_EMAIL.toLowerCase(),
-      passwordHash,
-      userTypeId: adminType.id,
-      isActive: true,
-    },
-  });
-  console.log('[seed] تم إنشاء حساب المدير: هاتف=%s، بريد=%s', ADMIN_PHONE, ADMIN_EMAIL);
+  // ضمان وجود الخدمات وخطوات الـ workflow بعد كل نشر
+  const { importLegacyServicesSeed } = await import(
+    '../src/modules/services/services.service.js'
+  );
+  const legacy = await importLegacyServicesSeed();
+  console.log(
+    '[seed] استيراد الخدمات والـ workflow: created=%s, updated=%s, workflow steps=%s',
+    legacy.created,
+    legacy.updated,
+    legacy.workflows,
+  );
 }
 
 main()
