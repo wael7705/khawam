@@ -164,3 +164,15 @@ input, textarea {
   .section-title { font-size: 1.8rem; }
   .container { padding: 0 16px; }
 }
+
+/* Fallback for page-loading (prefer LoadingScreen component) */
+.page-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-alt);
+  font-family: var(--font-ar);
+  color: var(--secondary);
+  padding: 24px;
+}

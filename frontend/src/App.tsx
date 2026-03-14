@@ -31,6 +31,7 @@ import { ServicesManagement } from './pages/dashboard/ServicesManagement';
 import { WorksManagement } from './pages/dashboard/WorksManagement';
 import { Archive } from './pages/dashboard/Archive';
 import { Studio } from './pages/Studio';
+import { LoadingScreen } from './components/LoadingScreen';
 import './index.css';
 
 function PublicLayout() {
@@ -55,7 +56,7 @@ function OrderFlowLayout() {
 
 function DashboardGuard({ children, authReady }: { children: ReactElement; authReady: boolean }) {
   if (!authReady) {
-    return <div className="page-loading">جاري التحميل...</div>;
+    return <LoadingScreen />;
   }
   if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
@@ -94,11 +95,11 @@ export default function App() {
     <I18nProvider>
       <BrowserRouter>
         {!authReady ? (
-          <div className="page-loading">جاري التحميل...</div>
+          <LoadingScreen />
         ) : (
         <Routes>
           <Route path="/order" element={<OrderFlowLayout />}>
-            <Route path="location" element={<Suspense fallback={<div className="page-loading">جاري التحميل...</div>}><DeliveryLocationPage /></Suspense>} />
+            <Route path="location" element={<Suspense fallback={<LoadingScreen />}><DeliveryLocationPage /></Suspense>} />
             <Route path=":serviceSlug" element={<ServicesCatalogWithOrder />} />
             <Route index element={<Navigate to="/services" replace />} />
           </Route>

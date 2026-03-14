@@ -1,0 +1,93 @@
+/* Loading screen – الهوية البصرية خوام (لوغو + ألوان) */
+.loading-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-alt);
+  padding: 24px;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.loading-screen__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  max-width: 320px;
+}
+
+.loading-screen__logo {
+  width: 120px;
+  height: auto;
+  max-height: 120px;
+  -o-object-fit: contain;
+  object-fit: contain;
+  display: block;
+}
+
+.loading-screen__text {
+  font-family: var(--font-ar);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--secondary);
+  margin: 0;
+}
+
+.loading-screen__bar {
+  width: 100%;
+  height: 4px;
+  background: var(--primary-light);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  -webkit-animation: loading-screen-pulse 1.2s ease-in-out infinite;
+  animation: loading-screen-pulse 1.2s ease-in-out infinite;
+}
+
+.loading-screen__bar::after {
+  content: '';
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: var(--primary);
+  border-radius: inherit;
+  -webkit-animation: loading-screen-slide 1.2s ease-in-out infinite;
+  animation: loading-screen-slide 1.2s ease-in-out infinite;
+}
+
+@-webkit-keyframes loading-screen-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+@keyframes loading-screen-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+@-webkit-keyframes loading-screen-slide {
+  0% { -webkit-transform: translateX(-100%); transform: translateX(-100%); }
+  100% { -webkit-transform: translateX(350%); transform: translateX(350%); }
+}
+
+@keyframes loading-screen-slide {
+  0% { -webkit-transform: translateX(-100%); transform: translateX(-100%); }
+  100% { -webkit-transform: translateX(350%); transform: translateX(350%); }
+}
+
+/* توافق RTL: المؤشر يتحرك بشكل صحيح */
+[dir="rtl"] .loading-screen__bar::after {
+  -webkit-animation-name: loading-screen-slide-rtl;
+  animation-name: loading-screen-slide-rtl;
+}
+
+@-webkit-keyframes loading-screen-slide-rtl {
+  0% { -webkit-transform: translateX(100%); transform: translateX(100%); }
+  100% { -webkit-transform: translateX(-350%); transform: translateX(-350%); }
+}
+
+@keyframes loading-screen-slide-rtl {
+  0% { -webkit-transform: translateX(100%); transform: translateX(100%); }
+  100% { -webkit-transform: translateX(-350%); transform: translateX(-350%); }
+}

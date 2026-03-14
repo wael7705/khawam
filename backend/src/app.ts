@@ -3,7 +3,7 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import fastifyStatic from '@fastify/static';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config } from './config/index.js';
@@ -99,27 +99,29 @@ export async function buildApp() {
       wildcard: false,
     });
     app.setNotFoundHandler(async (request, reply) => {
-      const pathname = request.url.split('?')[0] ?? '';
+      const method = request.method;
+      const pathname = (request.url.split('?')[0] ?? '').split('#')[0] || '/';
       if (
-        request.method !== 'GET' ||
+        (method !== 'GET' && method !== 'HEAD') ||
         pathname.startsWith('/api') ||
         pathname.startsWith('/uploads')
       ) {
         return reply.code(404).send({
-          message: `Route ${request.method}:${request.url} not found`,
+          message: `Route ${method}:${request.url} not found`,
           error: 'Not Found',
           statusCode: 404,
         });
       }
-      try {
-        return await reply.sendFile('index.html', publicDir);
-      } catch {
+      const filePath = join(publicDir, 'index.html');
+      if (!existsSync(filePath)) {
         return reply.code(404).send({
           message: 'Not Found',
           error: 'Not Found',
           statusCode: 404,
         });
       }
+      const html = readFileSync(filePath, 'utf-8');
+      return reply.type('text/html').send(html);
     });
   }
 
