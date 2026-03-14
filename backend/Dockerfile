@@ -50,9 +50,10 @@ EXPOSE 8000
 ENV NODE_ENV=production
 ENV PORT=8000
 
-# مهلة أطول لبدء الحاوية (seed + اختبارات + تشغيل السيرفر) قبل أول فحص صحة
-HEALTHCHECK --interval=30s --timeout=10s --start-period=120s \
+# مهلة كافية لـ db push + seed + بدء السيرفر قبل أول فحص صحة
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s \
   CMD node -e "const p=process.env.PORT||8000; fetch('http://127.0.0.1:'+p+'/api/health').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"
 
-# تشغيل الاختبارات لا يمنع السيرفر من البدء؛ إن فشلت الاختبارات تُسجّل في السجل والنشر ينجح
-CMD ["sh", "-c", "pnpm exec prisma db push && pnpm exec prisma db seed && (pnpm test || true) && echo 'Starting server...' && node dist/server.js"]
+# سكربت البدء: db push ثم seed ثم السيرفر (بدون اختبارات في مسار التشغيل لضمان وصول الـ health check)
+RUN chmod +x scripts/start.sh
+CMD ["sh", "scripts/start.sh"]
