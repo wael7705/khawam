@@ -54,6 +54,5 @@ ENV PORT=8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=90s \
   CMD node -e "const p=process.env.PORT||8000; fetch('http://127.0.0.1:'+p+'/api/health').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"
 
-# سكربت البدء: db push ثم seed ثم السيرفر (بدون اختبارات في مسار التشغيل لضمان وصول الـ health check)
-RUN chmod +x scripts/start.sh
-CMD ["sh", "scripts/start.sh"]
+# بدء التشغيل مباشرة بدون ملف سكربت (يتجنب أخطاء set/encoding في بيئة Railway)
+CMD ["sh", "-c", "echo '[start] db push...' && pnpm exec prisma db push && echo '[start] seed...' && pnpm exec prisma db seed && echo '[start] server...' && exec node dist/server.js"]
