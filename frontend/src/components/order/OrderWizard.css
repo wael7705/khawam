@@ -57,6 +57,18 @@
 
 .wizard-steps__label {
   display: none;
+  margin-inline-start: 6px;
+  font-size: 0.75rem;
+  color: var(--text-light);
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (min-width: 640px) {
+  .wizard-steps__label {
+    display: inline-block;
+  }
 }
 
 /* ── Wizard Card ── */

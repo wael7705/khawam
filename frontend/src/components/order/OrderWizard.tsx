@@ -326,6 +326,9 @@ export function OrderWizard({ service, backendServiceId, steps, onClose, useDemo
             >
               {i < currentStep ? '✓' : i + 1}
             </div>
+            <span className="wizard-steps__label">
+              {locale === 'ar' ? s.step_name_ar : (s.step_name_en || s.step_name_ar)}
+            </span>
             {i < steps.length - 1 && (
               <div
                 className={`wizard-steps__line${
@@ -343,8 +346,14 @@ export function OrderWizard({ service, backendServiceId, steps, onClose, useDemo
           <h2 className="wizard-card__title">
             {locale === 'ar' ? step.step_name_ar : (step.step_name_en || step.step_name_ar)}
           </h2>
-          {step.step_description_ar && (
-            <p className="wizard-card__desc">{step.step_description_ar}</p>
+          {(locale === 'ar'
+            ? (step.step_description_ar || step.step_description_en)
+            : (step.step_description_en || step.step_description_ar)) && (
+            <p className="wizard-card__desc">
+              {locale === 'ar'
+                ? (step.step_description_ar || step.step_description_en || '')
+                : (step.step_description_en || step.step_description_ar || '')}
+            </p>
           )}
 
           {renderStep(step, orderData, updateData, locale, service)}

@@ -13,6 +13,7 @@ export interface WorkflowStep {
   step_name_ar: string;
   step_name_en?: string;
   step_description_ar?: string;
+  step_description_en?: string;
   step_type: string;
   step_config: Record<string, unknown> | null;
   display_order: number;

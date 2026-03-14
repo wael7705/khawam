@@ -4,50 +4,72 @@ import { useTranslation } from '../i18n';
 import { workflowsAPI } from '../lib/api';
 import { CATALOG_SERVICES } from '../lib/servicesCatalog';
 import { OrderWizard } from '../components/order/OrderWizard';
+import type { WorkflowStep } from '../components/order/OrderModal';
 import './OrderPage.css';
 
-interface WorkflowStep {
-  id: string;
-  service_id: string;
-  step_number: number;
-  step_name_ar: string;
-  step_name_en?: string;
-  step_description_ar?: string;
-  step_type: string;
-  step_config: Record<string, any> | null;
-  display_order: number;
-  is_active: boolean;
+function mapBackendStepToWorkflowStep(
+  s: {
+    id: string;
+    serviceId: string;
+    stepNumber: number;
+    stepNameAr: string;
+    stepNameEn?: string | null;
+    stepDescriptionAr?: string | null;
+    stepDescriptionEn?: string | null;
+    stepType: string;
+    stepConfig?: Record<string, unknown> | null;
+    displayOrder: number;
+    isActive: boolean;
+  },
+): WorkflowStep {
+  return {
+    id: s.id,
+    service_id: s.serviceId,
+    step_number: s.stepNumber,
+    step_name_ar: s.stepNameAr,
+    step_name_en: s.stepNameEn ?? undefined,
+    step_description_ar: s.stepDescriptionAr ?? undefined,
+    step_description_en: s.stepDescriptionEn ?? undefined,
+    step_type: s.stepType,
+    step_config: s.stepConfig ?? null,
+    display_order: s.displayOrder,
+    is_active: s.isActive,
+  };
 }
 
 export function OrderPage() {
   const { serviceSlug } = useParams<{ serviceSlug: string }>();
   const { locale } = useTranslation();
   const [steps, setSteps] = useState<WorkflowStep[]>([]);
+  const [backendServiceId, setBackendServiceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const service = CATALOG_SERVICES.find((s) => s.slug === serviceSlug);
 
   useEffect(() => {
-    if (!service) {
+    if (!service || !serviceSlug) {
       setLoading(false);
-      setError(locale === 'ar' ? 'الخدمة غير موجودة' : 'Service not found');
+      if (!service) setError(locale === 'ar' ? 'الخدمة غير موجودة' : 'Service not found');
       return;
     }
 
     let cancelled = false;
     setLoading(true);
     setError('');
+    setBackendServiceId(null);
 
     workflowsAPI
-      .getServiceWorkflow(service.id)
+      .getWorkflowBySlug(serviceSlug)
       .then((res) => {
         if (!cancelled) {
-          const raw = (res.data as WorkflowStep[]) ?? [];
+          const data = res.data;
+          const raw = (data?.steps ?? []).map(mapBackendStepToWorkflowStep);
           const active = raw
-            .filter((s) => s.is_active)
-            .sort((a, b) => a.display_order - b.display_order);
+            .filter((s) => s.is_active !== false)
+            .sort((a, b) => (a.display_order ?? a.step_number) - (b.display_order ?? b.step_number));
           setSteps(active);
+          if (data?.serviceId) setBackendServiceId(data.serviceId);
           if (active.length === 0) {
             setError(
               locale === 'ar'
@@ -75,7 +97,7 @@ export function OrderPage() {
     return () => {
       cancelled = true;
     };
-  }, [service, locale]);
+  }, [service, serviceSlug, locale]);
 
   if (loading) {
     return (
@@ -112,7 +134,7 @@ export function OrderPage() {
           <h1>{locale === 'ar' ? service.nameAr : service.nameEn}</h1>
           <p>{locale === 'ar' ? service.descriptionAr : service.descriptionEn}</p>
         </header>
-        <OrderWizard service={service} steps={steps} />
+        <OrderWizard service={service} backendServiceId={backendServiceId} steps={steps} />
       </div>
     </div>
   );
