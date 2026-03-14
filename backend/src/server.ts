@@ -8,6 +8,7 @@ const SHUTDOWN_TIMEOUT_MS = 10_000;
 let shuttingDown = false;
 
 async function main(): Promise<void> {
+  console.log('[server] main() started, PORT=%s', config.PORT);
   try {
     await connectDatabase();
   } catch (err) {

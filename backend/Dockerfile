@@ -51,7 +51,7 @@ ENV NODE_ENV=production
 ENV PORT=8000
 
 # مهلة كافية لـ db push + seed + بدء السيرفر قبل أول فحص صحة
-HEALTHCHECK --interval=30s --timeout=10s --start-period=90s \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s \
   CMD node -e "const p=process.env.PORT||8000; fetch('http://127.0.0.1:'+p+'/api/health').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"
 
 # بدء التشغيل مباشرة بدون ملف سكربت (يتجنب أخطاء set/encoding في بيئة Railway)
