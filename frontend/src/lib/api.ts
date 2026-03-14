@@ -28,6 +28,12 @@ api.interceptors.response.use(
     }
 
     if (error.response?.status === 401 && !original._retry) {
+      const isRefreshRequest =
+        typeof original.url === 'string' && original.url.includes('/auth/refresh');
+      if (isRefreshRequest) {
+        clearAuth();
+        return Promise.reject(error);
+      }
       original._retry = true;
       try {
         const { data } = await api.post('/auth/refresh');
