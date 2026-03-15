@@ -51,8 +51,29 @@ model User {
   statusChanges      OrderStatusHistory[]
   visitorTracking    VisitorTracking[]
   studioProjects     StudioProject[]
+  savedLocations     SavedLocation[]
 
   @@map("users")
+}
+
+model SavedLocation {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  label          String   @db.VarChar(20)
+  street         String?  @db.Text
+  neighborhood   String?  @db.Text
+  buildingFloor  String?  @map("building_floor") @db.Text
+  extra          String?  @db.Text
+  latitude       Decimal  @db.Decimal(10, 8)
+  longitude      Decimal  @db.Decimal(11, 8)
+  displayOrder   Int      @default(0) @map("display_order")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime? @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, label])
+  @@map("saved_locations")
 }
 
 model ProductCategory {

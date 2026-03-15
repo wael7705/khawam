@@ -173,6 +173,37 @@ export const ordersAPI = {
     api.get<Record<string, unknown>>(`/orders/${orderId}/reorder-data`),
 };
 
+export interface SavedLocationItem {
+  id: string;
+  user_id: string;
+  label: string;
+  street?: string;
+  neighborhood?: string;
+  building_floor?: string;
+  extra?: string;
+  latitude: number | null;
+  longitude: number | null;
+  display_order: number;
+  created_at: string;
+  updated_at?: string;
+}
+
+export const savedLocationsAPI = {
+  list: () => api.get<{ data: SavedLocationItem[] }>('/saved-locations/'),
+  create: (data: {
+    label: 'home' | 'work' | 'other';
+    street?: string | null;
+    neighborhood?: string | null;
+    building_floor?: string | null;
+    extra?: string | null;
+    latitude: number;
+    longitude: number;
+  }) => api.post<SavedLocationItem>('/saved-locations/', data),
+  update: (id: string, data: Partial<{ street: string | null; neighborhood: string | null; building_floor: string | null; extra: string | null; latitude: number; longitude: number }>) =>
+    api.patch<SavedLocationItem>(`/saved-locations/${id}`, data),
+  delete: (id: string) => api.delete<{ success: boolean }>(`/saved-locations/${id}`),
+};
+
 const studioBaseUrl = (() => {
   const u = import.meta.env.VITE_API_URL as string || 'http://localhost:8000/api';
   return u.replace(/\/api\/?$/, '') || u;

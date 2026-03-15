@@ -68,3 +68,89 @@
   padding: 14px;
   font-size: 1rem;
 }
+
+.settings-saved-locations {
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+}
+
+.settings-saved-locations__title {
+  font-size: 1.2rem;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+.settings-saved-locations__loading,
+.settings-saved-locations__empty {
+  color: var(--text-light);
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+}
+
+.settings-saved-locations__list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-location-card {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.settings-location-card__main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.settings-location-card__label {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.settings-location-card__address {
+  font-size: 0.95rem;
+  color: var(--text-light);
+}
+
+.settings-location-card__coords {
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.settings-location-card__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.settings-location-card__delete {
+  color: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.settings-location-card__delete:hover {
+  background: #fef2f2;
+}
+
+.settings-location-edit {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.settings-location-edit .field {
+  margin-bottom: 12px;
+}
+
+.settings-location-edit__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}

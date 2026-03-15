@@ -21,6 +21,7 @@ import { pricingRoutes } from './modules/pricing/pricing.routes.js';
 import { heroSlidesRoutes } from './modules/hero-slides/hero-slides.routes.js';
 import { analyticsRoutes } from './modules/analytics/analytics.routes.js';
 import { notificationsRoutes } from './modules/notifications/notifications.routes.js';
+import { savedLocationsRoutes } from './modules/saved-locations/saved-locations.routes.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -71,8 +72,10 @@ export async function buildApp() {
         max: 400,
         timeWindow: '1 minute',
       });
+      await apiApp.register(uploadPlugin);
       await apiApp.register(authRoutes, { prefix: '/auth' });
       await apiApp.register(ordersRoutes, { prefix: '/orders' });
+      await apiApp.register(savedLocationsRoutes, { prefix: '/saved-locations' });
       await apiApp.register(productsRoutes, { prefix: '/products' });
       await apiApp.register(servicesRoutes, { prefix: '/services' });
       await apiApp.register(adminRoutes, { prefix: '/admin' });

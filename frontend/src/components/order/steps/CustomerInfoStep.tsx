@@ -1,5 +1,8 @@
 import { useNavigate } from 'react-router-dom';
-import { MapPin, CheckCircle } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { MapPin, CheckCircle, Home, Briefcase, MapPinned } from 'lucide-react';
+import { isAuthenticated } from '../../../lib/auth';
+import { savedLocationsAPI, type SavedLocationItem } from '../../../lib/api';
 import type { OrderData } from '../OrderWizard';
 
 interface Props {
@@ -9,12 +12,75 @@ interface Props {
   serviceSlug?: string;
 }
 
+function applySavedLocationToOrder(loc: SavedLocationItem, updateData: <K extends keyof OrderData>(key: K, value: OrderData[K]) => void) {
+  const parts = [loc.street, loc.neighborhood, loc.building_floor, loc.extra].filter(Boolean) as string[];
+  const address = parts.join('، ') || (loc.latitude != null && loc.longitude != null ? `${loc.latitude}, ${loc.longitude}` : '');
+  updateData('delivery_street', loc.street ?? '');
+  updateData('delivery_neighborhood', loc.neighborhood ?? '');
+  updateData('delivery_building_floor', loc.building_floor ?? '');
+  updateData('delivery_extra', loc.extra ?? '');
+  updateData('delivery_latitude', loc.latitude ?? null);
+  updateData('delivery_longitude', loc.longitude ?? null);
+  updateData('delivery_address', address);
+  updateData('delivery_location_confirmed', true);
+}
+
+function getLabelIcon(label: string) {
+  if (label === 'home') return Home;
+  if (label === 'work') return Briefcase;
+  return MapPinned;
+}
+
+function getLabelName(label: string, locale: 'ar' | 'en') {
+  if (label === 'home') return locale === 'ar' ? 'البيت' : 'Home';
+  if (label === 'work') return locale === 'ar' ? 'العمل' : 'Work';
+  return locale === 'ar' ? 'أخرى' : 'Other';
+}
+
 export function CustomerInfoStep({ orderData, updateData, locale, serviceSlug }: Props) {
   const navigate = useNavigate();
+  const [savedLocations, setSavedLocations] = useState<SavedLocationItem[]>([]);
+  const [savedLocationsLoading, setSavedLocationsLoading] = useState(false);
+  const deliveryFetchedRef = useRef(false);
 
   const openLocationPage = () => {
     navigate('/order/location', { state: { serviceSlug: serviceSlug ?? '' } });
   };
+
+  useEffect(() => {
+    if (orderData.delivery_type !== 'delivery') {
+      deliveryFetchedRef.current = false;
+      return;
+    }
+    if (!isAuthenticated()) {
+      openLocationPage();
+      return;
+    }
+    if (deliveryFetchedRef.current) return;
+    deliveryFetchedRef.current = true;
+    setSavedLocationsLoading(true);
+    savedLocationsAPI
+      .list()
+      .then((res) => {
+        const list = res.data?.data ?? [];
+        if (list.length === 0) {
+          openLocationPage();
+          return;
+        }
+        if (list.length === 1) {
+          applySavedLocationToOrder(list[0]!, updateData);
+          setSavedLocations([]);
+        } else {
+          setSavedLocations(list);
+        }
+      })
+      .catch(() => {
+        openLocationPage();
+      })
+      .finally(() => {
+        setSavedLocationsLoading(false);
+      });
+  }, [orderData.delivery_type, serviceSlug, updateData]);
 
   return (
     <div className="customer-fields">
@@ -125,12 +191,41 @@ export function CustomerInfoStep({ orderData, updateData, locale, serviceSlug }:
         </div>
       </div>
 
-      {/* Delivery: location button + address fields + confirmed badge */}
+      {/* Delivery: saved locations list or map button + address fields + confirmed badge */}
       {orderData.delivery_type === 'delivery' && (
         <div className="customer-field">
           <label className="customer-field__label">
             {locale === 'ar' ? 'موقع التوصيل' : 'Delivery Location'}
           </label>
+          {savedLocationsLoading && (
+            <p className="customer-field__hint" style={{ marginBottom: 8 }}>
+              {locale === 'ar' ? 'جاري تحميل المواقع المحفوظة...' : 'Loading saved locations...'}
+            </p>
+          )}
+          {!savedLocationsLoading && savedLocations.length > 1 && (
+            <div className="saved-locations-cards">
+              {savedLocations.map((loc) => {
+                const Icon = getLabelIcon(loc.label);
+                const name = getLabelName(loc.label, locale);
+                const short = [loc.street, loc.neighborhood].filter(Boolean).join(' — ') || (loc.latitude != null && loc.longitude != null ? `${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}` : '');
+                return (
+                  <button
+                    key={loc.id}
+                    type="button"
+                    className="saved-location-card"
+                    onClick={() => {
+                      applySavedLocationToOrder(loc, updateData);
+                      setSavedLocations([]);
+                    }}
+                  >
+                    <Icon size={20} />
+                    <span className="saved-location-card__name">{name}</span>
+                    {short && <span className="saved-location-card__short">{short}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
           <button
             type="button"
             className="delivery-location-btn"
