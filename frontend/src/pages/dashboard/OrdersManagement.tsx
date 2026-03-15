@@ -115,8 +115,9 @@ function formatSpecValue(
   if (key === 'delivery_type') return value === 'delivery' ? (locale === 'ar' ? 'توصيل' : 'Delivery') : (locale === 'ar' ? 'استلام من المحل' : 'Self Pickup');
   if (key === 'clothing_source') return value === 'customer' ? (locale === 'ar' ? 'من العميل' : 'Customer') : (locale === 'ar' ? 'من المتجر' : 'Store');
   if (key === 'width' || key === 'height' || key === 'dimensions') {
-    if (typeof value === 'string') return value;
+    if (typeof value === 'string') return value || '';
     if (typeof value === 'number') {
+      if (value === 0) return ''; // لا نعرض الأبعاد عندما تكون غير مستخدمة (مثل خدمة طباعة المحاضرات)
       const unit = (contextSpecs?.dimensions_unit as string) ?? (contextSpecs?.unit as string) ?? (locale === 'ar' ? 'سم' : 'cm');
       return `${value} ${unit}`;
     }
@@ -372,7 +373,9 @@ export function OrdersManagement() {
     const entries = Object.entries(specs).filter(([k, v]) => {
       if (['files', 'clothing_designs', 'uploadedFileResults', 'service_id', 'customer_name', 'customer_whatsapp', 'customer_phone_extra', 'shop_name', 'delivery_address', 'notes', 'total_pages', 'number_of_pages', 'dimensions_unit', 'unit'].includes(k)) return false;
       const formatted = formatSpecValue(k, v, locale, specs);
-      return formatted !== '' && formatted !== '0';
+      if (formatted === '' || formatted === '0') return false;
+      if ((k === 'width' || k === 'height' || k === 'dimensions') && (v === 0 || v === null || v === undefined || v === '')) return false;
+      return true;
     });
     if (entries.length === 0) return null;
     return (

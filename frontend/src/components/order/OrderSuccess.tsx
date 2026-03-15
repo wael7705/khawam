@@ -51,7 +51,7 @@ export function OrderSuccess({ orderNumber, onClose }: OrderSuccessProps) {
         <button
           type="button"
           className="order-success__btn order-success__btn--outline"
-          onClick={() => navigate(`/orders/${orderNumber}`)}
+          onClick={() => navigate('/my-orders', { state: { openOrderNumber: orderNumber } })}
         >
           {locale === 'ar' ? 'متابعة الطلب' : 'Track Order'}
         </button>

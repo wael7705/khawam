@@ -70,11 +70,14 @@ export function MyOrderDetailDrawer({
       'notes',
       'total_pages',
       'number_of_pages',
+      'dimensions_unit',
+      'unit',
     ];
     const entries = Object.entries(specs).filter(([k, v]) => {
       if (skipKeys.includes(k)) return false;
+      if ((k === 'width' || k === 'height' || k === 'dimensions') && (v === 0 || v === null || v === undefined || v === '')) return false;
       const formatted = formatSpecValue(k, v as string, locale);
-      return formatted !== '';
+      return formatted !== '' && formatted !== '0';
     });
     if (entries.length === 0) return null;
     return (

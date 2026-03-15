@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ordersAPI } from '../lib/api';
 import { useTranslation } from '../i18n';
 import { isAuthenticated } from '../lib/auth';
@@ -59,6 +59,7 @@ function normalizeOrderDetail(raw: Record<string, unknown>): OrderDetail {
 export function MyOrders() {
   const { locale, t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [orders, setOrders] = useState<OrderListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -108,6 +109,31 @@ export function MyOrders() {
   useEffect(() => {
     if (isAuthenticated()) void loadOrders();
   }, [loadOrders]);
+
+  const openOrderNumberFromState = (location.state as { openOrderNumber?: string } | null)?.openOrderNumber;
+
+  useEffect(() => {
+    if (!openOrderNumberFromState || loading || orders.length === 0) return;
+    const order = orders.find((o) => (o.order_number ?? '').toUpperCase() === openOrderNumberFromState.toUpperCase());
+    if (!order?.id) return;
+    let cancelled = false;
+    setDetailLoading(true);
+    ordersAPI
+      .getById(order.id)
+      .then(({ data }) => {
+        if (!cancelled) setSelectedOrder(normalizeOrderDetail(data as Record<string, unknown>));
+      })
+      .catch(() => {
+        if (!cancelled) setSelectedOrder(null);
+      })
+      .finally(() => {
+        if (!cancelled) setDetailLoading(false);
+      });
+    navigate(location.pathname, { replace: true, state: {} });
+    return () => {
+      cancelled = true;
+    };
+  }, [openOrderNumberFromState, loading, orders, navigate, location.pathname]);
 
   const filteredOrders = useMemo(() => {
     const q = search.trim().toLowerCase();
