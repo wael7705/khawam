@@ -25,6 +25,7 @@ import { savedLocationsRoutes } from './modules/saved-locations/saved-locations.
 
 export async function buildApp() {
   const app = Fastify({
+    trustProxy: true,
     logger: {
       level: config.NODE_ENV === 'development' ? 'info' : 'warn',
       transport: config.NODE_ENV === 'development'
@@ -45,7 +46,8 @@ export async function buildApp() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   });
 
-  // Multipart is registered only under /api (with ordersRoutes) to avoid parser conflicts
+  // Multipart on root so all /api routes (orders, studio, admin uploads) inherit the parser
+  await app.register(uploadPlugin);
 
   // Static files (uploads)
   await app.register(fastifyStatic, {
@@ -67,10 +69,20 @@ export async function buildApp() {
   // API routes: rate limit applies only here (not to static files or health)
   await app.register(
     async (apiApp) => {
-      await apiApp.register(uploadPlugin);
       await apiApp.register(rateLimit, {
         max: 400,
         timeWindow: '1 minute',
+        skip: (request) => {
+          const path = request.url.split('?')[0] ?? '';
+          return (
+            path === '/api/orders/upload' ||
+            path === '/api/orders/upload-batch' ||
+            path.startsWith('/api/studio/') ||
+            path === '/api/admin/upload' ||
+            path.startsWith('/api/admin/upload/') ||
+            path === '/api/hero-slides/upload'
+          );
+        },
       });
       await apiApp.register(authRoutes, { prefix: '/auth' });
       await apiApp.register(ordersRoutes, { prefix: '/orders' });
