@@ -1,4 +1,4 @@
-import Fastify from 'fastify';
+import Fastify, { type FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
@@ -72,7 +72,7 @@ export async function buildApp() {
       await apiApp.register(rateLimit, {
         max: 400,
         timeWindow: '1 minute',
-        skip: (request) => {
+        allowList: (request: FastifyRequest, _key: string) => {
           const path = request.url.split('?')[0] ?? '';
           return (
             path === '/api/orders/upload' ||
