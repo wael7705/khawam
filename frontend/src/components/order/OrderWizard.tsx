@@ -108,6 +108,8 @@ export interface OrderData {
   delivery_latitude: number | null;
   delivery_longitude: number | null;
   delivery_location_confirmed: boolean;
+  /** عند اختيار موقع محفوظ: 'home'|'work'|'other'؛ عند التحديد من الخريطة: null */
+  delivery_location_label: 'home' | 'work' | 'other' | null;
   number_of_pages: number;
   total_pages: number;
 }
@@ -178,6 +180,7 @@ const INITIAL_ORDER_DATA: OrderData = {
   delivery_latitude: null,
   delivery_longitude: null,
   delivery_location_confirmed: false,
+  delivery_location_label: null,
   number_of_pages: 0,
   total_pages: 0,
 };
@@ -215,6 +218,7 @@ export function OrderWizard({
       delivery_latitude: initialDeliveryData!.delivery_latitude ?? null,
       delivery_longitude: initialDeliveryData!.delivery_longitude ?? null,
       delivery_location_confirmed: true,
+      delivery_location_label: null,
     }),
     [initialDeliveryData],
   );
@@ -225,7 +229,7 @@ export function OrderWizard({
     try {
       const raw = sessionStorage.getItem(key);
       if (raw) {
-        const parsed = JSON.parse(raw) as Omit<OrderData, 'files' | 'clothing_designs'> & { files?: unknown; clothing_designs?: unknown };
+        const parsed = JSON.parse(raw) as Omit<OrderData, 'files' | 'clothing_designs'> & { files?: unknown; clothing_designs?: unknown; currentStep?: number };
         const restored: OrderData = {
           ...parsed,
           files: [],
@@ -233,6 +237,8 @@ export function OrderWizard({
           uploadedFileResults: Array.isArray(parsed.uploadedFileResults) ? parsed.uploadedFileResults as UploadedFileResult[] : [],
         };
         setOrderData(deliveryMerge(restored));
+        const step = typeof parsed.currentStep === 'number' ? Math.min(Math.max(0, parsed.currentStep), steps.length - 1) : 0;
+        setCurrentStep(step);
         sessionStorage.removeItem(key);
         return;
       }
@@ -240,7 +246,7 @@ export function OrderWizard({
       // ignore parse/storage errors
     }
     setOrderData((prev) => deliveryMerge(prev));
-  }, [initialDeliveryData, service, deliveryMerge]);
+  }, [initialDeliveryData, service, deliveryMerge, steps.length]);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitProgress, setSubmitProgress] = useState(0);
@@ -255,12 +261,12 @@ export function OrderWizard({
   const onBeforeNavigateToMap = useCallback(() => {
     try {
       const { files: _f, clothing_designs: _c, ...rest } = orderData;
-      const snapshot = { ...rest, files: [], clothing_designs: {} };
+      const snapshot = { ...rest, files: [], clothing_designs: {}, currentStep };
       sessionStorage.setItem(`orderWizard_${service.slug}`, JSON.stringify(snapshot));
     } catch {
       // ignore storage errors
     }
-  }, [orderData, service.slug]);
+  }, [orderData, service.slug, currentStep]);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {

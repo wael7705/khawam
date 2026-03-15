@@ -1,3 +1,9 @@
+/**
+ * رفع الملفات: التسلسل هو
+ * 1. تهيئة الملفات للرفع (العميل يجهّز multipart/form-data)
+ * 2. فحص الملفات للتأكد من الخلو من الفيروسات/الهجمات (مرحلة لاحقة، مثلاً ClamAV على الخادم)
+ * 3. رفع الملفات للسيرفر (استقبال الـ stream، التحقق من الامتداد والحجم والتوقيع، ثم الحفظ)
+ */
 import type { FastifyInstance } from 'fastify';
 import multipart from '@fastify/multipart';
 import { createWriteStream } from 'node:fs';
@@ -26,8 +32,10 @@ function createSizeLimitStream(maxBytes: number): Transform {
 const UPLOAD_DIR = config.uploadDir;
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
+/** مسموح به: مستندات (PDF, Word, Excel, PowerPoint)، صور (png, jpg, jpeg, webp, gif, svg)، تصميم (ai, psd, eps)، أوتوكاد (dwg, dxf) */
 const ALLOWED_EXTENSIONS = new Set([
   '.pdf', '.doc', '.docx',
+  '.xls', '.xlsx', '.ppt', '.pptx',
   '.jpg', '.jpeg', '.png', '.webp', '.gif',
   '.svg', '.ai', '.psd', '.eps',
   '.dwg', '.dxf',

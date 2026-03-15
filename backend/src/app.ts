@@ -67,11 +67,11 @@ export async function buildApp() {
   // API routes: rate limit applies only here (not to static files or health)
   await app.register(
     async (apiApp) => {
+      await apiApp.register(uploadPlugin);
       await apiApp.register(rateLimit, {
         max: 400,
         timeWindow: '1 minute',
       });
-      await apiApp.register(uploadPlugin);
       await apiApp.register(authRoutes, { prefix: '/auth' });
       await apiApp.register(ordersRoutes, { prefix: '/orders' });
       await apiApp.register(savedLocationsRoutes, { prefix: '/saved-locations' });

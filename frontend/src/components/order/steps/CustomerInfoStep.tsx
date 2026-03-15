@@ -24,6 +24,8 @@ function applySavedLocationToOrder(loc: SavedLocationItem, updateData: <K extend
   updateData('delivery_longitude', loc.longitude ?? null);
   updateData('delivery_address', address);
   updateData('delivery_location_confirmed', true);
+  const label = loc.label === 'home' || loc.label === 'work' || loc.label === 'other' ? loc.label : 'other';
+  updateData('delivery_location_label', label);
 }
 
 function getLabelIcon(label: string) {
@@ -45,6 +47,7 @@ export function CustomerInfoStep({ orderData, updateData, locale, serviceSlug, o
   const deliveryFetchedRef = useRef(false);
 
   const openLocationPage = () => {
+    updateData('delivery_location_label', null);
     onBeforeNavigateToMap?.();
     navigate('/order/location', { state: { serviceSlug: serviceSlug ?? '' } });
   };
@@ -239,7 +242,11 @@ export function CustomerInfoStep({ orderData, updateData, locale, serviceSlug, o
           {orderData.delivery_location_confirmed && (
             <div className="delivery-location-confirmed">
               <CheckCircle size={18} />
-              <span>{locale === 'ar' ? 'تم تأكيد موقع التوصيل' : 'Delivery location confirmed'}</span>
+              <span>
+                {orderData.delivery_location_label
+                  ? (locale === 'ar' ? `الموقع: ${getLabelName(orderData.delivery_location_label, 'ar')}` : `Location: ${getLabelName(orderData.delivery_location_label, 'en')}`)
+                  : (locale === 'ar' ? 'تم تحديد موقع جديد على الخريطة' : 'New location set on map')}
+              </span>
             </div>
           )}
           <label className="customer-field__label" style={{ marginTop: 12 }}>

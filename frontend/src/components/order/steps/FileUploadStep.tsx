@@ -116,6 +116,22 @@ export function FileUploadStep({ orderData, updateData, stepConfig, locale }: Pr
         />
       </div>
 
+      {orderData.uploadedFileResults.length > 0 && (
+        <div className="file-list file-list--uploaded">
+          <p className="file-list__uploaded-hint">
+            {locale === 'ar' ? 'ملفات مرفوعة — ستُستخدم عند إرسال الطلب' : 'Uploaded files — will be used when submitting the order'}
+          </p>
+          {orderData.uploadedFileResults.map((f, i) => (
+            <div key={`uploaded-${i}-${f.filename}`} className="file-item file-item--uploaded">
+              <div className="file-item__info">
+                <span className="file-item__icon">📄</span>
+                <span className="file-item__name">{f.original_name ?? f.filename}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {orderData.files.length > 0 && (
         <div className="file-list">
           {orderData.files.map((file, i) => (

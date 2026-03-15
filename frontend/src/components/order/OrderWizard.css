@@ -395,6 +395,16 @@
   gap: 8px;
 }
 
+.file-list__uploaded-hint {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  margin-bottom: 4px;
+}
+
+.file-list--uploaded .file-item--uploaded {
+  opacity: 0.95;
+}
+
 .file-item {
   display: flex;
   align-items: center;
