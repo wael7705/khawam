@@ -47,9 +47,9 @@ export async function buildApp() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   });
 
-  // Multipart على الجذر أولاً — مسارات الرفع تُسجّل على الجذر لتجنب 415 خلف proxy
-  await app.register(uploadPlugin);
+  // مسارات الرفع أولاً — نستخدم request.raw + busboy فلا نريد أن يستهلك multipart الجسم قبلنا
   await app.register(ordersUploadRoutes);
+  await app.register(uploadPlugin);
 
   // Static files (uploads)
   await app.register(fastifyStatic, {
