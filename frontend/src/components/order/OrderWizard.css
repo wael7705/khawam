@@ -55,6 +55,11 @@
   background: var(--primary);
 }
 
+.wizard-steps__icon {
+  flex-shrink: 0;
+  display: block;
+}
+
 .wizard-steps__label {
   display: none;
   margin-inline-start: 6px;
@@ -93,10 +98,18 @@
 }
 
 .wizard-card__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 1.3rem;
   font-weight: 700;
   color: var(--secondary);
   margin-bottom: 8px;
+}
+
+.wizard-card__title-icon {
+  flex-shrink: 0;
+  color: var(--primary);
 }
 
 .wizard-card__desc {
@@ -160,11 +173,18 @@
 }
 
 .step-section__label {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--text);
   margin-bottom: 12px;
+}
+
+.step-section__icon {
+  flex-shrink: 0;
+  color: var(--primary);
 }
 
 /* ── Radio Cards ── */
@@ -179,6 +199,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   padding: 14px 16px;
   border: 2px solid var(--border);
   border-radius: var(--radius);
@@ -190,6 +211,15 @@
   font-weight: 500;
   color: var(--text);
   min-height: 48px;
+}
+
+.radio-card__icon {
+  flex-shrink: 0;
+  color: var(--text-light);
+}
+
+.radio-card--selected .radio-card__icon {
+  color: var(--primary);
 }
 
 .radio-card:hover {

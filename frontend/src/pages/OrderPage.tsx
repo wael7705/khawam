@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from '../i18n';
 import { workflowsAPI } from '../lib/api';
 import { CATALOG_SERVICES } from '../lib/servicesCatalog';
+import { getStoredUser } from '../lib/auth';
 import { OrderWizard } from '../components/order/OrderWizard';
 import type { WorkflowStep } from '../components/order/OrderModal';
 import './OrderPage.css';
@@ -46,6 +47,16 @@ export function OrderPage() {
   const [error, setError] = useState('');
 
   const service = CATALOG_SERVICES.find((s) => s.slug === serviceSlug);
+  const user = getStoredUser();
+  const initialCustomerData =
+    user != null
+      ? {
+          customer_name: user.name,
+          customer_whatsapp: user.phone ?? '',
+          customer_phone_extra: '',
+        }
+      : undefined;
+  const customerId = user?.id ?? undefined;
 
   useEffect(() => {
     if (!service || !serviceSlug) {
@@ -134,7 +145,13 @@ export function OrderPage() {
           <h1>{locale === 'ar' ? service.nameAr : service.nameEn}</h1>
           <p>{locale === 'ar' ? service.descriptionAr : service.descriptionEn}</p>
         </header>
-        <OrderWizard service={service} backendServiceId={backendServiceId} steps={steps} />
+        <OrderWizard
+          service={service}
+          backendServiceId={backendServiceId}
+          steps={steps}
+          initialCustomerData={initialCustomerData}
+          customerId={customerId}
+        />
       </div>
     </div>
   );

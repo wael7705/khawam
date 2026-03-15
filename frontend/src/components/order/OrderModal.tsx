@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import { workflowsAPI } from '../../lib/api';
 import { CATALOG_SERVICES } from '../../lib/servicesCatalog';
+import { getStoredUser } from '../../lib/auth';
 import { OrderWizard } from './OrderWizard';
 import './OrderModal.css';
 
@@ -133,6 +134,16 @@ export function OrderModal({ serviceSlug, onClose, initialDeliveryData }: OrderM
   const [useDemo, setUseDemo] = useState(false);
 
   const service = serviceSlug ? CATALOG_SERVICES.find((s) => s.slug === serviceSlug) : null;
+  const user = getStoredUser();
+  const initialCustomerData =
+    user != null
+      ? {
+          customer_name: user.name,
+          customer_whatsapp: user.phone ?? '',
+          customer_phone_extra: '',
+        }
+      : undefined;
+  const customerId = user?.id ?? undefined;
 
   useEffect(() => {
     if (!service || !serviceSlug) {
@@ -251,6 +262,8 @@ export function OrderModal({ serviceSlug, onClose, initialDeliveryData }: OrderM
                 onClose={onClose}
                 useDemoMode={useDemo}
                 initialDeliveryData={initialDeliveryData}
+                initialCustomerData={initialCustomerData}
+                customerId={customerId}
               />
             </>
           )}

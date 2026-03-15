@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Archive as ArchiveIcon, BarChart3, ChevronLeft, ChevronRight, ClipboardList, FolderOpen, Globe, Home, LogOut, Menu, Moon, Shapes, Sun, Users, Wallet, X } from 'lucide-react';
+import { Archive as ArchiveIcon, BarChart3, ChevronLeft, ChevronRight, ClipboardList, FolderOpen, Globe, Home, LogOut, Menu, Moon, Sun, Users, Wallet, X } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import { authAPI } from '../../lib/api';
 import { clearAuth, getStoredUser } from '../../lib/auth';
@@ -62,7 +62,6 @@ export function DashboardLayout() {
             home: 'الرئيسية',
             orders: 'إدارة الطلبات',
             customers: 'إدارة العملاء',
-            services: 'إدارة الخدمات',
             works: 'إدارة الأعمال',
             archive: 'الأرشيف',
             finance: 'القاعدة المالية',
@@ -77,7 +76,6 @@ export function DashboardLayout() {
             home: 'Home',
             orders: 'Orders',
             customers: 'Customers',
-            services: 'Services',
             works: 'Works',
             archive: 'Archive',
             finance: 'Finance',
@@ -94,7 +92,6 @@ export function DashboardLayout() {
       { to: '/dashboard', label: labels.home, Icon: Home },
       { to: '/dashboard/orders', label: labels.orders, Icon: ClipboardList },
       { to: '/dashboard/customers', label: labels.customers, Icon: Users },
-      { to: '/dashboard/services', label: labels.services, Icon: Shapes },
       { to: '/dashboard/works', label: labels.works, Icon: FolderOpen },
       { to: '/dashboard/archive', label: labels.archive, Icon: ArchiveIcon },
       { to: '/dashboard/finance', label: labels.finance, Icon: Wallet },

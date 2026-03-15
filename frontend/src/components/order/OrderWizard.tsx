@@ -1,4 +1,19 @@
 import { useState, useCallback, useEffect } from 'react';
+import {
+  BookMarked,
+  BookOpen,
+  CreditCard,
+  FileStack,
+  FileText,
+  FileUp,
+  LayoutGrid,
+  Palette,
+  Printer,
+  Ruler,
+  Shirt,
+  User,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import { ordersAPI, type UploadedFileResult } from '../../lib/api';
 import { getServiceShortName } from '../../lib/servicesCatalog';
@@ -26,9 +41,26 @@ interface WorkflowStep {
   step_description_ar?: string;
   step_description_en?: string;
   step_type: string;
-  step_config: Record<string, any> | null;
+  step_config: Record<string, unknown> | null;
   display_order: number;
   is_active: boolean;
+}
+
+const STEP_TYPE_ICONS: Record<string, LucideIcon> = {
+  files: FileUp,
+  print_options: Printer,
+  notes: FileText,
+  customer_info: User,
+  dimensions: Ruler,
+  binding_options: BookOpen,
+  thesis_binding: BookMarked,
+  card_type: CreditCard,
+  paper_type: FileStack,
+  clothing_source: Shirt,
+  clothing_designs: Shirt,
+};
+function getStepIcon(stepType: string): LucideIcon | null {
+  return STEP_TYPE_ICONS[stepType] ?? null;
 }
 
 interface ServiceInfo {
@@ -90,6 +122,12 @@ interface InitialDeliveryData {
   delivery_longitude?: number;
 }
 
+export interface InitialCustomerData {
+  customer_name?: string;
+  customer_whatsapp?: string;
+  customer_phone_extra?: string;
+}
+
 interface OrderWizardProps {
   service: ServiceInfo;
   /** معرّف الخدمة من القاعدة (لإرسال الطلب). إن كان null (وضع تجريبي) لا يُرسل الطلب. */
@@ -98,6 +136,10 @@ interface OrderWizardProps {
   onClose?: () => void;
   useDemoMode?: boolean;
   initialDeliveryData?: InitialDeliveryData | null;
+  /** بيانات العميل المعبأة مسبقاً عند تسجيل الدخول */
+  initialCustomerData?: InitialCustomerData | null;
+  /** معرّف المستخدم لربط الطلب بحسابه (يُرسل كـ customer_id) */
+  customerId?: string | null;
 }
 
 const INITIAL_ORDER_DATA: OrderData = {
@@ -140,10 +182,27 @@ const INITIAL_ORDER_DATA: OrderData = {
   total_pages: 0,
 };
 
-export function OrderWizard({ service, backendServiceId, steps, onClose, useDemoMode, initialDeliveryData }: OrderWizardProps) {
+export function OrderWizard({
+  service,
+  backendServiceId,
+  steps,
+  onClose,
+  useDemoMode,
+  initialDeliveryData,
+  initialCustomerData,
+  customerId,
+}: OrderWizardProps) {
   const { locale } = useTranslation();
+  const initialMerged: OrderData = {
+    ...INITIAL_ORDER_DATA,
+    ...(initialCustomerData && {
+      customer_name: initialCustomerData.customer_name ?? INITIAL_ORDER_DATA.customer_name,
+      customer_whatsapp: initialCustomerData.customer_whatsapp ?? INITIAL_ORDER_DATA.customer_whatsapp,
+      customer_phone_extra: initialCustomerData.customer_phone_extra ?? INITIAL_ORDER_DATA.customer_phone_extra,
+    }),
+  };
   const [currentStep, setCurrentStep] = useState(0);
-  const [orderData, setOrderData] = useState<OrderData>({ ...INITIAL_ORDER_DATA });
+  const [orderData, setOrderData] = useState<OrderData>(initialMerged);
 
   useEffect(() => {
     if (!initialDeliveryData) return;
@@ -262,6 +321,7 @@ export function OrderWizard({ service, backendServiceId, steps, onClose, useDemo
 
       const payload: Record<string, unknown> = {
         service_id: backendServiceId,
+        ...(customerId && { customer_id: customerId }),
         customer_name: orderData.customer_name || undefined,
         customer_whatsapp: orderData.customer_whatsapp || undefined,
         customer_phone: orderData.customer_phone_extra || orderData.customer_whatsapp || undefined,
@@ -301,7 +361,7 @@ export function OrderWizard({ service, backendServiceId, steps, onClose, useDemo
       }
       void err;
     }
-  }, [orderData, service.id, backendServiceId, locale, submitProgress, useDemoMode]);
+  }, [orderData, service.id, backendServiceId, locale, submitProgress, useDemoMode, customerId]);
 
   if (orderResult) {
     return <OrderSuccess orderNumber={orderResult.orderNumber} onClose={onClose} />;
@@ -314,37 +374,51 @@ export function OrderWizard({ service, backendServiceId, steps, onClose, useDemo
     <div className="order-wizard">
       {/* Step Indicator */}
       <div className="wizard-steps">
-        {steps.map((s, i) => (
-          <div key={s.id} className="wizard-steps__item">
-            <div
-              className={`wizard-steps__circle${
-                i < currentStep
-                  ? ' wizard-steps__circle--completed'
-                  : i === currentStep
-                    ? ' wizard-steps__circle--active'
-                    : ''
-              }`}
-            >
-              {i < currentStep ? '✓' : i + 1}
-            </div>
-            <span className="wizard-steps__label">
-              {locale === 'ar' ? s.step_name_ar : (s.step_name_en || s.step_name_ar)}
-            </span>
-            {i < steps.length - 1 && (
+        {steps.map((s, i) => {
+          const StepIcon = getStepIcon(s.step_type);
+          return (
+            <div key={s.id} className="wizard-steps__item">
               <div
-                className={`wizard-steps__line${
-                  i < currentStep ? ' wizard-steps__line--completed' : ''
+                className={`wizard-steps__circle${
+                  i < currentStep
+                    ? ' wizard-steps__circle--completed'
+                    : i === currentStep
+                      ? ' wizard-steps__circle--active'
+                      : ''
                 }`}
-              />
-            )}
-          </div>
-        ))}
+              >
+                {i < currentStep ? (
+                  '✓'
+                ) : StepIcon ? (
+                  <StepIcon size={18} className="wizard-steps__icon" aria-hidden />
+                ) : (
+                  i + 1
+                )}
+              </div>
+              <span className="wizard-steps__label">
+                {locale === 'ar' ? s.step_name_ar : (s.step_name_en || s.step_name_ar)}
+              </span>
+              {i < steps.length - 1 && (
+                <div
+                  className={`wizard-steps__line${
+                    i < currentStep ? ' wizard-steps__line--completed' : ''
+                  }`}
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Step Content */}
-      {step && (
+      {step && (() => {
+        const StepTitleIcon = getStepIcon(step.step_type);
+        return (
         <div className="wizard-card" key={step.id}>
           <h2 className="wizard-card__title">
+            {StepTitleIcon && (
+              <StepTitleIcon size={22} className="wizard-card__title-icon" aria-hidden />
+            )}
             {locale === 'ar' ? step.step_name_ar : (step.step_name_en || step.step_name_ar)}
           </h2>
           {(locale === 'ar'
@@ -359,7 +433,8 @@ export function OrderWizard({ service, backendServiceId, steps, onClose, useDemo
 
           {renderStep(step, orderData, updateData, locale, service)}
         </div>
-      )}
+        );
+      })()}
 
       {/* Navigation */}
       <div className="wizard-nav">

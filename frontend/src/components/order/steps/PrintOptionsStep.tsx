@@ -1,18 +1,19 @@
+import { BookOpen, CircleDot, Layout, LayoutGrid, Palette, FileSpreadsheet, Sparkles } from 'lucide-react';
 import type { OrderData } from '../OrderWizard';
 
 interface Props {
   orderData: OrderData;
   updateData: <K extends keyof OrderData>(key: K, value: OrderData[K]) => void;
-  stepConfig: Record<string, any>;
+  stepConfig: Record<string, unknown>;
   locale: 'ar' | 'en';
 }
 
 export function PrintOptionsStep({ orderData, updateData, stepConfig, locale }: Props) {
-  const paperSizes: string[] = stepConfig.paper_sizes || [];
-  const showBooklet = stepConfig.show_booklet ?? false;
-  const showColor = stepConfig.show_color ?? true;
-  const showQuality = stepConfig.show_quality ?? false;
-  const showSides = stepConfig.show_sides ?? true;
+  const paperSizes: string[] = (stepConfig.paper_sizes as string[]) || [];
+  const showBooklet = (stepConfig.show_booklet as boolean) ?? false;
+  const showColor = (stepConfig.show_color as boolean) ?? true;
+  const showQuality = (stepConfig.show_quality as boolean) ?? false;
+  const showSides = (stepConfig.show_sides as boolean) ?? true;
 
   return (
     <div>
@@ -20,6 +21,7 @@ export function PrintOptionsStep({ orderData, updateData, stepConfig, locale }: 
       {paperSizes.length > 0 && (
         <div className="step-section">
           <span className="step-section__label">
+            <Layout size={18} className="step-section__icon" aria-hidden />
             {locale === 'ar' ? 'قياس الورق' : 'Paper Size'}
           </span>
           <div className="radio-cards">
@@ -35,6 +37,9 @@ export function PrintOptionsStep({ orderData, updateData, stepConfig, locale }: 
                   checked={orderData.paper_size === size}
                   onChange={() => updateData('paper_size', size)}
                 />
+                <span className="radio-card__icon" aria-hidden>
+                  <Layout size={20} />
+                </span>
                 {size}
               </label>
             ))}
@@ -46,6 +51,7 @@ export function PrintOptionsStep({ orderData, updateData, stepConfig, locale }: 
       {showColor && (
         <div className="step-section">
           <span className="step-section__label">
+            <Palette size={18} className="step-section__icon" aria-hidden />
             {locale === 'ar' ? 'نوع الطباعة' : 'Print Color'}
           </span>
           <div className="radio-cards">
@@ -59,6 +65,9 @@ export function PrintOptionsStep({ orderData, updateData, stepConfig, locale }: 
                 checked={orderData.print_color === 'bw'}
                 onChange={() => updateData('print_color', 'bw')}
               />
+              <span className="radio-card__icon" aria-hidden>
+                <CircleDot size={20} />
+              </span>
               {locale === 'ar' ? 'أبيض وأسود' : 'Black & White'}
             </label>
             <label
@@ -71,6 +80,9 @@ export function PrintOptionsStep({ orderData, updateData, stepConfig, locale }: 
                 checked={orderData.print_color === 'color'}
                 onChange={() => updateData('print_color', 'color')}
               />
+              <span className="radio-card__icon" aria-hidden>
+                <Palette size={20} />
+              </span>
               {locale === 'ar' ? 'ألوان' : 'Color'}
             </label>
           </div>
@@ -81,6 +93,7 @@ export function PrintOptionsStep({ orderData, updateData, stepConfig, locale }: 
       {showQuality && orderData.print_color === 'color' && (
         <div className="step-section">
           <span className="step-section__label">
+            <Sparkles size={18} className="step-section__icon" aria-hidden />
             {locale === 'ar' ? 'جودة الطباعة' : 'Print Quality'}
           </span>
           <div className="radio-cards">
@@ -116,6 +129,7 @@ export function PrintOptionsStep({ orderData, updateData, stepConfig, locale }: 
       {showSides && (
         <div className="step-section">
           <span className="step-section__label">
+            <LayoutGrid size={18} className="step-section__icon" aria-hidden />
             {locale === 'ar' ? 'طباعة الوجه' : 'Print Sides'}
           </span>
           <div className="radio-cards">
@@ -129,6 +143,9 @@ export function PrintOptionsStep({ orderData, updateData, stepConfig, locale }: 
                 checked={orderData.print_sides === 'single'}
                 onChange={() => updateData('print_sides', 'single')}
               />
+              <span className="radio-card__icon" aria-hidden>
+                <FileSpreadsheet size={20} />
+              </span>
               {locale === 'ar' ? 'وجه واحد' : 'Single Side'}
             </label>
             <label
@@ -141,6 +158,9 @@ export function PrintOptionsStep({ orderData, updateData, stepConfig, locale }: 
                 checked={orderData.print_sides === 'double'}
                 onChange={() => updateData('print_sides', 'double')}
               />
+              <span className="radio-card__icon" aria-hidden>
+                <LayoutGrid size={20} />
+              </span>
               {locale === 'ar' ? 'وجهين' : 'Double Side'}
             </label>
           </div>
@@ -158,6 +178,7 @@ export function PrintOptionsStep({ orderData, updateData, stepConfig, locale }: 
                 updateData('booklet', e.target.checked)
               }
             />
+            <BookOpen size={18} className="step-section__icon" aria-hidden />
             <span>{locale === 'ar' ? 'طباعة ككتيب (Booklet)' : 'Print as Booklet'}</span>
           </label>
         </div>

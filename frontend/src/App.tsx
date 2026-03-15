@@ -27,7 +27,6 @@ import { OrdersManagement } from './pages/dashboard/OrdersManagement';
 import { Analytics } from './pages/dashboard/Analytics';
 import { CustomersManagement } from './pages/dashboard/CustomersManagement';
 import { FinancePricing } from './pages/dashboard/FinancePricing';
-import { ServicesManagement } from './pages/dashboard/ServicesManagement';
 import { WorksManagement } from './pages/dashboard/WorksManagement';
 import { Archive } from './pages/dashboard/Archive';
 import { Studio } from './pages/Studio';
@@ -126,7 +125,6 @@ export default function App() {
             <Route index element={<DashboardHome />} />
             <Route path="orders" element={<OrdersManagement />} />
             <Route path="customers" element={<CustomersManagement />} />
-            <Route path="services" element={<ServicesManagement />} />
             <Route path="works" element={<WorksManagement />} />
             <Route path="archive" element={<Archive />} />
             <Route path="finance" element={<FinancePricing />} />
