@@ -525,6 +525,7 @@ export async function getAllOrders(
       orderBy: { createdAt: 'desc' },
       include: {
         customer: { select: { id: true, name: true, phone: true } },
+        service: { select: { id: true, nameAr: true, nameEn: true } },
         items: { select: { id: true, productName: true, quantity: true, totalPrice: true } },
       },
     }),
@@ -536,6 +537,8 @@ export async function getAllOrders(
     id: o.id,
     order_number: o.orderNumber,
     service_id: o.serviceId ?? undefined,
+    service_name_ar: o.service?.nameAr ?? undefined,
+    service_name_en: o.service?.nameEn ?? undefined,
     customer_id: o.customerId,
     customer_name: o.customerName,
     customer_phone: o.customerPhone,
@@ -570,6 +573,7 @@ export async function getOrderById(orderId: string): Promise<Record<string, unkn
     where: { id: orderId },
     include: {
       customer: { select: { id: true, name: true, phone: true, email: true } },
+      service: { select: { id: true, nameAr: true, nameEn: true } },
       items: {
         include: { product: { select: { id: true, name: true, nameAr: true } } },
       },
@@ -586,6 +590,8 @@ export async function getOrderById(orderId: string): Promise<Record<string, unkn
     id: order.id,
     order_number: order.orderNumber,
     service_id: order.serviceId ?? undefined,
+    service_name_ar: order.service?.nameAr ?? undefined,
+    service_name_en: order.service?.nameEn ?? undefined,
     customer_id: order.customerId,
     customer_name: order.customerName,
     customer_phone: order.customerPhone,

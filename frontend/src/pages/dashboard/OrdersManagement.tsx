@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Search, X, FileText, Download, MapPin, Phone, User, Package, Truck, ExternalLink, Copy, Share2, ChevronRight, Ban } from 'lucide-react';
+import { Search, X, FileText, Download, MapPin, Phone, User, Package, Truck, ExternalLink, Copy, Share2, ChevronRight, Ban, Check } from 'lucide-react';
 import {
   advanceMockOrderStatus,
   canUseDashboardMockData,
@@ -308,6 +308,8 @@ export function OrdersManagement() {
       id: raw.id as string,
       order_number: raw.order_number as string,
       service_id: raw.service_id as string | undefined,
+      service_name_ar: raw.service_name_ar as string | undefined,
+      service_name_en: raw.service_name_en as string | undefined,
       customer_name: (raw.customer_name as string) ?? '',
       customer_phone: (raw.customer_phone as string) ?? '',
       customer_whatsapp: raw.customer_whatsapp as string | undefined,
@@ -470,7 +472,7 @@ export function OrdersManagement() {
                   return (
                     <tr key={order.id} onClick={() => void openOrderDetail(order.id)} className="orders-table__clickable">
                       <td>{order.order_number}</td>
-                      <td>{getServiceDisplayName(order.service_id, locale).subName}</td>
+                      <td>{getServiceDisplayName(order.service_id, locale, { nameAr: order.service_name_ar, nameEn: order.service_name_en }).subName}</td>
                       <td>
                         <strong>{order.customer_name}</strong>
                         <span>{order.customer_phone}</span>
@@ -485,12 +487,16 @@ export function OrdersManagement() {
                         {nextStatus != null && (
                           <button
                             type="button"
-                            className="orders-status-icon"
+                            className={order.status?.toLowerCase() === 'pending' && nextStatus === 'confirmed' ? 'orders-status-icon orders-status-icon--accept' : 'orders-status-icon'}
                             title={getOrderStatusActionLabel(order.status, locale)}
                             onClick={() => void handleAdvanceStatus(order.id, nextStatus)}
                             aria-label={getOrderStatusActionLabel(order.status, locale)}
                           >
-                            <ChevronRight size={18} />
+                            {order.status?.toLowerCase() === 'pending' && nextStatus === 'confirmed' ? (
+                              <Check size={18} />
+                            ) : (
+                              <ChevronRight size={18} />
+                            )}
                           </button>
                         )}
                         {isPending && (
@@ -555,17 +561,21 @@ export function OrdersManagement() {
                     </span>
                   </div>
                   <div className="order-detail__header-actions">
-                    {getNextOrderStatus(selectedOrder.status) != null && (
-                      <button
-                        type="button"
-                        className="orders-status-icon"
-                        title={getOrderStatusActionLabel(selectedOrder.status, locale)}
-                        onClick={() => void handleAdvanceStatus(selectedOrder.id, getNextOrderStatus(selectedOrder.status)!)}
-                        aria-label={getOrderStatusActionLabel(selectedOrder.status, locale)}
-                      >
-                        <ChevronRight size={20} />
-                      </button>
-                    )}
+                    {getNextOrderStatus(selectedOrder.status) != null && (() => {
+                      const next = getNextOrderStatus(selectedOrder.status)!;
+                      const isAccept = selectedOrder.status?.toLowerCase() === 'pending' && next === 'confirmed';
+                      return (
+                        <button
+                          type="button"
+                          className={isAccept ? 'orders-status-icon orders-status-icon--accept' : 'orders-status-icon'}
+                          title={getOrderStatusActionLabel(selectedOrder.status, locale)}
+                          onClick={() => void handleAdvanceStatus(selectedOrder.id, next)}
+                          aria-label={getOrderStatusActionLabel(selectedOrder.status, locale)}
+                        >
+                          {isAccept ? <Check size={20} /> : <ChevronRight size={20} />}
+                        </button>
+                      );
+                    })()}
                     {selectedOrder.status?.toLowerCase() === 'pending' && (
                       <button
                         type="button"
@@ -589,9 +599,9 @@ export function OrdersManagement() {
                     <div className="detail-section">
                       <h4><Package size={16} /> {locale === 'ar' ? 'الخدمة' : 'Service'}</h4>
                       <p className="detail-service-name">
-                        {getServiceDisplayName(selectedOrder.service_id, locale).mainName}
+                        {getServiceDisplayName(selectedOrder.service_id, locale, { nameAr: selectedOrder.service_name_ar, nameEn: selectedOrder.service_name_en }).mainName}
                         {' → '}
-                        {getServiceDisplayName(selectedOrder.service_id, locale).subName}
+                        {getServiceDisplayName(selectedOrder.service_id, locale, { nameAr: selectedOrder.service_name_ar, nameEn: selectedOrder.service_name_en }).subName}
                       </p>
                     </div>
                   )}

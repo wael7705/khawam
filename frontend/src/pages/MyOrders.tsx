@@ -27,6 +27,8 @@ function normalizeOrderDetail(raw: Record<string, unknown>): OrderDetail {
     id: raw.id as string,
     order_number: raw.order_number as string,
     service_id: raw.service_id as string | undefined,
+    service_name_ar: raw.service_name_ar as string | undefined,
+    service_name_en: raw.service_name_en as string | undefined,
     customer_name: (raw.customer_name as string) ?? '',
     customer_phone: (raw.customer_phone as string) ?? '',
     customer_whatsapp: raw.customer_whatsapp as string | undefined,

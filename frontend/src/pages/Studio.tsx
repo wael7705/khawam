@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Upload,
@@ -46,6 +46,7 @@ export function Studio() {
     exportPdf: isRtl ? 'تصدير PDF' : 'Export PDF',
     print: isRtl ? 'طباعة' : 'Print',
     placeholder: isRtl ? 'ارفع صورة لبدء التعديل. Ctrl+P للطباعة.' : 'Upload an image to start. Ctrl+P to print.',
+    nonImageUploaded: isRtl ? 'تم رفع الملف. معاينة وتعديل الصور تتطلب صورة (png, jpg, webp, gif, svg).' : 'File uploaded. Preview and image tools require an image (png, jpg, webp, gif, svg).',
     backToSite: isRtl ? 'العودة للموقع' : 'Back to site',
   };
 
@@ -62,14 +63,38 @@ export function Studio() {
     }
   }, [currentFile, imageUrl]);
 
-  const handleUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !file.type.startsWith('image/')) return;
-    setCurrentFile(file);
-    setImageUrl(URL.createObjectURL(file));
-    setError(null);
-    e.target.value = '';
-  }, []);
+  const studioAllowedExtensions = useMemo(
+    () => new Set(['.psd', '.pdf', '.ai', '.eps', '.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg']),
+    [],
+  );
+  const getFileExtension = (name: string) => {
+    const i = name.toLowerCase().lastIndexOf('.');
+    return i >= 0 ? name.slice(i).toLowerCase() : '';
+  };
+  const isImageExtension = (ext: string) =>
+    ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'].includes(ext);
+
+  const handleUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const ext = getFileExtension(file.name);
+      if (!studioAllowedExtensions.has(ext)) {
+        setError(isRtl ? 'نوع الملف غير مسموح. المسموح: psd, pdf, ai, eps, png, jpg, webp, gif, svg' : 'File type not allowed. Allowed: psd, pdf, ai, eps, png, jpg, webp, gif, svg');
+        e.target.value = '';
+        return;
+      }
+      setCurrentFile(file);
+      setError(null);
+      if (file.type.startsWith('image/') || isImageExtension(ext)) {
+        setImageUrl(URL.createObjectURL(file));
+      } else {
+        setImageUrl(null);
+      }
+      e.target.value = '';
+    },
+    [isRtl, studioAllowedExtensions],
+  );
 
   const runApi = useCallback(
     async (
@@ -215,7 +240,12 @@ export function Studio() {
             <label className="studio-tool" title={t.upload}>
               <Upload size={22} />
               {sidebarExpanded && <span className="studio-tool__label">{t.upload}</span>}
-              <input type="file" accept="image/*" className="studio-tool__input" onChange={handleUpload} />
+              <input
+              type="file"
+              accept=".psd,.pdf,.ai,.eps,.png,.jpg,.jpeg,.webp,.gif,.svg"
+              className="studio-tool__input"
+              onChange={handleUpload}
+            />
             </label>
           </div>
 
@@ -316,7 +346,9 @@ export function Studio() {
           {fullImageUrl ? (
             <img ref={imgRef} src={fullImageUrl} alt="" crossOrigin="anonymous" />
           ) : (
-            <p className="studio-board-placeholder">{t.placeholder}</p>
+            <p className="studio-board-placeholder">
+              {currentFile && !imageUrl ? t.nonImageUploaded : t.placeholder}
+            </p>
           )}
         </div>
       </main>

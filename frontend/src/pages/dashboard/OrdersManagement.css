@@ -261,6 +261,16 @@
   background: rgba(200, 0, 0, 0.08);
 }
 
+.orders-status-icon--accept {
+  color: var(--success, #0a7c42);
+  border-color: rgba(10, 124, 66, 0.4);
+}
+
+.orders-status-icon--accept:hover {
+  background: var(--success, #0a7c42);
+  color: #fff;
+}
+
 .orders-state {
   border: 1px solid var(--border);
   border-radius: 12px;

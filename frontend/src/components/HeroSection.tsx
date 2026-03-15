@@ -6,7 +6,6 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
-  ClipboardList,
 } from 'lucide-react';
 import {
   FaPrint,
@@ -99,12 +98,6 @@ export function HeroSection() {
                   </Link>
                 );
               })}
-              <Link to="/my-orders" className="hero__svc">
-                <span className="hero__svc-icon">
-                  <ClipboardList size={34} />
-                </span>
-                <span className="hero__svc-label">{t.nav.myOrders}</span>
-              </Link>
             </div>
           </div>
           <button

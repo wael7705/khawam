@@ -146,6 +146,88 @@
   flex-shrink: 0;
 }
 
+/* Status track (pending → confirmed → processing → completed) */
+.my-orders__status-track {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  width: 100%;
+  margin: 0.75rem 0;
+  padding: 0 2px;
+}
+
+.my-orders__status-track-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.my-orders__status-track-dots {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.my-orders__status-track-dot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.my-orders__status-track-dot--done {
+  background: var(--success, #0a7c42);
+  border-color: var(--success, #0a7c42);
+}
+
+.my-orders__status-track-dot--current {
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.3);
+}
+
+.my-orders__status-track-line {
+  flex: 1;
+  height: 2px;
+  margin: 0 2px;
+  background: var(--border);
+  transition: background 0.2s;
+}
+
+.my-orders__status-track-line--done {
+  background: var(--success, #0a7c42);
+}
+
+.my-orders__status-track-label {
+  font-size: 0.7rem;
+  color: var(--text-light);
+  margin-top: 4px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.my-orders__status-track-step:has(.my-orders__status-track-dot--done) .my-orders__status-track-label,
+.my-orders__status-track-step:has(.my-orders__status-track-dot--current) .my-orders__status-track-label {
+  color: var(--text);
+}
+
+.my-orders__status-track--cancelled {
+  margin: 0.5rem 0;
+}
+
+.my-orders__status-track--cancelled .my-orders__status-track-label {
+  color: var(--danger, #c00);
+  font-size: 0.85rem;
+}
+
 /* Overlay & Drawer */
 .my-orders-overlay {
   position: fixed;

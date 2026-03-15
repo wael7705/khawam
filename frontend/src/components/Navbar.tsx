@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, Facebook } from 'lucide-react';
 import { useTranslation } from '../i18n/index';
 import { getStoredUser, clearAuth } from '../lib/auth';
@@ -16,6 +16,7 @@ const navItems = [
 export function Navbar() {
   const { t, locale, toggleLocale } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState<ReturnType<typeof getStoredUser>>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -23,7 +24,7 @@ export function Navbar() {
 
   useEffect(() => {
     setUser(getStoredUser());
-  }, []);
+  }, [location.pathname]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);

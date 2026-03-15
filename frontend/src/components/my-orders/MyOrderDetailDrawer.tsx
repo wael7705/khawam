@@ -120,8 +120,8 @@ export function MyOrderDetailDrawer({
               <Package size={16} /> {labels.service}
             </h4>
             <p className="my-orders-drawer__service-name">
-              {getServiceDisplayName(order.service_id, locale).mainName} →{' '}
-              {getServiceDisplayName(order.service_id, locale).subName}
+              {getServiceDisplayName(order.service_id, locale, { nameAr: order.service_name_ar, nameEn: order.service_name_en }).mainName} →{' '}
+              {getServiceDisplayName(order.service_id, locale, { nameAr: order.service_name_ar, nameEn: order.service_name_en }).subName}
             </p>
           </div>
         )}

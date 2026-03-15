@@ -2,8 +2,8 @@ import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from '../i18n/index';
 import { authAPI } from '../lib/api';
-import { storeAuth, getAuthToken } from '../lib/auth';
-import type { UserData } from '../lib/auth';
+import { storeAuth, getAuthToken, getAuthErrorDetail } from '../lib/auth';
+import type { UserData, LoginResponsePayload } from '../lib/auth';
 import './Register.css';
 
 type Step = 'form' | 'phone-confirm';
@@ -32,7 +32,7 @@ export function Register() {
         password,
       });
       const { data } = await authAPI.login(email || phone || name, password);
-      const payload = data as { access_token?: string; user?: { id: string; name: string; email: string | null; phone: string | null; role: string } };
+      const payload = data as LoginResponsePayload;
       const token = payload.access_token;
       if (!token) {
         setError('Registration failed');
@@ -60,11 +60,7 @@ export function Register() {
         navigate('/');
       }
     } catch (err: unknown) {
-      const res = err && typeof err === 'object' && 'response' in err
-        ? (err as { response?: { status?: number; data?: { detail?: string } } }).response
-        : undefined;
-      const msg = res?.data?.detail;
-      setError(typeof msg === 'string' ? msg : 'Registration failed');
+      setError(getAuthErrorDetail(err) || 'Registration failed');
       setLoading(false);
     }
   };
@@ -83,10 +79,7 @@ export function Register() {
       }
       navigate('/');
     } catch (err: unknown) {
-      const msg = err && typeof err === 'object' && 'response' in err
-        ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
-        : null;
-      setError(typeof msg === 'string' ? msg : 'Failed to save phone');
+      setError(getAuthErrorDetail(err) || 'Failed to save phone');
       setLoading(false);
     }
   };

@@ -50,19 +50,34 @@ export interface ServiceDisplayName {
 /**
  * يُرجع اسم الخدمة الرئيسي (الفئة) والفرعي (الخدمة) للعرض في بطاقة الطلب.
  * إن لم يُعثر على serviceId يُرجع قيم افتراضية.
+ * إن وُجد fallback (من API) واستخدمناها للعرض، يُستخدم subName من الـ fallback و mainName يبقى "—" إن لم يُطابق الكتالوج.
  */
-export function getServiceDisplayName(serviceId: string | null | undefined, locale: Locale): ServiceDisplayName {
+export function getServiceDisplayName(
+  serviceId: string | null | undefined,
+  locale: Locale,
+  fallback?: { nameAr?: string | null; nameEn?: string | null },
+): ServiceDisplayName {
+  const dash = locale === 'ar' ? '—' : '—';
+  const unspecified = locale === 'ar' ? 'غير محدد' : 'Not specified';
   if (!serviceId) {
-    return { mainName: locale === 'ar' ? '—' : '—', subName: locale === 'ar' ? 'غير محدد' : 'Not specified' };
+    if (fallback && (fallback.nameAr ?? fallback.nameEn)) {
+      const subName = locale === 'ar' ? (fallback.nameAr ?? fallback.nameEn ?? '') : (fallback.nameEn ?? fallback.nameAr ?? '');
+      return { mainName: dash, subName: subName || unspecified };
+    }
+    return { mainName: dash, subName: unspecified };
   }
   const service = CATALOG_SERVICES.find((s) => s.id === serviceId);
-  if (!service) {
-    return { mainName: locale === 'ar' ? '—' : '—', subName: locale === 'ar' ? 'غير محدد' : 'Not specified' };
+  if (service) {
+    const categoryLabel = CATEGORY_LABELS[service.category];
+    const mainName = locale === 'ar' ? categoryLabel.ar : categoryLabel.en;
+    const subName = locale === 'ar' ? service.nameAr : service.nameEn;
+    return { mainName, subName };
   }
-  const categoryLabel = CATEGORY_LABELS[service.category];
-  const mainName = locale === 'ar' ? categoryLabel.ar : categoryLabel.en;
-  const subName = locale === 'ar' ? service.nameAr : service.nameEn;
-  return { mainName, subName };
+  if (fallback && (fallback.nameAr ?? fallback.nameEn)) {
+    const subName = locale === 'ar' ? (fallback.nameAr ?? fallback.nameEn ?? '') : (fallback.nameEn ?? fallback.nameAr ?? '');
+    return { mainName: dash, subName: subName || unspecified };
+  }
+  return { mainName: dash, subName: unspecified };
 }
 
 /** اسم الخدمة للعرض المختصر (فرعي فقط أو "الفئة > الفرعي") */

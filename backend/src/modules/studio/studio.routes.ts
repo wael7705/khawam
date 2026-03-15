@@ -6,34 +6,39 @@ import { join } from 'node:path';
 import { config } from '../../config/index.js';
 import { createId } from '../../shared/utils/nanoid.js';
 import { authenticate } from '../../shared/middleware/auth.middleware.js';
-import { isImageFile } from '../../shared/plugins/upload.plugin.js';
+import { isImageFile, isStudioAllowedFile } from '../../shared/plugins/upload.plugin.js';
 import * as studioService from './studio.service.js';
 
 const STUDIO_TEMP_DIR = 'studio/temp';
 
-async function getUploadedFilePath(request: FastifyRequest): Promise<string> {
+const STUDIO_ALLOWED_LIST = '.psd, .pdf, .ai, .eps, .png, .jpg, .jpeg, .webp, .gif, .svg';
+
+async function getUploadedFile(request: FastifyRequest): Promise<{ filePath: string; filename: string }> {
   const data = await request.file();
   if (!data) {
     throw new Error('لم يتم رفع أي ملف');
   }
 
   const filename = data.filename ?? '';
-  if (!isImageFile(filename)) {
-    throw new Error('نوع الملف غير مسموح. يرجى رفع صورة (jpg, png, webp, gif)');
+  if (!isStudioAllowedFile(filename)) {
+    throw new Error(`نوع الملف غير مسموح. المسموح: ${STUDIO_ALLOWED_LIST}`);
   }
 
-  const ext = filename.toLowerCase().includes('.') ? filename.slice(filename.lastIndexOf('.')) : '.png';
+  const ext = filename.toLowerCase().includes('.') ? filename.slice(filename.lastIndexOf('.')).toLowerCase() : '.png';
   await mkdir(join(config.uploadDir, STUDIO_TEMP_DIR), { recursive: true });
   const safeName = `${createId()}${ext}`;
   const filePath = join(config.uploadDir, STUDIO_TEMP_DIR, safeName);
   await pipeline(data.file, createWriteStream(filePath));
-  return filePath;
+  return { filePath, filename };
 }
 
 export async function studioRoutes(app: FastifyInstance): Promise<void> {
   app.post('/remove-background', { preHandler: [authenticate] }, async (request, reply) => {
     try {
-      const filePath = await getUploadedFilePath(request);
+      const { filePath, filename } = await getUploadedFile(request);
+      if (!isImageFile(filename)) {
+        return reply.code(400).send({ detail: 'هذه العملية تتطلب صورة (jpg, png, webp, gif, svg)' });
+      }
       const resultPath = await studioService.removeBackground(filePath);
       return reply.send({ path: resultPath, url: resultPath });
     } catch (err: unknown) {
@@ -44,7 +49,10 @@ export async function studioRoutes(app: FastifyInstance): Promise<void> {
 
   app.post<{ Querystring: { removeBgFirst?: string } }>('/passport-photos', { preHandler: [authenticate] }, async (request, reply) => {
     try {
-      const filePath = await getUploadedFilePath(request);
+      const { filePath, filename } = await getUploadedFile(request);
+      if (!isImageFile(filename)) {
+        return reply.code(400).send({ detail: 'هذه العملية تتطلب صورة (jpg, png, webp, gif, svg)' });
+      }
       const removeBgFirst = request.query?.removeBgFirst === 'true' || request.query?.removeBgFirst === '1';
       const resultPath = await studioService.createPassportPhotos(filePath, { removeBgFirst });
       return reply.send({ path: resultPath, url: resultPath });
@@ -64,7 +72,10 @@ export async function studioRoutes(app: FastifyInstance): Promise<void> {
     };
   }>('/crop-rotate', { preHandler: [authenticate] }, async (request, reply) => {
     try {
-      const filePath = await getUploadedFilePath(request);
+      const { filePath, filename } = await getUploadedFile(request);
+      if (!isImageFile(filename)) {
+        return reply.code(400).send({ detail: 'هذه العملية تتطلب صورة (jpg, png, webp, gif, svg)' });
+      }
       const q = request.query ?? {};
       const options = {
         left: Number(q.left) || 0,
@@ -85,7 +96,10 @@ export async function studioRoutes(app: FastifyInstance): Promise<void> {
     Querystring: { dpi?: string };
   }>('/add-dpi', { preHandler: [authenticate] }, async (request, reply) => {
     try {
-      const filePath = await getUploadedFilePath(request);
+      const { filePath, filename } = await getUploadedFile(request);
+      if (!isImageFile(filename)) {
+        return reply.code(400).send({ detail: 'هذه العملية تتطلب صورة (jpg, png, webp, gif, svg)' });
+      }
       const q = request.query ?? {};
       const dpi = Number(q.dpi) || 300;
       const resultPath = await studioService.addDpi(filePath, { dpi });
@@ -100,7 +114,10 @@ export async function studioRoutes(app: FastifyInstance): Promise<void> {
     Querystring: { filter?: string; blurSigma?: string };
   }>('/apply-filter', { preHandler: [authenticate] }, async (request, reply) => {
     try {
-      const filePath = await getUploadedFilePath(request);
+      const { filePath, filename } = await getUploadedFile(request);
+      if (!isImageFile(filename)) {
+        return reply.code(400).send({ detail: 'هذه العملية تتطلب صورة (jpg, png, webp, gif, svg)' });
+      }
       const q = request.query ?? {};
       const filter = (q.filter ?? 'grayscale') as studioService.FilterType;
       if (!['grayscale', 'sepia', 'blur'].includes(filter)) {

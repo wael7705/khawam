@@ -2,8 +2,8 @@ import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from '../i18n/index';
 import { authAPI } from '../lib/api';
-import { storeAuth } from '../lib/auth';
-import type { UserData } from '../lib/auth';
+import { storeAuth, getAuthErrorDetail } from '../lib/auth';
+import type { UserData, LoginResponsePayload } from '../lib/auth';
 import './Login.css';
 
 export function Login() {
@@ -20,7 +20,7 @@ export function Login() {
     setLoading(true);
     try {
       const { data } = await authAPI.login(username, password);
-      const payload = data as { access_token?: string; user?: { id: string; name: string; email: string | null; phone: string | null; role: string } };
+      const payload = data as LoginResponsePayload;
       const token = payload.access_token;
       if (!token) {
         setError('Invalid response from server');
@@ -45,10 +45,7 @@ export function Login() {
         navigate(['مدير', 'موظف'].includes(user.role) ? '/dashboard' : '/');
       }
     } catch (err: unknown) {
-      const msg = err && typeof err === 'object' && 'response' in err
-        ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
-        : null;
-      setError(typeof msg === 'string' ? msg : 'Login failed');
+      setError(getAuthErrorDetail(err) || 'Login failed');
     } finally {
       setLoading(false);
     }

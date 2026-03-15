@@ -6,6 +6,28 @@ export interface UserData {
   role: string;
 }
 
+/** شكل استجابة واجهة تسجيل الدخول من الـ API */
+export interface LoginResponsePayload {
+  access_token?: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string | null;
+    phone: string | null;
+    role: string;
+  };
+}
+
+/** استخراج رسالة الخطأ من استجابة API (axios-style) للاستخدام في صفحات تسجيل الدخول والتسجيل */
+export function getAuthErrorDetail(err: unknown): string {
+  if (err && typeof err === 'object' && 'response' in err) {
+    const res = (err as { response?: { data?: { detail?: string } } }).response;
+    const detail = res?.data?.detail;
+    return typeof detail === 'string' ? detail : '';
+  }
+  return '';
+}
+
 // تخزين في الذاكرة فقط — لا يُكتب التوكن أو بيانات المستخدم في localStorage
 let inMemoryToken: string | null = null;
 let inMemoryUser: UserData | null = null;

@@ -45,6 +45,12 @@ const ALLOWED_IMAGE_EXTENSIONS = new Set([
   '.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg',
 ]);
 
+/** امتدادات مسموحة في الاستديو: صور + تصميم + PDF */
+const STUDIO_ALLOWED_EXTENSIONS = new Set([
+  '.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg',
+  '.psd', '.pdf', '.ai', '.eps',
+]);
+
 const COMPRESSIBLE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
 
 export interface UploadedFile {
@@ -123,6 +129,10 @@ export async function saveUploadedFile(
 
 export function isImageFile(filename: string): boolean {
   return ALLOWED_IMAGE_EXTENSIONS.has(extname(filename).toLowerCase());
+}
+
+export function isStudioAllowedFile(filename: string): boolean {
+  return STUDIO_ALLOWED_EXTENSIONS.has(extname(filename).toLowerCase());
 }
 
 export async function uploadPlugin(fastify: FastifyInstance): Promise<void> {
