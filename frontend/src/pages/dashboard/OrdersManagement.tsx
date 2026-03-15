@@ -47,6 +47,8 @@ interface OrderDetail {
   id: string;
   order_number: string;
   service_id?: string;
+  service_name_ar?: string;
+  service_name_en?: string;
   customer_name: string;
   customer_phone: string;
   customer_whatsapp?: string;
