@@ -16,12 +16,16 @@ const STUDIO_ALLOWED_LIST = '.psd, .pdf, .ai, .eps, .png, .jpg, .jpeg, .webp, .g
 async function getUploadedFile(request: FastifyRequest): Promise<{ filePath: string; filename: string }> {
   const data = await request.file();
   if (!data) {
-    throw new Error('لم يتم رفع أي ملف');
+    const err = new Error('لم يتم رفع أي ملف') as Error & { statusCode?: number };
+    err.statusCode = 400;
+    throw err;
   }
 
   const filename = data.filename ?? '';
   if (!isStudioAllowedFile(filename)) {
-    throw new Error(`نوع الملف غير مسموح. المسموح: ${STUDIO_ALLOWED_LIST}`);
+    const err = new Error(`نوع الملف غير مسموح. المسموح: ${STUDIO_ALLOWED_LIST}`) as Error & { statusCode?: number };
+    err.statusCode = 400;
+    throw err;
   }
 
   const ext = filename.toLowerCase().includes('.') ? filename.slice(filename.lastIndexOf('.')).toLowerCase() : '.png';
@@ -42,8 +46,9 @@ export async function studioRoutes(app: FastifyInstance): Promise<void> {
       const resultPath = await studioService.removeBackground(filePath);
       return reply.send({ path: resultPath, url: resultPath });
     } catch (err: unknown) {
-      const error = err as Error;
-      return reply.code(500).send({ detail: error.message });
+      const error = err as Error & { statusCode?: number };
+      const code = error.statusCode === 400 ? 400 : 500;
+      return reply.code(code).send({ detail: error.message });
     }
   });
 
@@ -57,8 +62,9 @@ export async function studioRoutes(app: FastifyInstance): Promise<void> {
       const resultPath = await studioService.createPassportPhotos(filePath, { removeBgFirst });
       return reply.send({ path: resultPath, url: resultPath });
     } catch (err: unknown) {
-      const error = err as Error;
-      return reply.code(500).send({ detail: error.message });
+      const error = err as Error & { statusCode?: number };
+      const code = error.statusCode === 400 ? 400 : 500;
+      return reply.code(code).send({ detail: error.message });
     }
   });
 
@@ -87,8 +93,9 @@ export async function studioRoutes(app: FastifyInstance): Promise<void> {
       const resultPath = await studioService.cropRotate(filePath, options);
       return reply.send({ path: resultPath, url: resultPath });
     } catch (err: unknown) {
-      const error = err as Error;
-      return reply.code(500).send({ detail: error.message });
+      const error = err as Error & { statusCode?: number };
+      const code = error.statusCode === 400 ? 400 : 500;
+      return reply.code(code).send({ detail: error.message });
     }
   });
 
@@ -105,13 +112,20 @@ export async function studioRoutes(app: FastifyInstance): Promise<void> {
       const resultPath = await studioService.addDpi(filePath, { dpi });
       return reply.send({ path: resultPath, url: resultPath });
     } catch (err: unknown) {
-      const error = err as Error;
-      return reply.code(500).send({ detail: error.message });
+      const error = err as Error & { statusCode?: number };
+      const code = error.statusCode === 400 ? 400 : 500;
+      return reply.code(code).send({ detail: error.message });
     }
   });
 
   app.post<{
-    Querystring: { filter?: string; blurSigma?: string };
+    Querystring: {
+      filter?: string;
+      blurSigma?: string;
+      brightness?: string;
+      contrast?: string;
+      saturation?: string;
+    };
   }>('/apply-filter', { preHandler: [authenticate] }, async (request, reply) => {
     try {
       const { filePath, filename } = await getUploadedFile(request);
@@ -120,17 +134,21 @@ export async function studioRoutes(app: FastifyInstance): Promise<void> {
       }
       const q = request.query ?? {};
       const filter = (q.filter ?? 'grayscale') as studioService.FilterType;
-      if (!['grayscale', 'sepia', 'blur'].includes(filter)) {
+      if (!['grayscale', 'sepia', 'blur', 'adjust'].includes(filter)) {
         return reply.code(400).send({ detail: 'فلتر غير صالح' });
       }
       const resultPath = await studioService.applyFilter(filePath, {
         filter,
         blurSigma: q.blurSigma ? Number(q.blurSigma) : undefined,
+        brightness: q.brightness != null ? Number(q.brightness) : undefined,
+        contrast: q.contrast != null ? Number(q.contrast) : undefined,
+        saturation: q.saturation != null ? Number(q.saturation) : undefined,
       });
       return reply.send({ path: resultPath, url: resultPath });
     } catch (err: unknown) {
-      const error = err as Error;
-      return reply.code(500).send({ detail: error.message });
+      const error = err as Error & { statusCode?: number };
+      const code = error.statusCode === 400 ? 400 : 500;
+      return reply.code(code).send({ detail: error.message });
     }
   });
 }

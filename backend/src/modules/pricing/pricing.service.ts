@@ -537,3 +537,84 @@ export async function importLegacyFinancialTemplates() {
 
   return { success: true, imported: 1, message: 'تم استيراد قالب مالي مبدئي من النظام القديم' };
 }
+
+/**
+ * اسم قاعدة التسعير الافتراضية عند ملء القاعدة المالية الكاملة.
+ * الأسعار في الشرائح افتراضية؛ تعديل الأرقام يتم من لوحة المالية/التسعير.
+ */
+const DEFAULT_FINANCIAL_RULE_NAME_AR = 'قاعدة تسعير افتراضية';
+
+/** أبعاد تسعير موحّدة: أوضاع الطباعة × أحجام الورق، مع شرائح أسعار افتراضية (قابلة للتعديل لاحقاً من لوحة التسعير) */
+const DEFAULT_FINANCIAL_DIMENSIONS: FinancialDimensionInput[] = (
+  [
+    { print_mode: 'bw' as const, ranges: [0, 10, 1800, 11, 100, 1500, 101, null, 1200] },
+    { print_mode: 'color_normal' as const, ranges: [0, 10, 2800, 11, 100, 2400, 101, null, 2100] },
+    { print_mode: 'color_laser' as const, ranges: [0, 10, 3500, 11, 100, 3200, 101, null, 2900] },
+  ] as const
+).flatMap(({ print_mode, ranges: r }) =>
+  (['A3', 'A4', 'A5', 'A6', 'BOOKLET_A5', 'BOOKLET_B5', 'BOOKLET_A4'] as const).map((size_code) => ({
+    print_mode,
+    size_code,
+    ranges: [
+      { min_value: r[0], max_value: r[1], unit_price: r[2], display_order: 1 },
+      { min_value: r[3], max_value: r[4], unit_price: r[5], display_order: 2 },
+      { min_value: r[6], max_value: r[7], unit_price: r[8], display_order: 3 },
+    ],
+  })),
+);
+
+/**
+ * ملء قاعدة مالية كاملة لجميع الخدمات النشطة/المرئية: قاعدة تسعير افتراضية واحدة لكل خدمة
+ * بأبعاد (print_mode × size_code) وشرائح أسعار افتراضية. يبقى على المدير تعديل الأرقام من لوحة التسعير.
+ */
+export async function seedFullFinancialPricing(): Promise<{
+  created: number;
+  skipped: number;
+  errors: string[];
+}> {
+  const services = await prisma.service.findMany({
+    where: { isActive: true, isVisible: true },
+    select: { id: true, nameAr: true },
+    orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
+  });
+
+  let created = 0;
+  let skipped = 0;
+  const errors: string[] = [];
+
+  for (const service of services) {
+    const existing = await prisma.pricingRule.findFirst({
+      where: {
+        serviceId: service.id,
+        nameAr: DEFAULT_FINANCIAL_RULE_NAME_AR,
+      },
+      select: { id: true },
+    });
+    if (existing) {
+      skipped += 1;
+      continue;
+    }
+
+    try {
+      await createFinancialRule({
+        service_id: service.id,
+        name: DEFAULT_FINANCIAL_RULE_NAME_AR,
+        name_en: 'Default pricing rule',
+        unit_type: 'page',
+        priority: 0,
+        is_active: true,
+        dimensions: DEFAULT_FINANCIAL_DIMENSIONS,
+      });
+      created += 1;
+    } catch (err: unknown) {
+      const msg = err && typeof err === 'object' && 'message' in err ? String((err as { message: unknown }).message) : String(err);
+      errors.push(`${service.nameAr} (${service.id}): ${msg}`);
+    }
+  }
+
+  return {
+    created,
+    skipped,
+    errors,
+  };
+}

@@ -90,6 +90,21 @@ async function main(): Promise<void> {
   if (wfResult.errors?.length) {
     wfResult.errors.forEach((err) => console.warn('[seed] workflow error:', err));
   }
+
+  // ملء قاعدة مالية كاملة لكل خدمة (أبعاد وشرائح أسعار افتراضية؛ يبقى تعديل الأرقام من لوحة التسعير)
+  const { seedFullFinancialPricing } = await import(
+    '../src/modules/pricing/pricing.service.js'
+  );
+  const pricingResult = await seedFullFinancialPricing();
+  console.log(
+    '[seed] القاعدة المالية: created=%s, skipped=%s, errors=%s',
+    pricingResult.created,
+    pricingResult.skipped,
+    pricingResult.errors?.length ?? 0,
+  );
+  if (pricingResult.errors?.length) {
+    pricingResult.errors.forEach((err) => console.warn('[seed] pricing error:', err));
+  }
 }
 
 main()

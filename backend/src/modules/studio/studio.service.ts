@@ -19,11 +19,17 @@ export interface AddDpiOptions {
   dpi: number;
 }
 
-export type FilterType = 'grayscale' | 'sepia' | 'blur';
+export type FilterType = 'grayscale' | 'sepia' | 'blur' | 'adjust';
 
 export interface ApplyFilterOptions {
   filter: FilterType;
   blurSigma?: number;
+  /** 0–200, default 100 (for adjust) */
+  brightness?: number;
+  /** 0–200, default 100 (for adjust) */
+  contrast?: number;
+  /** 0–200, default 100 (for adjust) */
+  saturation?: number;
 }
 
 async function ensureDir(dir: string): Promise<void> {
@@ -197,6 +203,17 @@ export async function applyFilter(
     case 'blur':
       pipeline = pipeline.blur(options.blurSigma ?? 5);
       break;
+    case 'adjust': {
+      const brightness = (options.brightness ?? 100) / 100;
+      const contrast = (options.contrast ?? 100) / 100;
+      const saturation = (options.saturation ?? 100) / 100;
+      pipeline = pipeline.modulate({ brightness, saturation });
+      if (contrast !== 1) {
+        const offset = 128 * (1 - contrast);
+        pipeline = pipeline.linear(contrast, offset);
+      }
+      break;
+    }
     default:
       throw new Error(`Unknown filter: ${options.filter}`);
   }

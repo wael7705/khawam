@@ -65,13 +65,14 @@ export async function buildApp() {
     { prefix: '/api/orders' },
   );
 
-  // Static files (uploads)
+  // Static files (uploads) — CORS so frontend can load studio images from another origin
   await app.register(fastifyStatic, {
     root: config.uploadDir,
     prefix: '/uploads/',
     decorateReply: false,
     setHeaders: (res) => {
       res.setHeader('Cache-Control', 'public, max-age=86400, immutable');
+      res.setHeader('Access-Control-Allow-Origin', config.FRONTEND_URL);
     },
   });
 
@@ -106,7 +107,20 @@ export async function buildApp() {
       await apiApp.register(savedLocationsRoutes, { prefix: '/saved-locations' });
       await apiApp.register(productsRoutes, { prefix: '/products' });
       await apiApp.register(servicesRoutes, { prefix: '/services' });
-      await apiApp.register(adminRoutes, { prefix: '/admin' });
+      // مسارات الإدارة داخل تطبيق فرعي يمرّر multipart كـ raw لتجنب 415 عند تغيير البروكسي لـ Content-Type
+      await apiApp.register(
+        async (adminApp) => {
+          adminApp.addContentTypeParser(
+            'multipart/form-data',
+            { bodyLimit: UPLOAD_BODY_LIMIT },
+            (_req, payload, done) => {
+              done(null, payload);
+            },
+          );
+          await adminApp.register(adminRoutes);
+        },
+        { prefix: '/admin' },
+      );
       await apiApp.register(portfolioRoutes, { prefix: '/portfolio' });
       await apiApp.register(studioRoutes, { prefix: '/studio' });
       await apiApp.register(workflowsRoutes, { prefix: '/workflows' });

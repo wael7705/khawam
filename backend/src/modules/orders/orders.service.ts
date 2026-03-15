@@ -5,6 +5,7 @@ import { emitToStaff, emitToCustomer } from '../../shared/plugins/socket.plugin.
 import { saveUploadedFile } from '../../shared/plugins/upload.plugin.js';
 import { generateOrderNumber } from '../../algorithms/order-number.algorithm.js';
 import { calculateFinancialPrice } from '../pricing/pricing.service.js';
+import { specsToFinancialParams, type FinancialPricingParams } from './specs-to-financial.js';
 import type { PaginatedResponse } from '../../shared/types/index.js';
 
 export interface CreateOrderItemInput {
@@ -77,22 +78,47 @@ export async function createOrder(
   const normalizedItems: Array<CreateOrderItemInput & { resolved_unit_price: number; resolved_total_price: number }> = [];
   for (const item of input.items) {
     if (!item) continue;
-    const specs = (item.specifications ?? {}) as PricingSpecs;
+    const specs = (item.specifications ?? {}) as PricingSpecs & Record<string, unknown>;
     let resolvedUnitPrice = item.unit_price ?? 0;
-    if (specs.service_id && specs.print_mode && specs.size_code && specs.unit_value != null) {
-      const priced = await calculateFinancialPrice({
-        service_id: specs.service_id,
-        print_mode: specs.print_mode,
-        size_code: specs.size_code,
-        unit_value: Number(specs.unit_value),
-        quantity: item.quantity,
-      });
-      resolvedUnitPrice = priced.unitPrice * Number(specs.unit_value);
+    let effectiveSpecs = specs as Record<string, unknown>;
+
+    const hasDirectParams =
+      specs.service_id &&
+      specs.print_mode != null &&
+      specs.size_code != null &&
+      specs.unit_value != null;
+    const financialParams: FinancialPricingParams | null = hasDirectParams
+      ? {
+          print_mode: specs.print_mode as FinancialPricingParams['print_mode'],
+          size_code: specs.size_code as FinancialPricingParams['size_code'],
+          unit_value: Number(specs.unit_value),
+        }
+      : specs.service_id
+        ? specsToFinancialParams(specs)
+        : null;
+
+    if (specs.service_id && financialParams) {
+      const { print_mode: pm, size_code: sc, unit_value: uv } = financialParams;
+      try {
+        const priced = await calculateFinancialPrice({
+          service_id: specs.service_id,
+          print_mode: pm,
+          size_code: sc,
+          unit_value: uv,
+          quantity: item.quantity,
+        });
+        resolvedUnitPrice = priced.unitPrice * uv;
+        effectiveSpecs = { ...specs, print_mode: pm, size_code: sc, unit_value: uv };
+      } catch {
+        // غياب قاعدة أو شريحة مناسبة: نبقى على السعر 0 ولا نرفض الطلب
+      }
     }
+
     const resolvedTotalPrice = resolvedUnitPrice * item.quantity;
     computedTotalAmount += resolvedTotalPrice;
     normalizedItems.push({
       ...item,
+      specifications: effectiveSpecs,
       resolved_unit_price: resolvedUnitPrice,
       resolved_total_price: resolvedTotalPrice,
     });

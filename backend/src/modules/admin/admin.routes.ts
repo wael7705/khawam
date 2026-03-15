@@ -1,5 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { authenticate, requireRole } from '../../shared/middleware/auth.middleware.js';
+import {
+  getMultipartStream,
+  parseMultipleFiles,
+  parseOneFile,
+} from '../../shared/upload/multipart-raw.js';
 import * as adminService from './admin.service.js';
 import { importLegacyServicesSeed } from '../services/services.service.js';
 
@@ -730,20 +735,25 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     },
   );
 
-  // ─── Upload ────────────────────────────────────────────────────────────────
+  // ─── Upload (raw multipart + busboy لتفادي 415 عند تغيير البروكسي لـ Content-Type) ───
+  const ADMIN_UPLOAD_MAX_FILE_SIZE = 50 * 1024 * 1024;
+
   app.post('/upload', { preHandler: adminPreHandler }, async (request, reply) => {
     try {
-      const data = await request.file();
-      if (!data) {
-        return reply.code(400).send({ detail: 'لم يتم إرسال ملف' });
+      const headers: Record<string, string | string[] | undefined> = {};
+      for (const [k, v] of Object.entries(request.headers)) {
+        if (v !== undefined) headers[k.toLowerCase()] = v;
       }
+      const { stream, contentType } = await getMultipartStream(request, headers).catch((e: Error) => {
+        if (e.message === 'MULTIPART_REQUIRED') {
+          return Promise.reject({ statusCode: 415 as const, message: 'ارسل الطلب كـ multipart/form-data بحقل "file".' });
+        }
+        return Promise.reject(e);
+      });
+      const part = await parseOneFile(stream, contentType, headers, 'file', ADMIN_UPLOAD_MAX_FILE_SIZE);
       const query = request.query as { subdir?: 'products' | 'general' };
       const result = await adminService.uploadImage(
-        {
-          filename: data.filename,
-          file: data.file,
-          mimetype: data.mimetype,
-        },
+        { filename: part.filename, file: part.file, mimetype: part.mimetype },
         query.subdir ?? 'general',
       );
       return result;
@@ -755,22 +765,25 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
 
   app.post('/upload/multiple', { preHandler: adminPreHandler }, async (request, reply) => {
     try {
-      const files: Array<{ filename: string; file: NodeJS.ReadableStream; mimetype: string }> = [];
-      const parts = request.files();
-      for await (const part of parts) {
-        if (part.file) {
-          files.push({
-            filename: part.filename,
-            file: part.file,
-            mimetype: part.mimetype ?? 'application/octet-stream',
-          });
-        }
+      const headers: Record<string, string | string[] | undefined> = {};
+      for (const [k, v] of Object.entries(request.headers)) {
+        if (v !== undefined) headers[k.toLowerCase()] = v;
       }
+      const { stream, contentType } = await getMultipartStream(request, headers).catch((e: Error) => {
+        if (e.message === 'MULTIPART_REQUIRED') {
+          return Promise.reject({ statusCode: 415 as const, message: 'ارسل الطلب كـ multipart/form-data بحقل "files".' });
+        }
+        return Promise.reject(e);
+      });
+      const files = await parseMultipleFiles(stream, contentType, headers, 'files', ADMIN_UPLOAD_MAX_FILE_SIZE);
       if (files.length === 0) {
         return reply.code(400).send({ detail: 'لم يتم إرسال ملفات' });
       }
       const query = request.query as { subdir?: 'products' | 'general' };
-      const result = await adminService.uploadMultipleImages(files, query.subdir ?? 'general');
+      const result = await adminService.uploadMultipleImages(
+        files.map((f) => ({ filename: f.filename, file: f.file, mimetype: f.mimetype })),
+        query.subdir ?? 'general',
+      );
       return result;
     } catch (err: unknown) {
       const error = err as { statusCode?: number; message?: string };

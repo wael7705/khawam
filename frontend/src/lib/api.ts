@@ -275,11 +275,20 @@ export const studioAPI = {
     form.append('file', file);
     return uploadFormData<{ path: string; url: string }>('/studio/add-dpi', form, { query: `dpi=${dpi}` });
   },
-  applyFilter: (file: File, filter: 'grayscale' | 'sepia' | 'blur', blurSigma?: number) => {
+  applyFilter: (
+    file: File,
+    filter: 'grayscale' | 'sepia' | 'blur' | 'adjust',
+    options?: { blurSigma?: number; brightness?: number; contrast?: number; saturation?: number },
+  ) => {
     const form = new FormData();
     form.append('file', file);
-    let query = `filter=${filter}`;
-    if (blurSigma != null) query += `&blurSigma=${blurSigma}`;
+    const params = new URLSearchParams();
+    params.set('filter', filter);
+    if (options?.blurSigma != null) params.set('blurSigma', String(options.blurSigma));
+    if (options?.brightness != null) params.set('brightness', String(options.brightness));
+    if (options?.contrast != null) params.set('contrast', String(options.contrast));
+    if (options?.saturation != null) params.set('saturation', String(options.saturation));
+    const query = params.toString() || undefined;
     return uploadFormData<{ path: string; url: string }>('/studio/apply-filter', form, { query });
   },
 };

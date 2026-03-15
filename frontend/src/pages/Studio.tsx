@@ -14,6 +14,7 @@ import {
   Contrast,
   ImageIcon,
   ScanLine,
+  Crop,
 } from 'lucide-react';
 import { useTranslation } from '../i18n';
 import { studioAPI, getStudioImageUrl } from '../lib/api';
@@ -28,6 +29,14 @@ export function Studio() {
   const [error, setError] = useState<string | null>(null);
   const [passportRemoveBg, setPassportRemoveBg] = useState(false);
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
+  const [brightness, setBrightness] = useState(100);
+  const [contrast, setContrast] = useState(100);
+  const [saturation, setSaturation] = useState(100);
+  const [rotate, setRotate] = useState(0);
+  const [cropLeft, setCropLeft] = useState(0);
+  const [cropTop, setCropTop] = useState(0);
+  const [cropWidth, setCropWidth] = useState(0);
+  const [cropHeight, setCropHeight] = useState(0);
   const boardRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
 
@@ -48,6 +57,15 @@ export function Studio() {
     placeholder: isRtl ? 'ارفع صورة لبدء التعديل. Ctrl+P للطباعة.' : 'Upload an image to start. Ctrl+P to print.',
     nonImageUploaded: isRtl ? 'تم رفع الملف. معاينة وتعديل الصور تتطلب صورة (png, jpg, webp, gif, svg).' : 'File uploaded. Preview and image tools require an image (png, jpg, webp, gif, svg).',
     backToSite: isRtl ? 'العودة للموقع' : 'Back to site',
+    adjustFilters: isRtl ? 'السطوع والتباين' : 'Brightness & contrast',
+    applyFilters: isRtl ? 'تطبيق الفلاتر' : 'Apply filters',
+    cropRotate: isRtl ? 'قص وتدوير' : 'Crop & rotate',
+    rotation: isRtl ? 'التدوير' : 'Rotation',
+    applyCropRotate: isRtl ? 'تطبيق القص والتدوير' : 'Apply crop & rotate',
+    presetClassic: isRtl ? 'كلاسيكي' : 'Classic',
+    presetDrama: isRtl ? 'درامي' : 'Drama',
+    presetNeon: isRtl ? 'نيون' : 'Neon',
+    presetCinema: isRtl ? 'سينمائي' : 'Cinema',
   };
 
   const getCurrentFile = useCallback(async (): Promise<File | null> => {
@@ -138,14 +156,52 @@ export function Studio() {
     await runApi('passport', () => studioAPI.passportPhotos(file, passportRemoveBg));
   }, [getCurrentFile, runApi, passportRemoveBg, isRtl]);
 
+  const handleApplyAdjust = useCallback(async () => {
+    const file = await getCurrentFile();
+    if (!file) {
+      setError(isRtl ? 'ارفع صورة أولاً' : 'Upload an image first');
+      return;
+    }
+    await runApi('filter', () =>
+      studioAPI.applyFilter(file, 'adjust', { brightness, contrast, saturation }),
+    );
+  }, [getCurrentFile, runApi, isRtl, brightness, contrast, saturation]);
+
+  const handleCropRotate = useCallback(async () => {
+    const file = await getCurrentFile();
+    if (!file) {
+      setError(isRtl ? 'ارفع صورة أولاً' : 'Upload an image first');
+      return;
+    }
+    const img = imgRef.current;
+    const w = img?.naturalWidth ?? 0;
+    const h = img?.naturalHeight ?? 0;
+    const left = cropWidth > 0 ? cropLeft : 0;
+    const top = cropHeight > 0 ? cropTop : 0;
+    const width = cropWidth > 0 ? cropWidth : w;
+    const height = cropHeight > 0 ? cropHeight : h;
+    if (width < 1 || height < 1) {
+      setError(isRtl ? 'أبعاد غير صالحة أو لم تُحمّل الصورة بعد' : 'Invalid dimensions or image not loaded');
+      return;
+    }
+    await runApi('cropRotate', () =>
+      studioAPI.cropRotate(file, { left, top, width, height, rotate }),
+    );
+    setRotate(0);
+    setCropLeft(0);
+    setCropTop(0);
+    setCropWidth(0);
+    setCropHeight(0);
+  }, [getCurrentFile, runApi, isRtl, cropLeft, cropTop, cropWidth, cropHeight, rotate]);
+
   const handleFilter = useCallback(
-    async (filter: 'grayscale' | 'sepia' | 'blur') => {
+    async (filter: 'grayscale' | 'sepia' | 'blur', options?: { blurSigma?: number; brightness?: number; contrast?: number; saturation?: number }) => {
       const file = await getCurrentFile();
       if (!file) {
         setError(isRtl ? 'ارفع صورة أولاً' : 'Upload an image first');
         return;
       }
-      await runApi('filter', () => studioAPI.applyFilter(file, filter));
+      await runApi('filter', () => studioAPI.applyFilter(file, filter, options));
     },
     [getCurrentFile, runApi, isRtl],
   );
@@ -316,6 +372,72 @@ export function Studio() {
               <ScanLine size={22} />
               {sidebarExpanded && <span className="studio-tool__label">{t.blur}</span>}
             </button>
+            {sidebarExpanded && (
+              <div className="studio-tool-panel">
+                <span className="studio-tool-panel__title">{t.adjustFilters}</span>
+                <label className="studio-tool-panel__row">
+                  <span>{isRtl ? 'السطوع' : 'Brightness'}</span>
+                  <input type="range" min="0" max="200" value={brightness} onChange={(e) => setBrightness(Number(e.target.value))} />
+                  <span>{brightness}%</span>
+                </label>
+                <label className="studio-tool-panel__row">
+                  <span>{isRtl ? 'التباين' : 'Contrast'}</span>
+                  <input type="range" min="0" max="200" value={contrast} onChange={(e) => setContrast(Number(e.target.value))} />
+                  <span>{contrast}%</span>
+                </label>
+                <label className="studio-tool-panel__row">
+                  <span>{isRtl ? 'التشبع' : 'Saturation'}</span>
+                  <input type="range" min="0" max="200" value={saturation} onChange={(e) => setSaturation(Number(e.target.value))} />
+                  <span>{saturation}%</span>
+                </label>
+                <div className="studio-tool-panel__presets">
+                  <button type="button" className="studio-tool-panel__preset" onClick={() => { setBrightness(80); setContrast(120); setSaturation(110); }}>{t.presetClassic}</button>
+                  <button type="button" className="studio-tool-panel__preset" onClick={() => { setBrightness(120); setContrast(130); setSaturation(130); }}>{t.presetDrama}</button>
+                  <button type="button" className="studio-tool-panel__preset" onClick={() => { setBrightness(100); setContrast(90); setSaturation(200); }}>{t.presetNeon}</button>
+                  <button type="button" className="studio-tool-panel__preset" onClick={() => { setBrightness(110); setContrast(120); setSaturation(80); }}>{t.presetCinema}</button>
+                </div>
+                <button type="button" className="studio-tool-panel__apply" onClick={handleApplyAdjust} disabled={!!loading || !imageUrl}>
+                  {loading === 'filter' ? (isRtl ? 'جاري...' : 'Loading...') : t.applyFilters}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="studio-sidebar__group">
+            <span className="studio-sidebar__group-label">{sidebarExpanded && t.cropRotate}</span>
+            <button type="button" className="studio-tool" disabled={!imageUrl} title={t.cropRotate} style={{ cursor: imageUrl ? 'pointer' : 'not-allowed' }}>
+              <Crop size={22} />
+              {sidebarExpanded && <span className="studio-tool__label">{t.cropRotate}</span>}
+            </button>
+            {sidebarExpanded && (
+              <div className="studio-tool-panel">
+                <span className="studio-tool-panel__title">{t.rotation}</span>
+                <label className="studio-tool-panel__row">
+                  <span>{rotate}°</span>
+                  <input type="range" min="-180" max="180" value={rotate} onChange={(e) => setRotate(Number(e.target.value))} />
+                </label>
+                <span className="studio-tool-panel__title">{isRtl ? 'القص (بكسل، 0 = كامل)' : 'Crop (px, 0 = full)'}</span>
+                <label className="studio-tool-panel__row">
+                  <span>Left</span>
+                  <input type="number" min={0} value={cropLeft} onChange={(e) => setCropLeft(Number(e.target.value) || 0)} />
+                </label>
+                <label className="studio-tool-panel__row">
+                  <span>Top</span>
+                  <input type="number" min={0} value={cropTop} onChange={(e) => setCropTop(Number(e.target.value) || 0)} />
+                </label>
+                <label className="studio-tool-panel__row">
+                  <span>W</span>
+                  <input type="number" min={0} value={cropWidth || ''} onChange={(e) => setCropWidth(Number(e.target.value) || 0)} placeholder="0" />
+                </label>
+                <label className="studio-tool-panel__row">
+                  <span>H</span>
+                  <input type="number" min={0} value={cropHeight || ''} onChange={(e) => setCropHeight(Number(e.target.value) || 0)} placeholder="0" />
+                </label>
+                <button type="button" className="studio-tool-panel__apply" onClick={handleCropRotate} disabled={!!loading || !imageUrl}>
+                  {loading === 'cropRotate' ? (isRtl ? 'جاري...' : 'Loading...') : t.applyCropRotate}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="studio-sidebar__group">
