@@ -170,30 +170,33 @@ function parseFirstFileWithContentType(
 
 export async function ordersUploadRoutes(app: FastifyInstance): Promise<void> {
   app.post('/api/orders/upload', async (request, reply) => {
-    const raw = request.raw;
     const headers: Record<string, string | string[] | undefined> = {};
     for (const [k, v] of Object.entries(request.headers)) {
       if (v !== undefined) headers[k.toLowerCase()] = v;
     }
-    // تسجيل الهيدرات للتشخيص (خصوصاً عند 415 خلف الـ proxy)
+    const ct = headers['content-type'];
+    const contentType = typeof ct === 'string' ? ct : Array.isArray(ct) ? ct[0] : '';
+    const hasMultipart = !!contentType && contentType.toLowerCase().includes('multipart');
+    // عند multipart المحلل يضع الـ stream في request.body؛ وإلا نستخدم request.raw
+    const bodyStream =
+      hasMultipart && request.body && typeof (request.body as NodeJS.ReadableStream & { pipe?: unknown })?.pipe === 'function'
+        ? (request.body as NodeJS.ReadableStream)
+        : request.raw;
     const contentTypeReceived = request.headers['content-type'];
     request.log.info(
-      { path: '/api/orders/upload', contentType: contentTypeReceived, hasRaw: !!raw },
+      { path: '/api/orders/upload', contentType: contentTypeReceived, hasBodyStream: !!bodyStream },
       'orders/upload: request received',
     );
 
     let part: { filename: string; file: NodeJS.ReadableStream; mimetype: string };
-    const ct = headers['content-type'];
-    const contentType = typeof ct === 'string' ? ct : Array.isArray(ct) ? ct[0] : '';
-    const hasMultipart = !!contentType && contentType.toLowerCase().includes('multipart');
 
     try {
       if (hasMultipart) {
-        part = await parseFirstFileFromRaw(raw, headers);
+        part = await parseFirstFileFromRaw(bodyStream, headers);
       } else {
         // Fallback: اكتشاف multipart من أول بايتات الجسم (عندما الـ proxy يحذف/يغيّر Content-Type)
-        (raw as NodeJS.ReadableStream).resume?.();
-        const { buffer, combined } = await peekThenStream(raw);
+        (bodyStream as NodeJS.ReadableStream).resume?.();
+        const { buffer, combined } = await peekThenStream(bodyStream);
         const boundary = extractBoundaryFromBody(buffer);
         if (!boundary || !buffer.subarray(0, 2).toString('utf8').startsWith('--')) {
           request.log.warn({ contentType: contentTypeReceived }, 'orders/upload: missing or non-multipart Content-Type and body not multipart');
@@ -241,7 +244,6 @@ export async function ordersUploadRoutes(app: FastifyInstance): Promise<void> {
   });
 
   app.post('/api/orders/upload-batch', async (request, reply) => {
-    const raw = request.raw;
     const headers: Record<string, string | string[] | undefined> = {};
     for (const [k, v] of Object.entries(request.headers)) {
       if (v !== undefined) headers[k.toLowerCase()] = v;
@@ -253,6 +255,10 @@ export async function ordersUploadRoutes(app: FastifyInstance): Promise<void> {
         detail: 'ارسل الطلب كـ multipart/form-data بحقل "file". لا تعيّن Content-Type يدوياً.',
       });
     }
+    const bodyStream =
+      request.body && typeof (request.body as NodeJS.ReadableStream & { pipe?: unknown })?.pipe === 'function'
+        ? (request.body as NodeJS.ReadableStream)
+        : request.raw;
     const results: Awaited<ReturnType<typeof ordersService.uploadOrderFile>>[] = [];
     const busboy = Busboy({
       headers: { ...headers, 'content-type': contentType },
@@ -276,7 +282,7 @@ export async function ordersUploadRoutes(app: FastifyInstance): Promise<void> {
       busboy.on('finish', resolve);
       busboy.on('error', reject);
     });
-    (raw as NodeJS.ReadableStream).pipe(busboy);
+    (bodyStream as NodeJS.ReadableStream).pipe(busboy);
     await finished;
     await Promise.all(filePromises);
     if (results.length === 0) {

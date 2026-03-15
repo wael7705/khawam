@@ -107,10 +107,10 @@ export async function createOrder(
     const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
 
+    // لا نستخدم FOR UPDATE مع COUNT — PostgreSQL يرفض ذلك (0A000). الترتيب داخل الـ transaction كافٍ؛ order_number فريد فالتصادم نادر.
     const seqResult = await tx.$queryRaw<[{ seq: bigint }]>`
       SELECT COUNT(*) + 1 AS seq FROM orders
       WHERE created_at >= ${todayStart} AND created_at < ${todayEnd}
-      FOR UPDATE
     `;
     const sequenceNumber = Number(seqResult[0]?.seq ?? 1);
     const orderNumber = generateOrderNumber(today, sequenceNumber);

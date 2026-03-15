@@ -24,9 +24,12 @@ import { notificationsRoutes } from './modules/notifications/notifications.route
 import { savedLocationsRoutes } from './modules/saved-locations/saved-locations.routes.js';
 import { ordersUploadRoutes } from './modules/orders/orders-upload.routes.js';
 
+const UPLOAD_BODY_LIMIT = 55 * 1024 * 1024; // 55 MB (أكبر من حد الملف 50 MB)
+
 export async function buildApp() {
   const app = Fastify({
     trustProxy: true,
+    bodyLimit: UPLOAD_BODY_LIMIT, // حد الجسم العام (لتجنب رفض الطلبات الكبيرة قبل المعالج)
     logger: {
       level: config.NODE_ENV === 'development' ? 'info' : 'warn',
       transport: config.NODE_ENV === 'development'
@@ -34,6 +37,15 @@ export async function buildApp() {
         : undefined,
     },
   });
+
+  // طبقة الفحص: Fastify يرمي 415 إذا وصل multipart ولا يوجد محلل — نضيف محللاً يمرّر الـ stream فقط
+  app.addContentTypeParser(
+    'multipart/form-data',
+    { bodyLimit: UPLOAD_BODY_LIMIT },
+    (_req, payload, done) => {
+      done(null, payload);
+    },
+  );
 
   // Security
   await app.register(helmet, {
