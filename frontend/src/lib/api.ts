@@ -104,45 +104,67 @@ export interface UploadedFileResult {
   thumbnailUrl?: string;
 }
 
+const getBaseURL = () => import.meta.env.VITE_API_URL as string || 'http://localhost:8000/api';
+
 /**
- * رفع ملف عبر XHR و FormData.
- * لا تعيّن Content-Type — المتصفح يضيف multipart/form-data; boundary=... تلقائياً.
+ * دالة رفع موحدة: إرسال FormData عبر XHR دون تعيين Content-Type أبداً
+ * (المتصفح يضيف multipart/form-data; boundary=... تلقائياً — يمنع 415 خلف البروكسي/الـ CDN).
+ * تُستخدم لجميع رفع الملفات: الطلبات، الاستوديو، الأدمن، إلخ.
  */
-function uploadWithProgress(
-  url: string,
+export function uploadFormData<T = unknown>(
+  path: string,
   formData: FormData,
-  onProgress?: (percent: number) => void,
-): Promise<UploadedFileResult> {
+  options?: { method?: 'POST' | 'PUT'; query?: string; onProgress?: (percent: number) => void },
+): Promise<{ data: T }> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     const token = getAuthToken();
+    const baseURL = getBaseURL();
+    const pathStr = path.startsWith('/') ? path : `/${path}`;
+    const q = options?.query ? (pathStr.includes('?') ? `&${options.query}` : `?${options.query}`) : '';
+    const url = path.startsWith('http') ? path : `${baseURL}${pathStr}${q}`;
 
     xhr.upload.addEventListener('progress', (e) => {
-      if (e.lengthComputable && onProgress) {
-        onProgress(Math.round((e.loaded / e.total) * 100));
+      if (e.lengthComputable && options?.onProgress) {
+        options.onProgress(Math.round((e.loaded / e.total) * 100));
       }
     });
 
     xhr.addEventListener('load', () => {
       if (xhr.status >= 200 && xhr.status < 300) {
-        try { resolve(JSON.parse(xhr.responseText)); } catch { reject(new Error('استجابة غير صالحة')); }
+        try {
+          const data = xhr.responseText ? (JSON.parse(xhr.responseText) as T) : ({} as T);
+          resolve({ data });
+        } catch {
+          reject(new Error('استجابة غير صالحة'));
+        }
       } else {
         try {
-          const err = JSON.parse(xhr.responseText);
-          reject(new Error(err.detail ?? 'فشل الرفع'));
-        } catch { reject(new Error(`خطأ ${xhr.status}`)); }
+          const err = JSON.parse(xhr.responseText) as { detail?: string };
+          reject(new Error(err.detail ?? `خطأ ${xhr.status}`));
+        } catch {
+          reject(new Error(`خطأ ${xhr.status}`));
+        }
       }
     });
 
     xhr.addEventListener('error', () => reject(new Error('انقطع الاتصال أثناء الرفع')));
     xhr.addEventListener('abort', () => reject(new Error('تم إلغاء الرفع')));
 
-    const baseURL = import.meta.env.VITE_API_URL as string || 'http://localhost:8000/api';
-    xhr.open('POST', `${baseURL}${url}`);
+    xhr.open(options?.method ?? 'POST', url);
     xhr.withCredentials = true;
     if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
     xhr.send(formData);
   });
+}
+
+/** رفع ملف طلبات مع تقدم — يستخدم uploadFormData الموحدة. */
+function uploadWithProgress(
+  url: string,
+  formData: FormData,
+  onProgress?: (percent: number) => void,
+): Promise<UploadedFileResult> {
+  return uploadFormData<UploadedFileResult>(url, formData, { onProgress }).then((r) => r.data);
 }
 
 export const ordersAPI = {
@@ -220,18 +242,18 @@ export function getStudioImageUrl(path: string): string {
   return `${studioBaseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
 }
 
-/** لا تُعيّن Content-Type عند إرسال FormData — axios/المتصفح يضيف multipart/form-data مع boundary تلقائياً. */
+/** رفع الاستوديو عبر دالة الرفع الموحدة (XHR) لضمان multipart صحيح وتجنب 415. */
 export const studioAPI = {
   removeBackground: (file: File) => {
     const form = new FormData();
     form.append('file', file);
-    return api.post<{ path: string; url: string }>('/studio/remove-background', form);
+    return uploadFormData<{ path: string; url: string }>('/studio/remove-background', form);
   },
   passportPhotos: (file: File, removeBgFirst?: boolean) => {
     const form = new FormData();
     form.append('file', file);
-    const q = removeBgFirst ? '?removeBgFirst=true' : '';
-    return api.post<{ path: string; url: string }>(`/studio/passport-photos${q}`, form);
+    const query = removeBgFirst ? 'removeBgFirst=true' : undefined;
+    return uploadFormData<{ path: string; url: string }>('/studio/passport-photos', form, { query });
   },
   cropRotate: (
     file: File,
@@ -245,19 +267,19 @@ export const studioAPI = {
     if (options.width != null) params.set('width', String(options.width));
     if (options.height != null) params.set('height', String(options.height));
     if (options.rotate != null) params.set('rotate', String(options.rotate));
-    const q = params.toString();
-    return api.post<{ path: string; url: string }>(`/studio/crop-rotate${q ? `?${q}` : ''}`, form);
+    const query = params.toString() || undefined;
+    return uploadFormData<{ path: string; url: string }>('/studio/crop-rotate', form, { query });
   },
   addDpi: (file: File, dpi: number) => {
     const form = new FormData();
     form.append('file', file);
-    return api.post<{ path: string; url: string }>(`/studio/add-dpi?dpi=${dpi}`, form);
+    return uploadFormData<{ path: string; url: string }>('/studio/add-dpi', form, { query: `dpi=${dpi}` });
   },
   applyFilter: (file: File, filter: 'grayscale' | 'sepia' | 'blur', blurSigma?: number) => {
     const form = new FormData();
     form.append('file', file);
-    let url = `/studio/apply-filter?filter=${filter}`;
-    if (blurSigma != null) url += `&blurSigma=${blurSigma}`;
-    return api.post<{ path: string; url: string }>(url, form);
+    let query = `filter=${filter}`;
+    if (blurSigma != null) query += `&blurSigma=${blurSigma}`;
+    return uploadFormData<{ path: string; url: string }>('/studio/apply-filter', form, { query });
   },
 };
