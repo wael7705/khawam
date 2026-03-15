@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ordersAPI } from '../lib/api';
 import { useTranslation } from '../i18n';
 import { isAuthenticated } from '../lib/auth';
+import { useOrderStatusUpdates } from '../lib/socket';
 import type { OrderListItem, OrderDetail, OrderItemDetail } from '../types/order';
 import { MyOrdersFilters, STATUS_FILTERS, type StatusFilter } from '../components/my-orders/MyOrdersFilters';
 import { MyOrdersList } from '../components/my-orders/MyOrdersList';
@@ -81,6 +82,15 @@ export function MyOrders() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selectedOrder, setSelectedOrder] = useState<OrderDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+
+  useOrderStatusUpdates((payload) => {
+    setOrders((prev) =>
+      prev.map((o) => (o.id === payload.id ? { ...o, status: payload.status } : o)),
+    );
+    setSelectedOrder((prev) =>
+      prev?.id === payload.id ? { ...prev, status: payload.status } : prev,
+    );
+  });
 
   useEffect(() => {
     if (!isAuthenticated()) {

@@ -32,6 +32,29 @@ export const CATALOG_SERVICES: CatalogService[] = [
   { id: 'svc-graphic', slug: 'graphic-design', nameAr: 'التصميم الجرافيكي', nameEn: 'Graphic Design', descriptionAr: 'تصميم شعارات وهوية بصرية ومحتوى إعلاني.', descriptionEn: 'Logo, brand identity, and marketing design services.', category: 'design', subgroup: 'graphic' },
 ];
 
+/**
+ * Normalizes text for search: lowercase and strips Arabic definite article "ال" from the start of each word.
+ * Enables "المحاضرات", "المحاضرة", "محاضرة" to match "طباعة محاضرات".
+ */
+export function normalizeSearchText(text: string): string {
+  const lower = text.trim().toLowerCase();
+  if (!lower) return '';
+  return lower
+    .split(/\s+/)
+    .map((word) => (word.startsWith('ال') ? word.slice(2) : word))
+    .join(' ');
+}
+
+/**
+ * Returns true if the normalized query appears in the normalized service name (Arabic or English).
+ */
+export function serviceMatchesSearch(service: CatalogService, normalizedQuery: string): boolean {
+  if (!normalizedQuery) return true;
+  const normAr = normalizeSearchText(service.nameAr);
+  const normEn = normalizeSearchText(service.nameEn);
+  return normAr.includes(normalizedQuery) || normEn.includes(normalizedQuery);
+}
+
 /** تعيين الفئة الرئيسية → اسم العرض (عربي / إنجليزي) */
 export const CATEGORY_LABELS: Record<ServiceCategory, { ar: string; en: string }> = {
   printing: { ar: 'طباعة', en: 'Printing' },

@@ -3,7 +3,7 @@ import { Search } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from '../i18n';
 import { OrderModal } from '../components/order/OrderModal';
-import { CATALOG_SERVICES, type CatalogService, type ServiceCategory } from '../lib/servicesCatalog';
+import { CATALOG_SERVICES, normalizeSearchText, serviceMatchesSearch, type CatalogService, type ServiceCategory } from '../lib/servicesCatalog';
 import './ServicesCatalog.css';
 
 function clearOrderWizardStorage(): void {
@@ -69,7 +69,7 @@ export function ServicesCatalog({ initialOrderSlug }: ServicesCatalogProps) {
 
   const filtered = useMemo(() => {
     const categoryFilter = resolveCategoryFilter(category);
-    const q = search.trim().toLowerCase();
+    const normalizedQuery = normalizeSearchText(search);
     return CATALOG_SERVICES.filter((service) => {
       if (categoryFilter) {
         if (service.category !== categoryFilter.category) return false;
@@ -80,8 +80,7 @@ export function ServicesCatalog({ initialOrderSlug }: ServicesCatalogProps) {
           if (service.subgroup === 'clothing') return false;
         }
       }
-      if (!q) return true;
-      return service.nameAr.toLowerCase().includes(q) || service.nameEn.toLowerCase().includes(q);
+      return serviceMatchesSearch(service, normalizedQuery);
     });
   }, [category, search]);
 

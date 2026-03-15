@@ -705,6 +705,20 @@ export async function updateOrderStatus(
       },
     }),
   ]);
+
+  const { broadcastOrderStatusUpdate } = await import('../notifications/notifications.service.js');
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { orderNumber: true, customerId: true },
+  });
+  if (order) {
+    broadcastOrderStatusUpdate({
+      id: orderId,
+      order_number: order.orderNumber,
+      status: normalized,
+      customer_id: order.customerId,
+    });
+  }
 }
 
 export async function updateOrderRating(
