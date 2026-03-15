@@ -822,6 +822,31 @@
   background: var(--primary-dark);
 }
 
+.submit-overlay__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.submit-overlay__cancel {
+  padding: 10px 28px;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: 2px solid var(--border);
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.submit-overlay__cancel:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
 /* ── Order Success ── */
 .order-success {
   display: flex;

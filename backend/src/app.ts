@@ -45,8 +45,7 @@ export async function buildApp() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   });
 
-  // File upload support
-  await app.register(uploadPlugin);
+  // Multipart is registered only under /api (with ordersRoutes) to avoid parser conflicts
 
   // Static files (uploads)
   await app.register(fastifyStatic, {

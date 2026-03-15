@@ -204,20 +204,43 @@ export function OrderWizard({
   const [currentStep, setCurrentStep] = useState(0);
   const [orderData, setOrderData] = useState<OrderData>(initialMerged);
 
-  useEffect(() => {
-    if (!initialDeliveryData) return;
-    setOrderData((prev) => ({
+  const deliveryMerge = useCallback(
+    (prev: OrderData) => ({
       ...prev,
-      delivery_address: initialDeliveryData.delivery_address ?? prev.delivery_address,
-      delivery_street: initialDeliveryData.delivery_street ?? prev.delivery_street,
-      delivery_neighborhood: initialDeliveryData.delivery_neighborhood ?? prev.delivery_neighborhood,
-      delivery_building_floor: initialDeliveryData.delivery_building_floor ?? prev.delivery_building_floor,
-      delivery_extra: initialDeliveryData.delivery_extra ?? prev.delivery_extra,
-      delivery_latitude: initialDeliveryData.delivery_latitude ?? null,
-      delivery_longitude: initialDeliveryData.delivery_longitude ?? null,
+      delivery_address: initialDeliveryData!.delivery_address ?? prev.delivery_address,
+      delivery_street: initialDeliveryData!.delivery_street ?? prev.delivery_street,
+      delivery_neighborhood: initialDeliveryData!.delivery_neighborhood ?? prev.delivery_neighborhood,
+      delivery_building_floor: initialDeliveryData!.delivery_building_floor ?? prev.delivery_building_floor,
+      delivery_extra: initialDeliveryData!.delivery_extra ?? prev.delivery_extra,
+      delivery_latitude: initialDeliveryData!.delivery_latitude ?? null,
+      delivery_longitude: initialDeliveryData!.delivery_longitude ?? null,
       delivery_location_confirmed: true,
-    }));
-  }, [initialDeliveryData]);
+    }),
+    [initialDeliveryData],
+  );
+
+  useEffect(() => {
+    if (!initialDeliveryData || !service) return;
+    const key = `orderWizard_${service.slug}`;
+    try {
+      const raw = sessionStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Omit<OrderData, 'files' | 'clothing_designs'> & { files?: unknown; clothing_designs?: unknown };
+        const restored: OrderData = {
+          ...parsed,
+          files: [],
+          clothing_designs: parsed.clothing_designs && typeof parsed.clothing_designs === 'object' ? {} : {},
+          uploadedFileResults: Array.isArray(parsed.uploadedFileResults) ? parsed.uploadedFileResults as UploadedFileResult[] : [],
+        };
+        setOrderData(deliveryMerge(restored));
+        sessionStorage.removeItem(key);
+        return;
+      }
+    } catch {
+      // ignore parse/storage errors
+    }
+    setOrderData((prev) => deliveryMerge(prev));
+  }, [initialDeliveryData, service, deliveryMerge]);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitProgress, setSubmitProgress] = useState(0);
@@ -228,6 +251,16 @@ export function OrderWizard({
   const updateData = useCallback(<K extends keyof OrderData>(key: K, value: OrderData[K]) => {
     setOrderData((prev) => ({ ...prev, [key]: value }));
   }, []);
+
+  const onBeforeNavigateToMap = useCallback(() => {
+    try {
+      const { files: _f, clothing_designs: _c, ...rest } = orderData;
+      const snapshot = { ...rest, files: [], clothing_designs: {} };
+      sessionStorage.setItem(`orderWizard_${service.slug}`, JSON.stringify(snapshot));
+    } catch {
+      // ignore storage errors
+    }
+  }, [orderData, service.slug]);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -431,7 +464,7 @@ export function OrderWizard({
             </p>
           )}
 
-          {renderStep(step, orderData, updateData, locale, service)}
+          {renderStep(step, orderData, updateData, locale, service, onBeforeNavigateToMap)}
         </div>
         );
       })()}
@@ -472,6 +505,12 @@ export function OrderWizard({
           phase={submitPhase}
           error={submitError}
           onRetry={handleSubmit}
+          onCancel={() => {
+            setSubmitting(false);
+            setSubmitError('');
+            onClose?.();
+          }}
+          locale={locale}
         />
       )}
     </div>
@@ -484,6 +523,7 @@ function renderStep(
   updateData: <K extends keyof OrderData>(key: K, value: OrderData[K]) => void,
   locale: 'ar' | 'en',
   service: ServiceInfo,
+  onBeforeNavigateToMap?: () => void,
 ) {
   const config = step.step_config || {};
 
@@ -584,6 +624,7 @@ function renderStep(
           updateData={updateData}
           locale={locale}
           serviceSlug={service.slug}
+          onBeforeNavigateToMap={onBeforeNavigateToMap}
         />
       );
     default:

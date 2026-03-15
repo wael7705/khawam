@@ -10,6 +10,7 @@ interface Props {
   updateData: <K extends keyof OrderData>(key: K, value: OrderData[K]) => void;
   locale: 'ar' | 'en';
   serviceSlug?: string;
+  onBeforeNavigateToMap?: () => void;
 }
 
 function applySavedLocationToOrder(loc: SavedLocationItem, updateData: <K extends keyof OrderData>(key: K, value: OrderData[K]) => void) {
@@ -37,13 +38,14 @@ function getLabelName(label: string, locale: 'ar' | 'en') {
   return locale === 'ar' ? 'أخرى' : 'Other';
 }
 
-export function CustomerInfoStep({ orderData, updateData, locale, serviceSlug }: Props) {
+export function CustomerInfoStep({ orderData, updateData, locale, serviceSlug, onBeforeNavigateToMap }: Props) {
   const navigate = useNavigate();
   const [savedLocations, setSavedLocations] = useState<SavedLocationItem[]>([]);
   const [savedLocationsLoading, setSavedLocationsLoading] = useState(false);
   const deliveryFetchedRef = useRef(false);
 
   const openLocationPage = () => {
+    onBeforeNavigateToMap?.();
     navigate('/order/location', { state: { serviceSlug: serviceSlug ?? '' } });
   };
 

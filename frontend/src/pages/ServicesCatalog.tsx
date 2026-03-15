@@ -6,6 +6,19 @@ import { OrderModal } from '../components/order/OrderModal';
 import { CATALOG_SERVICES, type CatalogService, type ServiceCategory } from '../lib/servicesCatalog';
 import './ServicesCatalog.css';
 
+function clearOrderWizardStorage(): void {
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k != null && k.startsWith('orderWizard_')) keys.push(k);
+    }
+    keys.forEach((k) => sessionStorage.removeItem(k));
+  } catch {
+    // ignore
+  }
+}
+
 function resolveCategoryFilter(
   category: string | undefined,
 ): { category: ServiceCategory; subgroup?: string } | null {
@@ -40,11 +53,19 @@ export function ServicesCatalog({ initialOrderSlug }: ServicesCatalogProps) {
   }, [initialOrderSlug]);
 
   const closeOrderModal = () => {
+    clearOrderWizardStorage();
     setOrderModalSlug(null);
     if (location.pathname.startsWith('/order/')) {
       navigate('/services', { replace: true });
     }
   };
+
+  useEffect(() => {
+    const path = location.pathname;
+    if (path === '/' || path === '/services' || path.startsWith('/services/')) {
+      clearOrderWizardStorage();
+    }
+  }, [location.pathname]);
 
   const filtered = useMemo(() => {
     const categoryFilter = resolveCategoryFilter(category);

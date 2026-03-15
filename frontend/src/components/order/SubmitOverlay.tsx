@@ -3,9 +3,11 @@ interface SubmitOverlayProps {
   phase: 'uploading' | 'preparing' | 'sending';
   error?: string;
   onRetry: () => void;
+  onCancel?: () => void;
+  locale?: 'ar' | 'en';
 }
 
-export function SubmitOverlay({ progress, phase, error, onRetry }: SubmitOverlayProps) {
+export function SubmitOverlay({ progress, phase, error, onRetry, onCancel, locale = 'ar' }: SubmitOverlayProps) {
   const getPhaseText = () => {
     if (error) return '';
     if (progress <= 80) return 'جاري رفع الملفات...';
@@ -26,9 +28,16 @@ export function SubmitOverlay({ progress, phase, error, onRetry }: SubmitOverlay
         {error ? (
           <>
             <p className="submit-overlay__error">{error}</p>
-            <button type="button" className="submit-overlay__retry" onClick={onRetry}>
-              إعادة المحاولة
-            </button>
+            <div className="submit-overlay__actions">
+              <button type="button" className="submit-overlay__retry" onClick={onRetry}>
+                {locale === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+              </button>
+              {onCancel && (
+                <button type="button" className="submit-overlay__cancel" onClick={onCancel}>
+                  {locale === 'ar' ? 'إلغاء الطلب' : 'Cancel order'}
+                </button>
+              )}
+            </div>
           </>
         ) : (
           <>

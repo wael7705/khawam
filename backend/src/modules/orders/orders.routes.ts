@@ -3,8 +3,18 @@ import { authenticate, optionalAuth } from '../../shared/middleware/auth.middlew
 import { isStaffRole } from '../../shared/types/index.js';
 import * as ordersService from './orders.service.js';
 
+function isMultipartRequest(request: { headers: { 'content-type'?: string } }): boolean {
+  const ct = request.headers['content-type'];
+  return typeof ct === 'string' && ct.toLowerCase().trimStart().startsWith('multipart/form-data');
+}
+
 export async function ordersRoutes(app: FastifyInstance): Promise<void> {
   app.post('/upload', async (request, reply) => {
+    if (!isMultipartRequest(request)) {
+      return reply.code(415).send({
+        detail: 'يرجى إرسال الطلب كـ multipart/form-data. تأكد من عدم تعيين هيدر Content-Type يدوياً عند استخدام FormData.',
+      });
+    }
     try {
       const data = await request.file();
       if (!data) {
@@ -23,6 +33,11 @@ export async function ordersRoutes(app: FastifyInstance): Promise<void> {
   });
 
   app.post('/upload-batch', async (request, reply) => {
+    if (!isMultipartRequest(request)) {
+      return reply.code(415).send({
+        detail: 'يرجى إرسال الطلب كـ multipart/form-data. تأكد من عدم تعيين هيدر Content-Type يدوياً عند استخدام FormData.',
+      });
+    }
     try {
       const parts = request.files();
       const results: Awaited<ReturnType<typeof ordersService.uploadOrderFile>>[] = [];
