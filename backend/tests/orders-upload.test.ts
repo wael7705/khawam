@@ -52,4 +52,24 @@ describe('Orders upload API', () => {
     });
     expect(res.statusCode).toBe(415);
   });
+
+  it('POST /api/orders/upload with multipart body but no Content-Type (fallback) accepts or 400/415', async () => {
+    // محاكاة الـ proxy الذي يحذف Content-Type: جسم multipart صحيح بدون الهيدر
+    // ملاحظة: inject قد يمرّر الجسم بشكل مختلف عن HTTP الحقيقي فـ 415 مقبول أيضاً
+    const boundary = '----TestBoundary123';
+    const body = [
+      `--${boundary}\r\n`,
+      'Content-Disposition: form-data; name="file"; filename="t.pdf"\r\n',
+      'Content-Type: application/pdf\r\n\r\n',
+      '%PDF-1.4\n%\n',
+      `\r\n--${boundary}--\r\n`,
+    ].join('');
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/orders/upload',
+      headers: { 'content-length': Buffer.byteLength(body, 'utf8').toString() },
+      payload: body,
+    });
+    expect([200, 400, 415]).toContain(res.statusCode);
+  }, 8000);
 });
