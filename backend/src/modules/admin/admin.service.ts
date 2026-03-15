@@ -1055,6 +1055,31 @@ export async function getCustomerByPhone(phone: string): Promise<Record<string, 
       _sum: { finalAmount: true },
     });
 
+    let totalPaid = 0;
+    let totalRemaining = 0;
+    const ordersMapped = user.orders.map((o: (typeof user.orders)[number]) => {
+      const finalAmount = Number(o.finalAmount);
+      const paidAmount = Number(o.paidAmount ?? 0);
+      const remainingAmount = Number(o.remainingAmount ?? 0);
+      totalPaid += paidAmount;
+      totalRemaining += remainingAmount;
+      return {
+        id: o.id,
+        order_number: o.orderNumber,
+        status: o.status,
+        final_amount: finalAmount,
+        paid_amount: paidAmount,
+        remaining_amount: remainingAmount,
+        is_paid: o.isPaid,
+        created_at: o.createdAt,
+        items: o.items.map((i: (typeof o.items)[number]) => ({
+          product_name: i.productName,
+          quantity: i.quantity,
+          total_price: Number(i.totalPrice ?? 0),
+        })),
+      };
+    });
+
     return {
       id: user.id,
       name: user.name,
@@ -1063,18 +1088,9 @@ export async function getCustomerByPhone(phone: string): Promise<Record<string, 
       notes: user.notes,
       order_count: orderCount,
       total_spent: Number(totalSpent._sum.finalAmount ?? 0),
-      orders: user.orders.map((o: (typeof user.orders)[number]) => ({
-        id: o.id,
-        order_number: o.orderNumber,
-        status: o.status,
-        final_amount: Number(o.finalAmount),
-        created_at: o.createdAt,
-        items: o.items.map((i: (typeof o.items)[number]) => ({
-          product_name: i.productName,
-          quantity: i.quantity,
-          total_price: Number(i.totalPrice ?? 0),
-        })),
-      })),
+      total_paid: totalPaid,
+      total_remaining: totalRemaining,
+      orders: ordersMapped,
     };
   }
 
@@ -1093,9 +1109,32 @@ export async function getCustomerByPhone(phone: string): Promise<Record<string, 
     _sum: { finalAmount: true },
   });
 
-  const orders = ordersByPhone;
+  let totalPaid = 0;
+  let totalRemaining = 0;
+  const ordersMapped = ordersByPhone.map((o: (typeof ordersByPhone)[number]) => {
+    const finalAmount = Number(o.finalAmount);
+    const paidAmount = Number(o.paidAmount ?? 0);
+    const remainingAmount = Number(o.remainingAmount ?? 0);
+    totalPaid += paidAmount;
+    totalRemaining += remainingAmount;
+    return {
+      id: o.id,
+      order_number: o.orderNumber,
+      status: o.status,
+      final_amount: finalAmount,
+      paid_amount: paidAmount,
+      remaining_amount: remainingAmount,
+      is_paid: o.isPaid,
+      created_at: o.createdAt,
+      items: o.items.map((i: (typeof o.items)[number]) => ({
+        product_name: i.productName,
+        quantity: i.quantity,
+        total_price: Number(i.totalPrice ?? 0),
+      })),
+    };
+  });
 
-  const firstOrder = orders[0];
+  const firstOrder = ordersByPhone[0];
   return {
     id: null,
     name: firstOrder?.customerName ?? null,
@@ -1104,18 +1143,9 @@ export async function getCustomerByPhone(phone: string): Promise<Record<string, 
     notes: null,
     order_count: orderCount,
     total_spent: Number(totalSpent._sum.finalAmount ?? 0),
-    orders: orders.map((o: (typeof orders)[number]) => ({
-      id: o.id,
-      order_number: o.orderNumber,
-      status: o.status,
-      final_amount: Number(o.finalAmount),
-      created_at: o.createdAt,
-      items: o.items.map((i: (typeof o.items)[number]) => ({
-        product_name: i.productName,
-        quantity: i.quantity,
-        total_price: Number(i.totalPrice ?? 0),
-      })),
-    })),
+    total_paid: totalPaid,
+    total_remaining: totalRemaining,
+    orders: ordersMapped,
   };
 }
 

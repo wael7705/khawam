@@ -7,11 +7,45 @@
   padding-bottom: 3rem;
 }
 
+.my-orders__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
 .my-orders__title {
   font-family: var(--font-display);
   font-size: 1.75rem;
   color: var(--secondary);
-  margin-bottom: 1.25rem;
+  margin: 0;
+}
+
+.my-orders__whatsapp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
+}
+
+.my-orders__whatsapp-btn:hover {
+  background: #25d366;
+  border-color: #25d366;
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.my-orders__whatsapp-btn svg {
+  flex-shrink: 0;
 }
 
 .my-orders__controls {

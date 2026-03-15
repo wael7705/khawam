@@ -128,7 +128,7 @@ function getBodyStream(request: { body: unknown; raw: unknown }): NodeJS.Readabl
 }
 
 export async function ordersUploadRoutes(app: FastifyInstance): Promise<void> {
-  app.post('/orders/upload', async (request, reply) => {
+  app.post('/upload', async (request, reply) => {
     const headers: Record<string, string | string[] | undefined> = {};
     for (const [k, v] of Object.entries(request.headers)) {
       if (v !== undefined) headers[k.toLowerCase()] = v;
@@ -182,7 +182,7 @@ export async function ordersUploadRoutes(app: FastifyInstance): Promise<void> {
     }
   });
 
-  app.post('/orders/upload-batch', async (request, reply) => {
+  app.post('/upload-batch', async (request, reply) => {
     const headers: Record<string, string | string[] | undefined> = {};
     for (const [k, v] of Object.entries(request.headers)) {
       if (v !== undefined) headers[k.toLowerCase()] = v;

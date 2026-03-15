@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Eye, EyeOff, Plus, Star, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Eye, EyeOff, Plus, Star, Trash2, Upload } from 'lucide-react';
 import { dashboardApi, type ManagedWork, type ManagedWorkPayload } from '../../lib/dashboard-api';
 import { useTranslation } from '../../i18n';
 import './WorksManagement.css';
@@ -34,6 +34,10 @@ export function WorksManagement() {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState<WorkFormState>(initialForm);
+  const [uploadingMain, setUploadingMain] = useState(false);
+  const [uploadingSub, setUploadingSub] = useState(false);
+  const mainImageInputRef = useRef<HTMLInputElement>(null);
+  const subImagesInputRef = useRef<HTMLInputElement>(null);
 
   const labels = useMemo(
     () =>
@@ -45,7 +49,9 @@ export function WorksManagement() {
             loading: 'تحميل الأعمال...',
             empty: 'لا توجد أعمال حالياً',
             mainImage: 'الصورة الرئيسية',
+            uploadMain: 'رفع صورة رئيسية',
             subImages: 'الصور الفرعية (رابط بكل سطر)',
+            uploadSub: 'رفع صور فرعية',
             featured: 'عمل مميز',
             openCreate: 'إنشاء عمل جديد',
             save: 'حفظ العمل',
@@ -61,7 +67,9 @@ export function WorksManagement() {
             loading: 'Loading works...',
             empty: 'No works found',
             mainImage: 'Main image',
+            uploadMain: 'Upload main image',
             subImages: 'Sub images (one URL per line)',
+            uploadSub: 'Upload sub images',
             featured: 'Featured work',
             openCreate: 'Create new work',
             save: 'Save work',
@@ -125,6 +133,36 @@ export function WorksManagement() {
     await loadWorks();
   };
 
+  const handleMainImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingMain(true);
+    try {
+      const { url } = await dashboardApi.uploadAdminFile(file, 'general');
+      setForm((p) => ({ ...p, image_url: url }));
+    } finally {
+      setUploadingMain(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleSubImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files?.length) return;
+    setUploadingSub(true);
+    try {
+      const { urls } = await dashboardApi.uploadAdminMultiple(Array.from(files), 'general');
+      const newLines = urls.join('\n');
+      setForm((p) => ({
+        ...p,
+        images_raw: p.images_raw ? `${p.images_raw.trim()}\n${newLines}` : newLines,
+      }));
+    } finally {
+      setUploadingSub(false);
+      e.target.value = '';
+    }
+  };
+
   return (
     <div className="works-page">
       <header className="works-page__head">
@@ -150,11 +188,30 @@ export function WorksManagement() {
               <input value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder="Title (EN)" />
               <input value={form.category_ar} onChange={(e) => setForm((p) => ({ ...p, category_ar: e.target.value }))} placeholder="التصنيف (AR)" />
               <input value={form.category} onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))} placeholder="Category (EN)" />
-              <input
-                value={form.image_url}
-                onChange={(e) => setForm((p) => ({ ...p, image_url: e.target.value }))}
-                placeholder={labels.mainImage}
-              />
+              <div className="works-create__field-row">
+                <input
+                  value={form.image_url}
+                  onChange={(e) => setForm((p) => ({ ...p, image_url: e.target.value }))}
+                  placeholder={labels.mainImage}
+                />
+                <input
+                  ref={mainImageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="works-create__hidden-input"
+                  aria-hidden
+                  onChange={handleMainImageUpload}
+                />
+                <button
+                  type="button"
+                  className="works-btn works-btn--secondary"
+                  disabled={uploadingMain}
+                  onClick={() => mainImageInputRef.current?.click()}
+                >
+                  <Upload size={14} />
+                  {uploadingMain ? (locale === 'ar' ? 'جاري الرفع...' : 'Uploading...') : labels.uploadMain}
+                </button>
+              </div>
               <label className="works-create__check">
                 <input
                   type="checkbox"
@@ -169,12 +226,32 @@ export function WorksManagement() {
                 placeholder="الوصف (AR)"
               />
               <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Description (EN)" />
-              <textarea
-                className="works-create__sub-images"
-                value={form.images_raw}
-                onChange={(e) => setForm((p) => ({ ...p, images_raw: e.target.value }))}
-                placeholder={labels.subImages}
-              />
+              <div className="works-create__sub-images-wrap">
+                <textarea
+                  className="works-create__sub-images"
+                  value={form.images_raw}
+                  onChange={(e) => setForm((p) => ({ ...p, images_raw: e.target.value }))}
+                  placeholder={labels.subImages}
+                />
+                <input
+                  ref={subImagesInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="works-create__hidden-input"
+                  aria-hidden
+                  onChange={handleSubImagesUpload}
+                />
+                <button
+                  type="button"
+                  className="works-btn works-btn--secondary"
+                  disabled={uploadingSub}
+                  onClick={() => subImagesInputRef.current?.click()}
+                >
+                  <Upload size={14} />
+                  {uploadingSub ? (locale === 'ar' ? 'جاري الرفع...' : 'Uploading...') : labels.uploadSub}
+                </button>
+              </div>
             </div>
             <button type="button" className="works-btn works-btn--primary" onClick={() => void handleCreate()}>
               <Plus size={14} />

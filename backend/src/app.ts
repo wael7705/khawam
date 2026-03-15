@@ -50,7 +50,7 @@ export async function buildApp() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   });
 
-  // مسارات رفع الطلبات في نطاق فرعي مع محلل pass-through لـ multipart (لا نعتمد على request.raw فقط لأن Fastify يرمي 415 عند عدم وجود محلل)
+  // مسارات رفع الطلبات فقط تحت /api/orders حتى لا تلتقط كل طلبات /api (وإلا لا تصل طلبات الاستديو /api/studio)
   await app.register(
     async (uploadApp) => {
       uploadApp.addContentTypeParser(
@@ -62,7 +62,7 @@ export async function buildApp() {
       );
       await uploadApp.register(ordersUploadRoutes);
     },
-    { prefix: '/api' },
+    { prefix: '/api/orders' },
   );
 
   // Static files (uploads)

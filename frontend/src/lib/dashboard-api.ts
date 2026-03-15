@@ -106,6 +106,31 @@ export interface CustomerSummary {
   total_spent: number;
 }
 
+export interface CustomerOrderItem {
+  id: string;
+  order_number: string;
+  status: string;
+  final_amount: number;
+  paid_amount?: number;
+  remaining_amount?: number;
+  is_paid?: boolean;
+  created_at: string;
+  items: Array<{ product_name: string; quantity: number; total_price: number }>;
+}
+
+export interface CustomerDetail {
+  id: string | null;
+  name: string | null;
+  phone: string | null;
+  email: string | null;
+  notes: string | null;
+  order_count: number;
+  total_spent: number;
+  total_paid?: number;
+  total_remaining?: number;
+  orders: CustomerOrderItem[];
+}
+
 export interface PricingRuleSummary {
   id: string;
   nameAr: string;
@@ -867,8 +892,18 @@ export const dashboardApi = {
       return data;
     }, () => buildMockOrdersResponse(query));
   },
+  getOrderById: async (orderId: string): Promise<Record<string, unknown>> => {
+    const { data } = await api.get<Record<string, unknown>>(`/admin/orders/${orderId}`);
+    return data;
+  },
   updateOrderStatus: async (orderId: string, status: string, notes?: string): Promise<void> => {
     await api.put(`/admin/orders/${orderId}/status`, { status, notes });
+  },
+  updateOrderStaffNotes: async (orderId: string, staff_notes: string): Promise<void> => {
+    await api.put(`/admin/orders/${orderId}/staff-notes`, { staff_notes });
+  },
+  updateOrderPaid: async (orderId: string, payload: { is_paid: boolean; paid_amount?: number }): Promise<void> => {
+    await api.put(`/admin/orders/${orderId}/paid`, payload);
   },
   getAnalyticsStats: async (query?: DateRangeQuery): Promise<AnalyticsStatsResponse> => {
     return tryOrMock(async () => {
@@ -907,6 +942,13 @@ export const dashboardApi = {
       const { data } = await api.get<{ customers: CustomerSummary[] }>('/admin/customers');
       return data.customers;
     }, () => buildMockCustomers());
+  },
+  getCustomerByPhone: async (phone: string): Promise<CustomerDetail | null> => {
+    const { data } = await api.get<CustomerDetail | null>(`/admin/customers/${encodeURIComponent(phone)}`);
+    return data;
+  },
+  updateCustomerNotes: async (phone: string, notes: string): Promise<void> => {
+    await api.put(`/admin/customers/${encodeURIComponent(phone)}/notes`, { notes });
   },
   getPricingRules: async (): Promise<PricingRuleSummary[]> => {
     return tryOrMock(async () => {
@@ -1044,6 +1086,18 @@ export const dashboardApi = {
       const { data } = await api.post<{ success: boolean; created: number; skipped: number }>('/admin/works/import-legacy-once');
       return data;
     }, () => ({ success: true, created: 0, skipped: mockWorks.length }));
+  },
+  uploadAdminFile: async (file: File, subdir: 'products' | 'general' = 'general'): Promise<{ url: string }> => {
+    const form = new FormData();
+    form.append('file', file);
+    const { data } = await api.post<{ url: string; filename: string }>(`/admin/upload?subdir=${subdir}`, form);
+    return { url: data.url };
+  },
+  uploadAdminMultiple: async (files: File[], subdir: 'products' | 'general' = 'general'): Promise<{ urls: string[] }> => {
+    const form = new FormData();
+    files.forEach((f) => form.append('files', f));
+    const { data } = await api.post<{ urls: string[]; filenames: string[] }>(`/admin/upload/multiple?subdir=${subdir}`, form);
+    return { urls: data.urls };
   },
   createFinancialRule: async (payload: FinancialRulePayload): Promise<FinancialRule> => {
     return tryOrMock(async () => {

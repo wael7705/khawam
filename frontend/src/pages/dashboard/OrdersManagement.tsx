@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Search, X, FileText, Download, MapPin, Phone, User, Package, Truck, ExternalLink, Copy, Share2, ChevronRight, Ban, Check } from 'lucide-react';
+import { Search, X, FileText, Download, MapPin, Phone, User, Package, Truck, ExternalLink, Copy, Share2, ChevronRight, Ban, Check, StickyNote, Banknote } from 'lucide-react';
 import {
   advanceMockOrderStatus,
   canUseDashboardMockData,
@@ -57,6 +57,9 @@ interface OrderDetail {
   final_amount: number;
   total_amount?: number;
   is_paid: boolean;
+  paid_amount?: number;
+  remaining_amount?: number;
+  staff_notes?: string;
   created_at: string;
   notes?: string;
   delivery_type?: string;
@@ -142,6 +145,11 @@ export function OrdersManagement() {
   const [selectedOrder, setSelectedOrder] = useState<OrderDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState('');
+  const [staffNotesDraft, setStaffNotesDraft] = useState('');
+  const [savingStaffNotes, setSavingStaffNotes] = useState(false);
+  const [paymentIsPaid, setPaymentIsPaid] = useState(true);
+  const [paymentPaidAmount, setPaymentPaidAmount] = useState(0);
+  const [savingPayment, setSavingPayment] = useState(false);
 
   const labels = useMemo(
     () =>
@@ -263,6 +271,14 @@ export function OrdersManagement() {
     setPage(1);
   }, [status, query]);
 
+  useEffect(() => {
+    if (selectedOrder) {
+      setStaffNotesDraft(selectedOrder.staff_notes ?? '');
+      setPaymentIsPaid(selectedOrder.is_paid);
+      setPaymentPaidAmount(selectedOrder.paid_amount ?? selectedOrder.final_amount ?? 0);
+    }
+  }, [selectedOrder]);
+
   const handleAdvanceStatus = async (orderId: string, nextStatus: string) => {
     try {
       if (useMockData) {
@@ -297,6 +313,37 @@ export function OrdersManagement() {
     }
   };
 
+  const handleSaveStaffNotes = async () => {
+    if (!selectedOrder || useMockData) return;
+    setSavingStaffNotes(true);
+    try {
+      await dashboardApi.updateOrderStaffNotes(selectedOrder.id, staffNotesDraft);
+      setSelectedOrder((prev) => (prev ? { ...prev, staff_notes: staffNotesDraft } : null));
+    } catch {
+      setDetailError(locale === 'ar' ? 'فشل حفظ الملاحظات' : 'Failed to save notes');
+    } finally {
+      setSavingStaffNotes(false);
+    }
+  };
+
+  const handleSavePayment = async () => {
+    if (!selectedOrder || useMockData) return;
+    setSavingPayment(true);
+    try {
+      const isPaid = paymentIsPaid;
+      const paidAmount = isPaid ? (selectedOrder.final_amount ?? 0) : paymentPaidAmount;
+      await dashboardApi.updateOrderPaid(selectedOrder.id, { is_paid: isPaid, paid_amount: paidAmount });
+      const remaining = (selectedOrder.final_amount ?? 0) - paidAmount;
+      setSelectedOrder((prev) =>
+        prev ? { ...prev, is_paid: isPaid, paid_amount: paidAmount, remaining_amount: remaining } : null
+      );
+    } catch {
+      setDetailError(locale === 'ar' ? 'فشل تحديث التسديد' : 'Failed to update payment');
+    } finally {
+      setSavingPayment(false);
+    }
+  };
+
   function normalizeOrderDetail(raw: Record<string, unknown>): OrderDetail {
     const items = (raw.items as OrderItemDetail[] | undefined) ?? [];
     const firstItem = items[0];
@@ -320,6 +367,9 @@ export function OrdersManagement() {
       final_amount: Number(raw.final_amount ?? 0),
       total_amount: raw.total_amount != null ? Number(raw.total_amount) : undefined,
       is_paid: Boolean(raw.is_paid),
+      paid_amount: raw.paid_amount != null ? Number(raw.paid_amount) : undefined,
+      remaining_amount: raw.remaining_amount != null ? Number(raw.remaining_amount) : undefined,
+      staff_notes: raw.staff_notes as string | undefined,
       created_at: (raw.created_at as string) ?? '',
       notes: raw.notes as string | undefined,
       delivery_type: raw.delivery_type as string | undefined,
@@ -348,7 +398,9 @@ export function OrdersManagement() {
     setDetailLoading(true);
     setSelectedOrder(null);
     try {
-      const { data } = await api.get(`/orders/${orderId}`);
+      const data = useMockData
+        ? await api.get(`/orders/${orderId}`).then((r) => r.data as Record<string, unknown>)
+        : await dashboardApi.getOrderById(orderId);
       setSelectedOrder(normalizeOrderDetail(data as Record<string, unknown>));
     } catch {
       if (useMockData) {
@@ -795,6 +847,93 @@ export function OrdersManagement() {
                     <span>{locale === 'ar' ? 'الإجمالي' : 'Total'}</span>
                     <strong>{selectedOrder.final_amount.toLocaleString()} {locale === 'ar' ? 'ل.س' : 'SYP'}</strong>
                   </div>
+
+                  {/* Staff notes */}
+                  {!useMockData && (
+                    <div className="detail-section">
+                      <h4 className="detail-subtitle">
+                        <StickyNote size={18} />
+                        {locale === 'ar' ? 'ملاحظات الموظفين' : 'Staff notes'}
+                      </h4>
+                      <textarea
+                        className="detail-staff-notes"
+                        value={staffNotesDraft}
+                        onChange={(e) => setStaffNotesDraft(e.target.value)}
+                        placeholder={locale === 'ar' ? 'ملاحظات داخلية...' : 'Internal notes...'}
+                        rows={3}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={handleSaveStaffNotes}
+                        disabled={savingStaffNotes}
+                      >
+                        {savingStaffNotes ? (locale === 'ar' ? 'جاري الحفظ...' : 'Saving...') : locale === 'ar' ? 'حفظ' : 'Save'}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Payment */}
+                  {!useMockData && (
+                    <div className="detail-section">
+                      <h4 className="detail-subtitle">
+                        <Banknote size={18} />
+                        {locale === 'ar' ? 'التسديد' : 'Payment'}
+                      </h4>
+                      <div className="detail-payment-row">
+                        <span>{locale === 'ar' ? 'الإجمالي' : 'Total'}</span>
+                        <strong>{selectedOrder.final_amount.toLocaleString()} {locale === 'ar' ? 'ل.س' : 'SYP'}</strong>
+                      </div>
+                      <div className="detail-payment-row">
+                        <span>{locale === 'ar' ? 'المدفوع' : 'Paid'}</span>
+                        <strong>{(selectedOrder.paid_amount ?? 0).toLocaleString()} {locale === 'ar' ? 'ل.س' : 'SYP'}</strong>
+                      </div>
+                      <div className="detail-payment-row">
+                        <span>{locale === 'ar' ? 'المتبقي' : 'Remaining'}</span>
+                        <strong>{(selectedOrder.remaining_amount ?? selectedOrder.final_amount ?? 0).toLocaleString()} {locale === 'ar' ? 'ل.س' : 'SYP'}</strong>
+                      </div>
+                      <div className="detail-payment-actions">
+                        <label className="detail-radio">
+                          <input
+                            type="radio"
+                            name="payment-status"
+                            checked={paymentIsPaid}
+                            onChange={() => setPaymentIsPaid(true)}
+                          />
+                          {locale === 'ar' ? 'تم التسديد' : 'Paid'}
+                        </label>
+                        <label className="detail-radio">
+                          <input
+                            type="radio"
+                            name="payment-status"
+                            checked={!paymentIsPaid}
+                            onChange={() => setPaymentIsPaid(false)}
+                          />
+                          {locale === 'ar' ? 'لم يتم التسديد' : 'Not paid'}
+                        </label>
+                      </div>
+                      {!paymentIsPaid && (
+                        <div className="detail-payment-input">
+                          <label>{locale === 'ar' ? 'المبلغ المدفوع' : 'Amount paid'}</label>
+                          <input
+                            type="number"
+                            min={0}
+                            max={selectedOrder.final_amount ?? 0}
+                            value={paymentPaidAmount}
+                            onChange={(e) => setPaymentPaidAmount(Number(e.target.value) || 0)}
+                          />
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={handleSavePayment}
+                        disabled={savingPayment}
+                      >
+                        {savingPayment ? (locale === 'ar' ? 'جاري الحفظ...' : 'Saving...') : locale === 'ar' ? 'حفظ' : 'Save'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </>
             )}

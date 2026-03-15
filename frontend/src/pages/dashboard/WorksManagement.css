@@ -44,8 +44,42 @@
   min-height: 70px;
 }
 
+.works-create__field-row {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.works-create__field-row input[type="text"] {
+  flex: 1;
+  min-width: 180px;
+}
+
+.works-create__hidden-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
 .works-create__sub-images {
   grid-column: 1 / -1;
+}
+
+.works-create__sub-images-wrap {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.works-btn--secondary {
+  border-color: var(--border);
+  color: var(--text);
 }
 
 .works-create__check {

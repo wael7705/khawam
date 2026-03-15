@@ -708,6 +708,67 @@
   color: var(--primary);
 }
 
+.detail-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-staff-notes {
+  width: 100%;
+  font-size: 0.9rem;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  resize: vertical;
+  min-height: 72px;
+}
+
+.detail-payment-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.detail-payment-row strong {
+  color: var(--primary);
+}
+
+.detail-payment-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.detail-radio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.detail-payment-input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.detail-payment-input label {
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.detail-payment-input input {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  max-width: 160px;
+}
+
 @media (max-width: 640px) {
   .orders-summary {
     grid-template-columns: 1fr;
