@@ -163,7 +163,7 @@ export async function ordersUploadRoutes(app: FastifyInstance): Promise<void> {
     }
 
     try {
-      const part = await parseOneFile(stream, contentType, headers);
+      const part = await parseOneFile(stream, contentType ?? 'application/octet-stream', headers);
       if (part.filename === 'upload' && !part.file) {
         return reply.code(400).send({ detail: 'لم يتم إرسال ملف' });
       }
@@ -193,7 +193,7 @@ export async function ordersUploadRoutes(app: FastifyInstance): Promise<void> {
 
     if (!ctStr || !ctStr.toLowerCase().includes('multipart/form-data')) {
       try {
-        const { buffer, rest } = await readFirstChunk(raw);
+        const { buffer, rest } = await readFirstChunk(stream);
         stream = rest;
         const boundary = getBoundaryFromPeek(buffer);
         if (!boundary) {
