@@ -38,14 +38,8 @@ export async function buildApp() {
     },
   });
 
-  // طبقة الفحص: Fastify يرمي 415 إذا وصل multipart ولا يوجد محلل — نضيف محللاً يمرّر الـ stream فقط
-  app.addContentTypeParser(
-    'multipart/form-data',
-    { bodyLimit: UPLOAD_BODY_LIMIT },
-    (_req, payload, done) => {
-      done(null, payload);
-    },
-  );
+  // multipart مرة واحدة على الجذر — تجنب FST_ERR_CTP_ALREADY_PRESENT (لا تسجّله مرة ثانية داخل apiApp)
+  await app.register(uploadPlugin);
 
   // Security
   await app.register(helmet, {
@@ -59,7 +53,7 @@ export async function buildApp() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   });
 
-  // مسارات الرفع على الجذر — بدون تسجيل multipart هنا حتى لا يستهلك أحد جسم الطلب قبل المعالج
+  // مسارات رفع الطلبات على الجذر — تستخدم request.file() من uploadPlugin
   await app.register(ordersUploadRoutes);
 
   // Static files (uploads)
@@ -80,10 +74,8 @@ export async function buildApp() {
   app.get('/api/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 
   // API routes: rate limit applies only here (not to static files or health)
-  // multipart مسجّل هنا فقط — طلبات /api/orders/upload تُعالج على الجذر فلا يستهلك جسمها
   await app.register(
     async (apiApp) => {
-      await apiApp.register(uploadPlugin);
       await apiApp.register(rateLimit, {
         max: 400,
         timeWindow: '1 minute',
