@@ -14,6 +14,7 @@ import { Transform } from 'node:stream';
 import { config } from '../../config/index.js';
 import { createId } from '../utils/nanoid.js';
 import { validateMagicBytes, compressImage, getFileSizeLimit } from '../utils/file-validation.js';
+import { MAX_FILE_SIZE_BYTES, MAX_FILES_PER_REQUEST } from '../upload/upload.constants.js';
 
 function createSizeLimitStream(maxBytes: number): Transform {
   let total = 0;
@@ -30,7 +31,6 @@ function createSizeLimitStream(maxBytes: number): Transform {
 }
 
 const UPLOAD_DIR = config.uploadDir;
-const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
 /** مسموح به: مستندات (PDF, Word, Excel, PowerPoint)، صور (png, jpg, jpeg, webp, gif, svg)، تصميم (ai, psd, eps)، أوتوكاد (dwg, dxf) */
 const ALLOWED_EXTENSIONS = new Set([
@@ -128,8 +128,8 @@ export function isImageFile(filename: string): boolean {
 export async function uploadPlugin(fastify: FastifyInstance): Promise<void> {
   await fastify.register(multipart, {
     limits: {
-      fileSize: MAX_FILE_SIZE,
-      files: 20,
+      fileSize: MAX_FILE_SIZE_BYTES,
+      files: MAX_FILES_PER_REQUEST,
     },
   });
 }

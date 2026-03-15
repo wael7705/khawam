@@ -29,6 +29,11 @@ pnpm db:migrate  # للإنتاج
 
 ## رفع الملفات
 
+### خطأ: 415 Unsupported Media Type
+- **السبب:** الطلب لا يصل كـ `multipart/form-data` أو الـ proxy يغيّر الهيدرات.
+- **الحل:** مسارات الرفع مسجّلة على **نفس الـ app** الذي عليه `@fastify/multipart` (الجذر) في `app.ts`؛ الملفات: `orders-upload.routes.ts` و `shared/plugins/upload.plugin.ts`.
+- **العميل:** استخدم `FormData` مع حقل `file` ولا تعيّن `Content-Type` (المتصفح يضيف boundary تلقائياً). ثوابت الرفع في `frontend/src/lib/upload.ts`.
+
 ### خطأ: نوع الملف غير مسموح
 - الأنواع المسموحة: PDF, DOC, DOCX, JPG, JPEG, PNG, WEBP, GIF, SVG, AI, PSD, EPS
 - الحد الأقصى: 50MB

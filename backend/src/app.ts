@@ -22,6 +22,7 @@ import { heroSlidesRoutes } from './modules/hero-slides/hero-slides.routes.js';
 import { analyticsRoutes } from './modules/analytics/analytics.routes.js';
 import { notificationsRoutes } from './modules/notifications/notifications.routes.js';
 import { savedLocationsRoutes } from './modules/saved-locations/saved-locations.routes.js';
+import { ordersUploadRoutes } from './modules/orders/orders-upload.routes.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -46,6 +47,10 @@ export async function buildApp() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   });
 
+  // Multipart على الجذر أولاً — مسارات الرفع تُسجّل على الجذر لتجنب 415 خلف proxy
+  await app.register(uploadPlugin);
+  await app.register(ordersUploadRoutes);
+
   // Static files (uploads)
   await app.register(fastifyStatic, {
     root: config.uploadDir,
@@ -66,8 +71,6 @@ export async function buildApp() {
   // API routes: rate limit applies only here (not to static files or health)
   await app.register(
     async (apiApp) => {
-      // Multipart must be registered on apiApp so POST /api/orders/upload (and other /api uploads) get the parser
-      await apiApp.register(uploadPlugin);
       await apiApp.register(rateLimit, {
         max: 400,
         timeWindow: '1 minute',

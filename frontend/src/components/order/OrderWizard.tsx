@@ -16,6 +16,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import { ordersAPI, type UploadedFileResult } from '../../lib/api';
+import { isAllowedFile } from '../../lib/upload';
 import { getServiceShortName } from '../../lib/servicesCatalog';
 import { FileUploadStep } from './steps/FileUploadStep';
 import { PrintOptionsStep } from './steps/PrintOptionsStep';
@@ -295,6 +296,18 @@ export function OrderWizard({
     setSubmitError('');
 
     try {
+      const allFilesToUpload = [
+        ...orderData.files,
+        ...Object.values(orderData.clothing_designs).filter(Boolean),
+      ] as File[];
+      for (const file of allFilesToUpload) {
+        const check = isAllowedFile(file);
+        if (!check.ok) {
+          setSubmitError(check.error);
+          return;
+        }
+      }
+
       let uploaded = orderData.uploadedFileResults;
 
       if (orderData.files.length > 0 && uploaded.length === 0) {

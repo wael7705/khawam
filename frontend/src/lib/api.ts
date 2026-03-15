@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getAuthToken, setAuthToken, clearAuth } from './auth';
+import { UPLOAD_FIELD_NAME } from './upload';
 
 const API_URL = import.meta.env.VITE_API_URL as string || 'http://localhost:8000/api';
 
@@ -104,8 +105,8 @@ export interface UploadedFileResult {
 }
 
 /**
- * رفع ملف عبر XHR مع FormData.
- * لا تُعيّن Content-Type يدوياً — المتصفح يضيف multipart/form-data مع boundary تلقائياً.
+ * رفع ملف عبر XHR و FormData.
+ * لا تعيّن Content-Type — المتصفح يضيف multipart/form-data; boundary=... تلقائياً.
  */
 function uploadWithProgress(
   url: string,
@@ -128,7 +129,7 @@ function uploadWithProgress(
       } else {
         try {
           const err = JSON.parse(xhr.responseText);
-          reject(new Error(err.detail || 'فشل الرفع'));
+          reject(new Error(err.detail ?? 'فشل الرفع'));
         } catch { reject(new Error(`خطأ ${xhr.status}`)); }
       }
     });
@@ -140,7 +141,6 @@ function uploadWithProgress(
     xhr.open('POST', `${baseURL}${url}`);
     xhr.withCredentials = true;
     if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-    // Do not set Content-Type: browser sends multipart/form-data with boundary automatically
     xhr.send(formData);
   });
 }
@@ -148,7 +148,7 @@ function uploadWithProgress(
 export const ordersAPI = {
   upload: (file: File, onProgress?: (percent: number) => void): Promise<UploadedFileResult> => {
     const form = new FormData();
-    form.append('file', file);
+    form.append(UPLOAD_FIELD_NAME, file);
     return uploadWithProgress('/orders/upload', form, onProgress);
   },
 
