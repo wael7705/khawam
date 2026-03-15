@@ -108,12 +108,12 @@ khawam/
 
 - **اختبارات الوحدات والـ API:** من الجذر `pnpm test` أو `pnpm test:unit` (تشغيل Vitest للـ backend والواجهة). اختبارات الـ backend تحتاج `DATABASE_URL` وقاعدة بيانات مُهيّأة (مثلاً بعد `pnpm db:push` و `pnpm exec prisma db seed`). لاختبار تسجيل الدخول في الـ API يمكن ضبط `TEST_LOGIN_USERNAME` و `TEST_LOGIN_PASSWORD` إن لزم.
 - **اختبارات E2E (Playwright):** من الجذر `pnpm test:e2e`. يشغّل الواجهة على المنفذ 5173 تلقائياً؛ تأكد أن الـ backend يعمل على المنفذ 8000 (أو اضبط `VITE_API_URL` للواجهة). لاختبارات لوحة التحكم وُضِع افتراضي لمستخدم البذرة؛ يمكن تغييره عبر `TEST_LOGIN_USERNAME` و `TEST_LOGIN_PASSWORD`.
-- **اختبار التحميل:** `pnpm test:load` (يتطلب k6). انظر `load-tests/README.md`.
+- **اختبار التحميل:** `pnpm test:load` (يتطلب [k6](https://k6.io)). من جذر المشروع: `k6 run load-tests/load.js`؛ مع عنوان السيرفر: `k6 run -e BASE_URL=http://localhost:8000 load-tests/load.js`. المسارات المُختبرة: `GET /api/services` و `POST /api/orders`.
 
 ## ضبط استهلاك الذاكرة والأداء
 
 - **الذاكرة:** التشغيل مع حد أقصى للـ heap (مثلاً `NODE_OPTIONS=--max-old-space-size=512`) يحدّ من استهلاك الذاكرة. لتحليل التسريبات: شغّل الخادم بـ `node --inspect dist/server.js` ثم استخدم Chrome DevTools (chrome://inspect) لأخذ heap snapshots ومقارنتها تحت حمل.
-- **التحميل:** اختبارات التحميل بـ k6: من جذر المشروع `pnpm test:load` (يتطلب تثبيت [k6](https://k6.io)). التفاصيل في `load-tests/README.md`.
+- **التحميل:** اختبارات التحميل بـ k6: من جذر المشروع `pnpm test:load` أو `k6 run load-tests/load.js` (يتطلب تثبيت [k6](https://k6.io)). لرفع الحمل: `k6 run --vus 50 --duration 60s load-tests/load.js`.
 
 ## النشر
 
@@ -130,6 +130,8 @@ khawam/
 ```bash
 git push origin main
 ```
+
+**النشر بدون Railway (VPS أو منصة أخرى):** استخدم `backend/Dockerfile` بجذر المستودع كـ build context: `docker build -f backend/Dockerfile -t khawam-backend .`. لمجاورة staging/production مع Docker و Nginx استخدم السكربتات والإعدادات في مجلد `deploy/` (docker-compose، nginx، env، scripts).
 
 ### متغيرات البيئة على Railway (مشروع خوام)
 

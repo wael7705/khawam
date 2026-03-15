@@ -92,13 +92,21 @@ export async function buildApp() {
   // Serve frontend static + SPA fallback when public exists (Railway single-service deploy)
   const __dirname = dirname(fileURLToPath(import.meta.url));
   const publicDir = resolve(join(__dirname, '..', 'public'));
+  let cachedIndexHtml: string | null = null;
   if (existsSync(publicDir)) {
+    const indexPath = join(publicDir, 'index.html');
+    if (existsSync(indexPath)) {
+      cachedIndexHtml = readFileSync(indexPath, 'utf-8');
+    }
     await app.register(fastifyStatic, {
       root: publicDir,
       prefix: '/',
       decorateReply: false,
       index: ['index.html'],
       wildcard: false,
+      setHeaders: (res) => {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      },
     });
     app.setNotFoundHandler(async (request, reply) => {
       const method = request.method;
@@ -114,16 +122,17 @@ export async function buildApp() {
           statusCode: 404,
         });
       }
-      const filePath = join(publicDir, 'index.html');
-      if (!existsSync(filePath)) {
+      if (!cachedIndexHtml) {
         return reply.code(404).send({
           message: 'Not Found',
           error: 'Not Found',
           statusCode: 404,
         });
       }
-      const html = readFileSync(filePath, 'utf-8');
-      return reply.type('text/html').send(html);
+      return reply
+        .header('Cache-Control', 'no-cache')
+        .type('text/html')
+        .send(cachedIndexHtml);
     });
   }
 

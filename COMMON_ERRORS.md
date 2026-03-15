@@ -39,3 +39,12 @@ pnpm db:migrate  # للإنتاج
 - تأكد من الاتصال بـ `wss://domain/api/ws`
 - تأكد من إرسال token في المصادقة
 - تحقق من `/api/ws/status` لعدد المتصلين
+
+## Docker والنشر
+
+### سجلات الحاويات
+- `docker logs khawam-backend-staging` أو `khawam-backend-production` لعرض السجلات
+- للتحقق من الاتصال بقاعدة البيانات من داخل الحاوية: `docker exec -it khawam-backend-staging sh` ثم `pnpm exec prisma migrate status`
+
+### سجلات Nginx
+- `sudo tail -f /var/log/nginx/error.log` لمعرفة أخطاء الـ proxy

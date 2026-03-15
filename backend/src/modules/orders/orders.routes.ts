@@ -10,16 +10,23 @@ function isMultipartRequest(request: { headers: { 'content-type'?: string } }): 
 
 export async function ordersRoutes(app: FastifyInstance): Promise<void> {
   app.post('/upload', async (request, reply) => {
-    if (!isMultipartRequest(request)) {
+    let data: { filename: string; file: NodeJS.ReadableStream; mimetype: string } | undefined;
+    try {
+      data = await request.file();
+    } catch {
       return reply.code(415).send({
         detail: 'يرجى إرسال الطلب كـ multipart/form-data. تأكد من عدم تعيين هيدر Content-Type يدوياً عند استخدام FormData.',
       });
     }
-    try {
-      const data = await request.file();
-      if (!data) {
-        return reply.code(400).send({ detail: 'لم يتم إرسال ملف' });
+    if (!data) {
+      if (!isMultipartRequest(request)) {
+        return reply.code(415).send({
+          detail: 'يرجى إرسال الطلب كـ multipart/form-data. تأكد من عدم تعيين هيدر Content-Type يدوياً عند استخدام FormData.',
+        });
       }
+      return reply.code(400).send({ detail: 'لم يتم إرسال ملف' });
+    }
+    try {
       const result = await ordersService.uploadOrderFile({
         filename: data.filename,
         file: data.file,
@@ -33,14 +40,9 @@ export async function ordersRoutes(app: FastifyInstance): Promise<void> {
   });
 
   app.post('/upload-batch', async (request, reply) => {
-    if (!isMultipartRequest(request)) {
-      return reply.code(415).send({
-        detail: 'يرجى إرسال الطلب كـ multipart/form-data. تأكد من عدم تعيين هيدر Content-Type يدوياً عند استخدام FormData.',
-      });
-    }
+    let results: Awaited<ReturnType<typeof ordersService.uploadOrderFile>>[] = [];
     try {
       const parts = request.files();
-      const results: Awaited<ReturnType<typeof ordersService.uploadOrderFile>>[] = [];
       for await (const part of parts) {
         const result = await ordersService.uploadOrderFile({
           filename: part.filename,
@@ -49,14 +51,20 @@ export async function ordersRoutes(app: FastifyInstance): Promise<void> {
         });
         results.push(result);
       }
-      if (results.length === 0) {
-        return reply.code(400).send({ detail: 'لم يتم إرسال أي ملفات' });
-      }
-      return { files: results };
-    } catch (err: unknown) {
-      const error = err as { message?: string };
-      return reply.code(400).send({ detail: error.message ?? 'فشل رفع الملفات' });
+    } catch {
+      return reply.code(415).send({
+        detail: 'يرجى إرسال الطلب كـ multipart/form-data. تأكد من عدم تعيين هيدر Content-Type يدوياً عند استخدام FormData.',
+      });
     }
+    if (results.length === 0) {
+      if (!isMultipartRequest(request)) {
+        return reply.code(415).send({
+          detail: 'يرجى إرسال الطلب كـ multipart/form-data. تأكد من عدم تعيين هيدر Content-Type يدوياً عند استخدام FormData.',
+        });
+      }
+      return reply.code(400).send({ detail: 'لم يتم إرسال أي ملفات' });
+    }
+    return { files: results };
   });
 
   app.post('/', { preHandler: [optionalAuth] }, async (request, reply) => {

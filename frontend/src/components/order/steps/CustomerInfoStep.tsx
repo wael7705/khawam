@@ -250,42 +250,6 @@ export function CustomerInfoStep({ orderData, updateData, locale, serviceSlug, o
             </div>
           )}
           <label className="customer-field__label" style={{ marginTop: 12 }}>
-            {locale === 'ar' ? 'الشارع' : 'Street'}
-          </label>
-          <input
-            type="text"
-            className="step-input"
-            placeholder={locale === 'ar' ? 'الشارع...' : 'Street...'}
-            value={orderData.delivery_street}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              updateData('delivery_street', e.target.value)
-            }
-          />
-          <label className="customer-field__label" style={{ marginTop: 12 }}>
-            {locale === 'ar' ? 'الحي' : 'Neighborhood'}
-          </label>
-          <input
-            type="text"
-            className="step-input"
-            placeholder={locale === 'ar' ? 'الحي...' : 'Neighborhood...'}
-            value={orderData.delivery_neighborhood}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              updateData('delivery_neighborhood', e.target.value)
-            }
-          />
-          <label className="customer-field__label" style={{ marginTop: 12 }}>
-            {locale === 'ar' ? 'المبنى / الطابق' : 'Building / Floor'}
-          </label>
-          <input
-            type="text"
-            className="step-input"
-            placeholder={locale === 'ar' ? 'مبنى، طابق...' : 'Building, floor...'}
-            value={orderData.delivery_building_floor}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              updateData('delivery_building_floor', e.target.value)
-            }
-          />
-          <label className="customer-field__label" style={{ marginTop: 12 }}>
             {locale === 'ar' ? 'تفاصيل إضافية' : 'Extra details'}
           </label>
           <textarea
