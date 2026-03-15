@@ -38,9 +38,6 @@ export async function buildApp() {
     },
   });
 
-  // multipart مرة واحدة على الجذر — تجنب FST_ERR_CTP_ALREADY_PRESENT (لا تسجّله مرة ثانية داخل apiApp)
-  await app.register(uploadPlugin);
-
   // Security
   await app.register(helmet, {
     contentSecurityPolicy: false,
@@ -53,8 +50,20 @@ export async function buildApp() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   });
 
-  // مسارات رفع الطلبات على الجذر — تستخدم request.file() من uploadPlugin
-  await app.register(ordersUploadRoutes);
+  // مسارات رفع الطلبات في نطاق فرعي مع محلل pass-through لـ multipart (لا نعتمد على request.raw فقط لأن Fastify يرمي 415 عند عدم وجود محلل)
+  await app.register(
+    async (uploadApp) => {
+      uploadApp.addContentTypeParser(
+        'multipart/form-data',
+        { bodyLimit: UPLOAD_BODY_LIMIT },
+        (_req, payload, done) => {
+          done(null, payload);
+        },
+      );
+      await uploadApp.register(ordersUploadRoutes);
+    },
+    { prefix: '/api' },
+  );
 
   // Static files (uploads)
   await app.register(fastifyStatic, {
@@ -76,6 +85,7 @@ export async function buildApp() {
   // API routes: rate limit applies only here (not to static files or health)
   await app.register(
     async (apiApp) => {
+      await apiApp.register(uploadPlugin);
       await apiApp.register(rateLimit, {
         max: 400,
         timeWindow: '1 minute',
