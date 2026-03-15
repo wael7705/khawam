@@ -1,6 +1,5 @@
 import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Chrome, Smartphone } from 'lucide-react';
 import { useTranslation } from '../i18n/index';
 import { authAPI } from '../lib/api';
 import { storeAuth } from '../lib/auth';
@@ -8,7 +7,7 @@ import type { UserData } from '../lib/auth';
 import './Login.css';
 
 export function Login() {
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -84,17 +83,6 @@ export function Login() {
             {loading ? '...' : t.auth.login}
           </button>
         </form>
-        <div className="login-card__divider">{t.auth.loginWith}</div>
-        <div className="login-card__social">
-          <button type="button" className="login-card__social-btn">
-            <Chrome size={22} />
-            {t.auth.google}
-          </button>
-          <button type="button" className="login-card__social-btn">
-            <Smartphone size={22} />
-            {t.auth.apple}
-          </button>
-        </div>
         <p className="login-card__footer">
           {t.auth.noAccount}{' '}
           <Link to="/register" className="login-card__link">

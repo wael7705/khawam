@@ -16,6 +16,12 @@ const envSchema = z.object({
   SMTP_USE_TLS: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  APPLE_CLIENT_ID: z.string().optional(),
+  APPLE_TEAM_ID: z.string().optional(),
+  APPLE_KEY_ID: z.string().optional(),
+  APPLE_PRIVATE_KEY: z.string().optional(),
 });
 
 function loadConfig() {

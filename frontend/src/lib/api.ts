@@ -138,7 +138,9 @@ function uploadWithProgress(
 
     const baseURL = import.meta.env.VITE_API_URL as string || 'http://localhost:8000/api';
     xhr.open('POST', `${baseURL}${url}`);
+    xhr.withCredentials = true;
     if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    // Do not set Content-Type: browser sends multipart/form-data with boundary automatically
     xhr.send(formData);
   });
 }

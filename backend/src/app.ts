@@ -46,9 +46,6 @@ export async function buildApp() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   });
 
-  // Multipart on root so all /api routes (orders, studio, admin uploads) inherit the parser
-  await app.register(uploadPlugin);
-
   // Static files (uploads)
   await app.register(fastifyStatic, {
     root: config.uploadDir,
@@ -69,6 +66,8 @@ export async function buildApp() {
   // API routes: rate limit applies only here (not to static files or health)
   await app.register(
     async (apiApp) => {
+      // Multipart must be registered on apiApp so POST /api/orders/upload (and other /api uploads) get the parser
+      await apiApp.register(uploadPlugin);
       await apiApp.register(rateLimit, {
         max: 400,
         timeWindow: '1 minute',

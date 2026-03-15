@@ -1,6 +1,5 @@
 import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Chrome, Smartphone } from 'lucide-react';
 import { useTranslation } from '../i18n/index';
 import { authAPI } from '../lib/api';
 import { storeAuth, getAuthToken } from '../lib/auth';
@@ -61,16 +60,13 @@ export function Register() {
         navigate('/');
       }
     } catch (err: unknown) {
-      const msg = err && typeof err === 'object' && 'response' in err
-        ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
-        : null;
+      const res = err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { status?: number; data?: { detail?: string } } }).response
+        : undefined;
+      const msg = res?.data?.detail;
       setError(typeof msg === 'string' ? msg : 'Registration failed');
       setLoading(false);
     }
-  };
-
-  const handleSocialLogin = () => {
-    setStep('phone-confirm');
   };
 
   const handlePhoneConfirm = async (e: FormEvent) => {
@@ -166,17 +162,6 @@ export function Register() {
             {loading ? '...' : t.auth.register}
           </button>
         </form>
-        <div className="register-card__divider">{t.auth.loginWith}</div>
-        <div className="register-card__social">
-          <button type="button" className="register-card__social-btn" onClick={handleSocialLogin}>
-            <Chrome size={22} />
-            {t.auth.google}
-          </button>
-          <button type="button" className="register-card__social-btn" onClick={handleSocialLogin}>
-            <Smartphone size={22} />
-            {t.auth.apple}
-          </button>
-        </div>
         <p className="register-card__footer">
           {t.auth.hasAccount}{' '}
           <Link to="/login" className="register-card__link">

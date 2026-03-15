@@ -24,7 +24,7 @@ model User {
   phone        String?   @unique @db.VarChar(20)
   name         String    @db.VarChar(100)
   email        String?   @unique @db.VarChar(100)
-  passwordHash String    @map("password_hash") @db.VarChar(255)
+  passwordHash String?   @map("password_hash") @db.VarChar(255)
   userTypeId   String    @map("user_type_id")
   isActive     Boolean   @default(true) @map("is_active")
   isEmployee   String?   @map("is_employee") @db.VarChar(20)
@@ -45,6 +45,7 @@ model User {
   updatedAt    DateTime? @updatedAt @map("updated_at")
 
   userType           UserType              @relation(fields: [userTypeId], references: [id])
+  accounts          Account[]
   orders             Order[]               @relation("CustomerOrders")
   ordersCreated      Order[]               @relation("CreatorOrders")
   ordersAssigned     Order[]               @relation("AssignedOrders")
@@ -54,6 +55,22 @@ model User {
   savedLocations     SavedLocation[]
 
   @@map("users")
+}
+
+model Account {
+  id                String   @id @default(cuid())
+  userId            String   @map("user_id")
+  provider          String   @db.VarChar(50)
+  providerAccountId String   @map("provider_account_id") @db.VarChar(255)
+  accessToken       String?  @map("access_token") @db.Text
+  refreshToken      String?  @map("refresh_token") @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime? @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
 }
 
 model SavedLocation {

@@ -100,6 +100,10 @@ export async function login(input: LoginInput) {
     throw { statusCode: 403, message: 'الحساب غير نشط' };
   }
 
+  if (!user.passwordHash) {
+    throw { statusCode: 401, message: 'سجّل الدخول عبر حساب Google أو Apple' };
+  }
+
   const validPassword = await verifyPassword(user.passwordHash, input.password);
   if (!validPassword) {
     throw { statusCode: 401, message: 'اسم المستخدم أو كلمة المرور غير صحيحة' };
@@ -178,7 +182,7 @@ export async function register(input: RegisterInput) {
       where: { email: input.email.toLowerCase() },
     });
     if (existing) {
-      throw { statusCode: 400, message: 'البريد الإلكتروني مستخدم بالفعل' };
+      throw { statusCode: 409, message: 'البريد الإلكتروني مستخدم بالفعل' };
     }
   }
 
@@ -188,7 +192,7 @@ export async function register(input: RegisterInput) {
       where: { phone: normalizedPhone },
     });
     if (existing) {
-      throw { statusCode: 400, message: 'رقم الهاتف مستخدم بالفعل' };
+      throw { statusCode: 409, message: 'رقم الهاتف مستخدم بالفعل' };
     }
   }
 
@@ -293,6 +297,10 @@ export async function changePassword(userId: string, input: ChangePasswordInput)
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw { statusCode: 404, message: 'المستخدم غير موجود' };
 
+  if (!user.passwordHash) {
+    throw { statusCode: 400, message: 'حسابك مرتبط بـ Google/Apple. لا يمكن تغيير كلمة المرور من هنا.' };
+  }
+
   const valid = await verifyPassword(user.passwordHash, input.current_password);
   if (!valid) throw { statusCode: 400, message: 'كلمة المرور الحالية غير صحيحة' };
 
@@ -303,4 +311,77 @@ export async function changePassword(userId: string, input: ChangePasswordInput)
   });
 
   return { success: true, message: 'تم تغيير كلمة المرور بنجاح' };
+}
+
+export interface OAuthProfile {
+  provider: 'google' | 'apple';
+  providerAccountId: string;
+  email: string | null;
+  name: string;
+}
+
+export async function getOrCreateUserFromOAuth(profile: OAuthProfile) {
+  const existingAccount = await prisma.account.findUnique({
+    where: {
+      provider_providerAccountId: {
+        provider: profile.provider,
+        providerAccountId: profile.providerAccountId,
+      },
+    },
+    include: { user: { include: { userType: true } } },
+  });
+
+  if (existingAccount?.user) {
+    return existingAccount.user;
+  }
+
+  let customerType = await prisma.userType.findFirst({
+    where: { OR: [{ typeName: 'customer' }, { nameAr: ROLES.CUSTOMER }] },
+  });
+  if (!customerType) {
+    customerType = await prisma.userType.create({
+      data: { typeName: 'customer', nameAr: ROLES.CUSTOMER, description: 'عميل' },
+    });
+  }
+
+  const email = profile.email?.toLowerCase() ?? null;
+  let user = email
+    ? await prisma.user.findFirst({
+        where: { email },
+        include: { userType: true },
+      })
+    : null;
+
+  if (user) {
+    await prisma.account.create({
+      data: {
+        userId: user.id,
+        provider: profile.provider,
+        providerAccountId: profile.providerAccountId,
+      },
+    });
+    return user;
+  }
+
+  user = await prisma.user.create({
+    data: {
+      name: profile.name,
+      email,
+      phone: null,
+      passwordHash: null,
+      userTypeId: customerType.id,
+      isActive: true,
+    },
+    include: { userType: true },
+  });
+
+  await prisma.account.create({
+    data: {
+      userId: user.id,
+      provider: profile.provider,
+      providerAccountId: profile.providerAccountId,
+    },
+  });
+
+  return user;
 }
