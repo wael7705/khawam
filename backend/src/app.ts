@@ -47,9 +47,8 @@ export async function buildApp() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   });
 
-  // مسارات الرفع أولاً — نستخدم request.raw + busboy فلا نريد أن يستهلك multipart الجسم قبلنا
+  // مسارات الرفع على الجذر — بدون تسجيل multipart هنا حتى لا يستهلك أحد جسم الطلب قبل المعالج
   await app.register(ordersUploadRoutes);
-  await app.register(uploadPlugin);
 
   // Static files (uploads)
   await app.register(fastifyStatic, {
@@ -69,8 +68,10 @@ export async function buildApp() {
   app.get('/api/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 
   // API routes: rate limit applies only here (not to static files or health)
+  // multipart مسجّل هنا فقط — طلبات /api/orders/upload تُعالج على الجذر فلا يستهلك جسمها
   await app.register(
     async (apiApp) => {
+      await apiApp.register(uploadPlugin);
       await apiApp.register(rateLimit, {
         max: 400,
         timeWindow: '1 minute',

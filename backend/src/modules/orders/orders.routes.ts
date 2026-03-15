@@ -3,7 +3,7 @@ import { authenticate, optionalAuth } from '../../shared/middleware/auth.middlew
 import { isStaffRole } from '../../shared/types/index.js';
 import * as ordersService from './orders.service.js';
 
-/** مسارات رفع الملفات: في orders-upload.routes.ts على الجذر (نفس app الـ multipart) */
+/** مسارات رفع الملفات: في orders-upload.routes.ts على الجذر (بدون multipart حتى لا يُستهلك الجسم) */
 export async function ordersRoutes(app: FastifyInstance): Promise<void> {
   app.post('/', { preHandler: [optionalAuth] }, async (request, reply) => {
     const body = request.body as Record<string, unknown>;
