@@ -603,6 +603,19 @@
   color: var(--text-white);
 }
 
+.delivery-location-confirmed-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.delivery-location-btn--secondary {
+  align-self: flex-start;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+}
+
 .delivery-location-confirmed {
   display: inline-flex;
   align-items: center;
@@ -613,7 +626,6 @@
   border-radius: var(--radius);
   font-size: 0.9rem;
   font-weight: 600;
-  margin-top: 8px;
 }
 
 .delivery-location-confirmed svg {

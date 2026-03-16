@@ -1,10 +1,29 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Archive as ArchiveIcon, BarChart3, ChevronLeft, ChevronRight, ClipboardList, FolderOpen, Globe, Home, LogOut, Menu, Moon, Sun, Users, Wallet, X } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import { authAPI } from '../../lib/api';
 import { clearAuth, getStoredUser } from '../../lib/auth';
+import { useOrderCreated, type OrderCreatedPayload } from '../../lib/socket';
 import './DashboardLayout.css';
+
+function playNewOrderSound(): void {
+  try {
+    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.2);
+  } catch {
+    // ignore if AudioContext not supported or autoplay blocked
+  }
+}
 
 const DASHBOARD_THEME_KEY = 'khawam_dashboard_theme';
 
@@ -19,6 +38,7 @@ export function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [newOrderNotification, setNewOrderNotification] = useState<OrderCreatedPayload | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     try {
@@ -103,6 +123,17 @@ export function DashboardLayout() {
     return all;
   }, [user?.role, labels]);
 
+  useOrderCreated(
+    useCallback((payload: OrderCreatedPayload) => {
+      setNewOrderNotification(payload);
+      playNewOrderSound();
+    }, []),
+  );
+
+  const dismissNewOrderNotification = useCallback(() => {
+    setNewOrderNotification(null);
+  }, []);
+
   const handleLogout = async () => {
     try {
       await authAPI.logout();
@@ -122,6 +153,33 @@ export function DashboardLayout() {
     <div
       className={`dashboard-layout ${isCollapsed ? 'dashboard-layout--sidebar-collapsed' : ''} ${isDarkMode ? 'dashboard-layout--dark' : ''}`}
     >
+      {newOrderNotification && (
+        <div className="dashboard-order-toast" role="alert">
+          <div className="dashboard-order-toast__inner">
+            <span className="dashboard-order-toast__title">
+              {locale === 'ar' ? 'طلب جديد' : 'New order'}
+            </span>
+            <span className="dashboard-order-toast__number">
+              #{newOrderNotification.order_number}
+            </span>
+            <Link
+              to="/dashboard/orders"
+              className="dashboard-order-toast__link"
+              onClick={dismissNewOrderNotification}
+            >
+              {locale === 'ar' ? 'عرض الطلبات' : 'View orders'}
+            </Link>
+            <button
+              type="button"
+              className="dashboard-order-toast__close"
+              onClick={dismissNewOrderNotification}
+              aria-label={locale === 'ar' ? 'إغلاق' : 'Close'}
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+      )}
       <aside className={`dashboard-sidebar ${isCollapsed ? 'dashboard-sidebar--collapsed' : ''}`}>
         <div className="dashboard-sidebar__brand">
           <img src="/images/logo.jpeg" alt="Khawam" />

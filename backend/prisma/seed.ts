@@ -65,6 +65,48 @@ async function main(): Promise<void> {
     console.log('Admin user already exists (by email or phone), skipping create.');
   }
 
+  // مدير إضافي: إياد خوام
+  const ADMIN2_EMAIL = 'eyadmrx@gmail.com';
+  const admin2Existing = await prisma.user.findUnique({
+    where: { email: ADMIN2_EMAIL.toLowerCase() },
+  });
+  if (!admin2Existing) {
+    const admin2Hash = await hashPassword('khawam-pmrx');
+    await prisma.user.create({
+      data: {
+        name: 'إياد خوام',
+        email: ADMIN2_EMAIL.toLowerCase(),
+        passwordHash: admin2Hash,
+        userTypeId: adminType.id,
+        isActive: true,
+      },
+    });
+    console.log('[seed] تم إنشاء حساب المدير الثاني: %s', ADMIN2_EMAIL);
+  }
+
+  // موظف: employe
+  const employeeType = await prisma.userType.findUnique({
+    where: { typeName: 'employee' },
+  });
+  if (!employeeType) throw new Error('UserType employee not found');
+  const EMPLOYEE_EMAIL = 'khawam-1@gmail.com';
+  const employeeExisting = await prisma.user.findUnique({
+    where: { email: EMPLOYEE_EMAIL.toLowerCase() },
+  });
+  if (!employeeExisting) {
+    const employeeHash = await hashPassword('khawam-1');
+    await prisma.user.create({
+      data: {
+        name: 'employe',
+        email: EMPLOYEE_EMAIL.toLowerCase(),
+        passwordHash: employeeHash,
+        userTypeId: employeeType.id,
+        isActive: true,
+      },
+    });
+    console.log('[seed] تم إنشاء حساب الموظف: %s', EMPLOYEE_EMAIL);
+  }
+
   // ضمان وجود الخدمات وخطوات الـ workflow بعد كل نشر
   const { importLegacyServicesSeed } = await import(
     '../src/modules/services/services.service.js'

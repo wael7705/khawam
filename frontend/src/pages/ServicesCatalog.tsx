@@ -1,10 +1,45 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import {
+  Search,
+  BookOpen,
+  Shirt,
+  Layout,
+  Sticker,
+  BookMarked,
+  CreditCard,
+  Image,
+  LayoutDashboard,
+  Ruler,
+  Book,
+  GraduationCap,
+  PenTool,
+  type LucideIcon,
+} from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from '../i18n';
 import { OrderModal } from '../components/order/OrderModal';
 import { CATALOG_SERVICES, normalizeSearchText, serviceMatchesSearch, type CatalogService, type ServiceCategory } from '../lib/servicesCatalog';
 import './ServicesCatalog.css';
+
+const SERVICE_ICONS: Record<string, LucideIcon> = {
+  'lecture-printing': BookOpen,
+  'clothing-printing': Shirt,
+  'flex-printing': Layout,
+  'vinyl-printing': Sticker,
+  'brochure-printing': BookMarked,
+  'business-card-printing': CreditCard,
+  'poster-printing': Image,
+  'rollup-banners': LayoutDashboard,
+  'engineering-printing': Ruler,
+  'books-printing': Book,
+  'thesis-printing': GraduationCap,
+  'quran-certificate': BookMarked,
+  'graphic-design': PenTool,
+};
+
+function getServiceIcon(slug: string): LucideIcon {
+  return SERVICE_ICONS[slug] ?? BookOpen;
+}
 
 function clearOrderWizardStorage(): void {
   try {
@@ -102,8 +137,13 @@ export function ServicesCatalog({ initialOrderSlug }: ServicesCatalogProps) {
         </div>
 
         <div className="services-catalog__grid">
-          {filtered.map((service) => (
+          {filtered.map((service) => {
+            const IconComponent = getServiceIcon(service.slug);
+            return (
             <article key={service.id} className="services-catalog__card">
+              <div className="services-catalog__card-icon-wrap" aria-hidden>
+                <IconComponent className="services-catalog__card-icon" size={40} />
+              </div>
               <h3>{locale === 'ar' ? service.nameAr : service.nameEn}</h3>
               <p>{locale === 'ar' ? service.descriptionAr : service.descriptionEn}</p>
               <button
@@ -114,7 +154,8 @@ export function ServicesCatalog({ initialOrderSlug }: ServicesCatalogProps) {
                 {locale === 'ar' ? 'اطلب خدمة' : 'Order Service'}
               </button>
             </article>
-          ))}
+          );
+          })}
         </div>
       </div>
 

@@ -84,9 +84,32 @@
   gap: 8px;
 }
 
+.works-create__error {
+  grid-column: 1 / -1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(180, 40, 40, 0.12);
+  color: var(--danger, #b42828);
+  font-size: 0.9rem;
+}
+
 .works-create__upload-phase {
   font-size: 0.85rem;
   color: var(--text-muted, #666);
+}
+
+.works-create__progress-wrap {
+  grid-column: 1 / -1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.works-create__progress-bar {
+  height: 100%;
+  background: var(--primary, #b42828);
+  transition: width 0.2s ease;
 }
 
 .works-create__sub-count {

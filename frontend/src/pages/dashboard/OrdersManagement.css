@@ -150,6 +150,17 @@
   color: var(--secondary);
 }
 
+.orders-phone-link {
+  display: block;
+  color: var(--primary, #0a6e4a);
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.orders-phone-link:hover {
+  text-decoration: underline;
+}
+
 .orders-table td span {
   display: block;
   color: var(--text-light);
@@ -269,6 +280,18 @@
 .orders-status-icon--accept:hover {
   background: var(--success, #0a7c42);
   color: #fff;
+}
+
+.orders-status-icon--next {
+  color: var(--primary, #b42828);
+  border-color: rgba(180, 40, 40, 0.4);
+  background: rgba(180, 40, 40, 0.06);
+}
+
+.orders-status-icon--next:hover {
+  background: rgba(180, 40, 40, 0.18);
+  border-color: rgba(180, 40, 40, 0.6);
+  color: var(--primary, #b42828);
 }
 
 .orders-state {

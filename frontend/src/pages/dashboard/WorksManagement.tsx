@@ -38,6 +38,8 @@ export function WorksManagement() {
   const [form, setForm] = useState<WorkFormState>(initialForm);
   const [uploadPhaseMain, setUploadPhaseMain] = useState<UploadPhase>('idle');
   const [uploadPhaseSub, setUploadPhaseSub] = useState<UploadPhase>('idle');
+  const [subUploadProgress, setSubUploadProgress] = useState<{ total: number; current: number }>({ total: 0, current: 0 });
+  const [createError, setCreateError] = useState<string | null>(null);
   const mainImageInputRef = useRef<HTMLInputElement>(null);
   const subImagesInputRef = useRef<HTMLInputElement>(null);
 
@@ -104,23 +106,34 @@ export function WorksManagement() {
   }, []);
 
   const handleCreate = async () => {
-    if (!form.title.trim() || !form.title_ar.trim() || !form.image_url.trim()) return;
-    const payload: ManagedWorkPayload = {
-      title: form.title.trim(),
-      title_ar: form.title_ar.trim(),
-      description: form.description.trim() || undefined,
-      description_ar: form.description_ar.trim() || undefined,
-      category: form.category.trim() || undefined,
-      category_ar: form.category_ar.trim() || undefined,
-      image_url: form.image_url.trim(),
-      images: form.subImages,
-      is_featured: form.is_featured,
-      is_visible: true,
-    };
-    await dashboardApi.createManagedWork(payload);
-    setForm(initialForm);
-    setCreateOpen(false);
-    await loadWorks();
+    setCreateError(null);
+    if (!form.title.trim() || !form.title_ar.trim() || !form.image_url.trim()) {
+      setCreateError(locale === 'ar' ? 'العنوان (عربي وإنجليزي) والصورة الرئيسية مطلوبة.' : 'Title (AR & EN) and main image are required.');
+      return;
+    }
+    try {
+      const payload: ManagedWorkPayload = {
+        title: form.title.trim(),
+        title_ar: form.title_ar.trim(),
+        description: form.description.trim() || undefined,
+        description_ar: form.description_ar.trim() || undefined,
+        category: form.category.trim() || undefined,
+        category_ar: form.category_ar.trim() || undefined,
+        image_url: form.image_url.trim(),
+        images: form.subImages,
+        is_featured: form.is_featured,
+        is_visible: true,
+      };
+      await dashboardApi.createManagedWork(payload);
+      setForm(initialForm);
+      setCreateOpen(false);
+      await loadWorks();
+    } catch (err: unknown) {
+      const msg = err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
+        : null;
+      setCreateError(typeof msg === 'string' ? msg : (locale === 'ar' ? 'فشل إنشاء العمل. تحقق من الاتصال بالخادم.' : 'Failed to create work. Check server connection.'));
+    }
   };
 
   const toggleFeatured = async (work: ManagedWork) => {
@@ -158,15 +171,22 @@ export function WorksManagement() {
   const handleSubImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files?.length) return;
+    const total = files.length;
+    setSubUploadProgress({ total, current: 0 });
     setUploadPhaseSub('uploading');
     try {
       setUploadPhaseSub('processing');
       const { urls } = await dashboardApi.uploadAdminMultiple(Array.from(files), 'general');
-      setForm((p) => ({ ...p, subImages: [...p.subImages, ...urls] }));
+      setSubUploadProgress((p) => ({ ...p, current: p.total }));
+      setForm((p) => ({ ...p, subImages: [...p.subImages, ...(urls ?? [])] }));
       setUploadPhaseSub('done');
-      setTimeout(() => setUploadPhaseSub('idle'), 1200);
+      setTimeout(() => {
+        setUploadPhaseSub('idle');
+        setSubUploadProgress({ total: 0, current: 0 });
+      }, 1200);
     } catch {
       setUploadPhaseSub('idle');
+      setSubUploadProgress({ total: 0, current: 0 });
     } finally {
       e.target.value = '';
     }
@@ -189,7 +209,16 @@ export function WorksManagement() {
           ? labels.phaseDone
           : labels.uploadSub;
   const mainUploadTitle = [labels.phaseUploading, labels.phaseProcessing, labels.phaseDone].join(' → ');
-  const subUploadTitle = [labels.phaseUploading, labels.phaseProcessing, labels.phaseDone].join(' → ');
+  const subUploadTitle =
+    uploadPhaseSub !== 'idle'
+      ? (locale === 'ar'
+          ? `جاري رفع ${subUploadProgress.current} من ${subUploadProgress.total} صورة`
+          : `Uploading ${subUploadProgress.current} of ${subUploadProgress.total} images`)
+      : [labels.phaseUploading, labels.phaseProcessing, labels.phaseDone].join(' → ');
+  const subUploadPct =
+    subUploadProgress.total > 0
+      ? Math.round((subUploadProgress.current / subUploadProgress.total) * 100)
+      : 0;
 
   return (
     <div className="works-page">
@@ -207,10 +236,15 @@ export function WorksManagement() {
           <section className="works-create" onClick={(e) => e.stopPropagation()}>
             <div className="works-create__head">
               <h3>{labels.create}</h3>
-              <button type="button" className="works-btn" onClick={() => setCreateOpen(false)}>
+              <button type="button" className="works-btn" onClick={() => { setCreateOpen(false); setCreateError(null); }}>
                 {labels.close}
               </button>
             </div>
+            {createError && (
+              <div className="works-create__error" role="alert">
+                {createError}
+              </div>
+            )}
             <div className="works-create__grid">
               <input value={form.title_ar} onChange={(e) => setForm((p) => ({ ...p, title_ar: e.target.value }))} placeholder="العنوان (AR)" />
               <input value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder="Title (EN)" />
@@ -289,7 +323,20 @@ export function WorksManagement() {
                     {uploadPhaseSub === 'uploading' && labels.phaseUploading}
                     {uploadPhaseSub === 'processing' && labels.phaseProcessing}
                     {uploadPhaseSub === 'done' && labels.phaseDone}
+                    {subUploadProgress.total > 0 && ` (${subUploadPct}%)`}
                   </span>
+                )}
+                {uploadPhaseSub !== 'idle' && subUploadProgress.total > 0 && (
+                  <div className="works-create__progress-wrap" title={subUploadTitle}>
+                    <div
+                      className="works-create__progress-bar"
+                      style={{ width: `${subUploadPct}%` }}
+                      role="progressbar"
+                      aria-valuenow={subUploadPct}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                    />
+                  </div>
                 )}
               </div>
             </div>

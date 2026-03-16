@@ -240,13 +240,23 @@ export function CustomerInfoStep({ orderData, updateData, locale, serviceSlug, o
             {locale === 'ar' ? 'تحديد موقع التوصيل على الخريطة' : 'Set delivery location on map'}
           </button>
           {orderData.delivery_location_confirmed && (
-            <div className="delivery-location-confirmed">
-              <CheckCircle size={18} />
-              <span>
-                {orderData.delivery_location_label
-                  ? (locale === 'ar' ? `الموقع: ${getLabelName(orderData.delivery_location_label, 'ar')}` : `Location: ${getLabelName(orderData.delivery_location_label, 'en')}`)
-                  : (locale === 'ar' ? 'تم تحديد موقع جديد على الخريطة' : 'New location set on map')}
-              </span>
+            <div className="delivery-location-confirmed-wrap">
+              <div className="delivery-location-confirmed">
+                <CheckCircle size={18} />
+                <span>
+                  {orderData.delivery_location_label
+                    ? (locale === 'ar' ? `الموقع: ${getLabelName(orderData.delivery_location_label, 'ar')}` : `Location: ${getLabelName(orderData.delivery_location_label, 'en')}`)
+                    : (locale === 'ar' ? 'تم تحديد موقع جديد على الخريطة' : 'New location set on map')}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="delivery-location-btn delivery-location-btn--secondary"
+                onClick={openLocationPage}
+              >
+                <MapPin size={16} />
+                {locale === 'ar' ? 'إعادة تحديد الموقع على الخريطة' : 'Change location on map'}
+              </button>
             </div>
           )}
           <label className="customer-field__label" style={{ marginTop: 12 }}>

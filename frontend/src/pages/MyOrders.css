@@ -2,6 +2,23 @@
   min-height: 80vh;
 }
 
+.my-orders-status-toast {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 12px 20px;
+  border-radius: 10px;
+  background: rgba(180, 40, 40, 0.08);
+  border: 1px solid rgba(180, 40, 40, 0.3);
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 500;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  max-width: min(420px, 92vw);
+}
+
 .my-orders.section {
   padding-top: 2rem;
   padding-bottom: 3rem;

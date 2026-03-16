@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Search, X, FileText, Download, MapPin, Phone, User, Package, Truck, ExternalLink, Copy, Share2, ChevronRight, Ban, Check, StickyNote, Banknote } from 'lucide-react';
+import { Search, X, FileText, Download, MapPin, Phone, User, Package, Truck, ExternalLink, Copy, Share2, Ban, Check, CheckCircle, Cog, StickyNote, Banknote } from 'lucide-react';
 import {
   advanceMockOrderStatus,
   canUseDashboardMockData,
@@ -17,6 +17,15 @@ import {
   getOrderStatusActionLabel,
   ORDER_CANCEL_ACTION_LABELS,
 } from '../../lib/servicesCatalog';
+import type { LucideIcon } from 'lucide-react';
+
+function getOrderStatusNextIcon(currentStatus: string, nextStatus: string): LucideIcon {
+  const curr = currentStatus?.toLowerCase();
+  if (curr === 'pending' && nextStatus === 'confirmed') return Check;
+  if (curr === 'confirmed' && nextStatus === 'processing') return Package;
+  if (curr === 'processing' && nextStatus === 'completed') return CheckCircle;
+  return Cog;
+}
 import './OrdersManagement.css';
 
 const STATUS_FILTERS = ['all', 'pending', 'confirmed', 'processing', 'completed', 'cancelled'] as const;
@@ -73,6 +82,15 @@ interface OrderDetail {
   files?: string[];
   specifications?: Record<string, unknown>;
   items: OrderItemDetail[];
+}
+
+/** Normalize phone to WhatsApp international format (digits only; 0 prefix → 963 for Syria). */
+function toWhatsAppNumber(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (!digits.length) return '';
+  if (digits.startsWith('0')) return '963' + digits.slice(1);
+  if (!digits.startsWith('963') && digits.length <= 10) return '963' + digits;
+  return digits;
 }
 
 function buildShareText(orderNumber: string, customerName: string, address: string, lat: number, lon: number, locale: string): string {
@@ -529,7 +547,23 @@ export function OrdersManagement() {
                       <td>{getServiceDisplayName(order.service_id, locale, { nameAr: order.service_name_ar, nameEn: order.service_name_en }).subName}</td>
                       <td>
                         <strong>{order.customer_name}</strong>
-                        <span>{order.customer_phone}</span>
+                        {(order.customer_whatsapp || order.customer_phone) && (() => {
+                          const num = toWhatsAppNumber(order.customer_whatsapp || order.customer_phone);
+                          const display = order.customer_whatsapp || order.customer_phone;
+                          if (!num) return <span dir="ltr">{display}</span>;
+                          return (
+                            <a
+                              href={`https://wa.me/${num}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="orders-phone-link"
+                              dir="ltr"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {display}
+                            </a>
+                          );
+                        })()}
                       </td>
                       <td>
                         <span className={`order-status order-status--${getStatusClass(order.status)}`}>{getOrderStatusLabel(order.status, locale)}</span>
@@ -538,21 +572,21 @@ export function OrdersManagement() {
                       <td>{new Date(order.created_at).toLocaleDateString()}</td>
                       <td>{order.is_paid ? labels.yes : labels.no}</td>
                       <td className="orders-actions-cell" onClick={(e) => e.stopPropagation()}>
-                        {nextStatus != null && (
-                          <button
-                            type="button"
-                            className={order.status?.toLowerCase() === 'pending' && nextStatus === 'confirmed' ? 'orders-status-icon orders-status-icon--accept' : 'orders-status-icon'}
-                            title={getOrderStatusActionLabel(order.status, locale)}
-                            onClick={() => void handleAdvanceStatus(order.id, nextStatus)}
-                            aria-label={getOrderStatusActionLabel(order.status, locale)}
-                          >
-                            {order.status?.toLowerCase() === 'pending' && nextStatus === 'confirmed' ? (
-                              <Check size={18} />
-                            ) : (
-                              <ChevronRight size={18} />
-                            )}
-                          </button>
-                        )}
+                        {nextStatus != null && (() => {
+                          const StatusIcon = getOrderStatusNextIcon(order.status, nextStatus);
+                          const isAccept = order.status?.toLowerCase() === 'pending' && nextStatus === 'confirmed';
+                          return (
+                            <button
+                              type="button"
+                              className={isAccept ? 'orders-status-icon orders-status-icon--accept' : 'orders-status-icon orders-status-icon--next'}
+                              title={getOrderStatusActionLabel(order.status, locale)}
+                              onClick={() => void handleAdvanceStatus(order.id, nextStatus)}
+                              aria-label={getOrderStatusActionLabel(order.status, locale)}
+                            >
+                              <StatusIcon size={18} />
+                            </button>
+                          );
+                        })()}
                         {isPending && (
                           <button
                             type="button"
@@ -617,16 +651,17 @@ export function OrdersManagement() {
                   <div className="order-detail__header-actions">
                     {getNextOrderStatus(selectedOrder.status) != null && (() => {
                       const next = getNextOrderStatus(selectedOrder.status)!;
+                      const StatusIcon = getOrderStatusNextIcon(selectedOrder.status, next);
                       const isAccept = selectedOrder.status?.toLowerCase() === 'pending' && next === 'confirmed';
                       return (
                         <button
                           type="button"
-                          className={isAccept ? 'orders-status-icon orders-status-icon--accept' : 'orders-status-icon'}
+                          className={isAccept ? 'orders-status-icon orders-status-icon--accept' : 'orders-status-icon orders-status-icon--next'}
                           title={getOrderStatusActionLabel(selectedOrder.status, locale)}
                           onClick={() => void handleAdvanceStatus(selectedOrder.id, next)}
                           aria-label={getOrderStatusActionLabel(selectedOrder.status, locale)}
                         >
-                          {isAccept ? <Check size={20} /> : <ChevronRight size={20} />}
+                          <StatusIcon size={20} />
                         </button>
                       );
                     })()}
@@ -668,16 +703,22 @@ export function OrdersManagement() {
                         <User size={14} />
                         <span>{selectedOrder.customer_name || '—'}</span>
                       </div>
-                      <div className="detail-info-item">
-                        <Phone size={14} />
-                        <span dir="ltr">{selectedOrder.customer_phone || '—'}</span>
-                      </div>
-                      {selectedOrder.customer_whatsapp && (
-                        <div className="detail-info-item">
-                          <span>📱</span>
-                          <span dir="ltr">{selectedOrder.customer_whatsapp}</span>
-                        </div>
-                      )}
+                      {(() => {
+                        const phone = selectedOrder.customer_whatsapp || selectedOrder.customer_phone;
+                        const num = phone ? toWhatsAppNumber(phone) : '';
+                        return (
+                          <div className="detail-info-item">
+                            <Phone size={14} />
+                            {num ? (
+                              <a href={`https://wa.me/${num}`} target="_blank" rel="noopener noreferrer" className="orders-phone-link" dir="ltr">
+                                {phone}
+                              </a>
+                            ) : (
+                              <span dir="ltr">—</span>
+                            )}
+                          </div>
+                        );
+                      })()}
                       {selectedOrder.shop_name && (
                         <div className="detail-info-item">
                           <Package size={14} />

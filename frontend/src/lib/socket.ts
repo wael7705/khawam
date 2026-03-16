@@ -18,6 +18,13 @@ export interface OrderStatusUpdatedPayload {
   status: string;
 }
 
+export interface OrderCreatedPayload {
+  id: string;
+  order_number: string;
+  status: string;
+  created_at: string;
+}
+
 /**
  * Subscribes to real-time order status updates via Socket.IO.
  * Connects only when the user has a token; disconnects on unmount or when token is cleared.
@@ -44,6 +51,37 @@ export function useOrderStatusUpdates(onStatusUpdate: (payload: OrderStatusUpdat
 
     return () => {
       socket.off('order_status_updated', handler);
+      socket.disconnect();
+    };
+  }, []);
+}
+
+/**
+ * Subscribes to new order events (for staff dashboard).
+ * Connects only when the user has a token; disconnects on unmount.
+ */
+export function useOrderCreated(onOrderCreated: (payload: OrderCreatedPayload) => void): void {
+  const callbackRef = useRef(onOrderCreated);
+  callbackRef.current = onOrderCreated;
+
+  useEffect(() => {
+    const token = getAuthToken();
+    if (!token) return;
+
+    const socket: Socket = io(getSocketBaseUrl(), {
+      path: '/api/ws',
+      auth: { token },
+      transports: ['websocket', 'polling'],
+    });
+
+    const handler = (payload: OrderCreatedPayload) => {
+      callbackRef.current(payload);
+    };
+
+    socket.on('order_created', handler);
+
+    return () => {
+      socket.off('order_created', handler);
       socket.disconnect();
     };
   }, []);

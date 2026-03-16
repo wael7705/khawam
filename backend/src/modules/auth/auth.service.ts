@@ -6,7 +6,7 @@ import { normalizePhone } from '../../shared/utils/phone.js';
 import { ROLES, isStaffRole } from '../../shared/types/index.js';
 import type { LoginInput, RegisterInput, UpdateProfileInput, ChangePasswordInput } from './auth.schema.js';
 
-const ACCESS_TOKEN_EXPIRY = '15m';
+const ACCESS_TOKEN_EXPIRY = '30m';
 const REFRESH_TOKEN_EXPIRY = '30d';
 
 export function createAccessToken(userId: string): string {

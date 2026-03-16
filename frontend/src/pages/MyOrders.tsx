@@ -8,6 +8,7 @@ import type { OrderListItem, OrderDetail, OrderItemDetail } from '../types/order
 import { MyOrdersFilters, STATUS_FILTERS, type StatusFilter } from '../components/my-orders/MyOrdersFilters';
 import { MyOrdersList } from '../components/my-orders/MyOrdersList';
 import { MyOrderDetailDrawer } from '../components/my-orders/MyOrderDetailDrawer';
+import { getOrderStatusLabel } from '../lib/servicesCatalog';
 import './MyOrders.css';
 
 const WHATSAPP_URL = 'https://wa.me/963112134640';
@@ -82,6 +83,7 @@ export function MyOrders() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selectedOrder, setSelectedOrder] = useState<OrderDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [statusUpdateMessage, setStatusUpdateMessage] = useState<{ order_number: string; status: string } | null>(null);
 
   useOrderStatusUpdates((payload) => {
     setOrders((prev) =>
@@ -90,7 +92,14 @@ export function MyOrders() {
     setSelectedOrder((prev) =>
       prev?.id === payload.id ? { ...prev, status: payload.status } : prev,
     );
+    setStatusUpdateMessage({ order_number: payload.order_number, status: payload.status });
   });
+
+  useEffect(() => {
+    if (!statusUpdateMessage) return;
+    const t = setTimeout(() => setStatusUpdateMessage(null), 5000);
+    return () => clearTimeout(t);
+  }, [statusUpdateMessage]);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -228,6 +237,13 @@ export function MyOrders() {
 
   return (
     <div className="my-orders-page">
+      {statusUpdateMessage && (
+        <div className="my-orders-status-toast" role="status">
+          {locale === 'ar'
+            ? `تم تحديث حالة الطلب #${statusUpdateMessage.order_number} إلى ${getOrderStatusLabel(statusUpdateMessage.status, 'ar')}`
+            : `Order #${statusUpdateMessage.order_number} status updated to ${getOrderStatusLabel(statusUpdateMessage.status, 'en')}`}
+        </div>
+      )}
       <section className="my-orders section">
         <div className="container">
           <div className="my-orders__head">

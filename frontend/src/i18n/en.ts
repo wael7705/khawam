@@ -77,7 +77,7 @@ export const en = {
   },
   footer: {
     aboutTitle: 'About Us',
-    aboutText: 'Khawam for Advertising – providing professional printing and design services in Damascus for over 10 years, through specialized workshops equipped with the latest technologies.',
+    aboutText: 'Khawam for Advertising – providing professional printing and design services in Damascus for over 100 years, through specialized workshops equipped with the latest technologies.',
     linksTitle: 'Quick Links',
     contactTitle: 'Get In Touch',
     subscribeTitle: 'Subscribe Us',
