@@ -62,6 +62,7 @@ export interface AdminOrdersResponse {
     service_name_en?: string;
     customer_name: string;
     customer_phone: string;
+    customer_whatsapp?: string;
     status: string;
     final_amount: number;
     is_paid: boolean;
