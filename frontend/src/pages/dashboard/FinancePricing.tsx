@@ -29,6 +29,7 @@ export function FinancePricing() {
   const [selectedRuleId, setSelectedRuleId] = useState<string | null>(null);
   const [activeMode, setActiveMode] = useState<PrintMode>('bw');
   const [activeSize, setActiveSize] = useState<SizeCode>('A4');
+  const [activePaperType, setActivePaperType] = useState<string | null>(null);
   const [newRule, setNewRule] = useState<NewRuleFormState>({ service_id: '', name: '', unit_type: 'page' });
   const [rangeDrafts, setRangeDrafts] = useState<FinancialRange[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,6 +79,8 @@ export function FinancePricing() {
             loading: 'تحميل بيانات التسعير...',
             failed: 'تعذر تحميل بيانات التسعير',
             noRules: 'لا توجد قواعد تسعير حالياً',
+            paperType: 'نوع الورق',
+            paperTypeAny: 'جميع',
           }
         : {
             title: 'Finance & Pricing',
@@ -120,6 +123,8 @@ export function FinancePricing() {
             loading: 'Loading pricing data...',
             failed: 'Failed to load pricing data',
             noRules: 'No pricing rules found',
+            paperType: 'Paper type',
+            paperTypeAny: 'Any',
           },
     [locale],
   );
@@ -150,9 +155,18 @@ export function FinancePricing() {
   });
 
   const selectedRule = rules.find((rule) => rule.id === selectedRuleId) ?? null;
-  const selectedDimension = selectedRule?.dimensions.find(
-    (dimension) => dimension.print_mode === activeMode && dimension.size_code === activeSize,
-  );
+  const dimensionCandidates = selectedRule?.dimensions.filter(
+    (d) => d.print_mode === activeMode && d.size_code === activeSize,
+  ) ?? [];
+  const selectedDimension = dimensionCandidates.find(
+    (d) => (d.paper_type ?? null) === activePaperType,
+  ) ?? dimensionCandidates[0] ?? null;
+
+  useEffect(() => {
+    if (dimensionCandidates.length > 0 && !dimensionCandidates.some((d) => (d.paper_type ?? null) === activePaperType)) {
+      setActivePaperType(dimensionCandidates[0]?.paper_type ?? null);
+    }
+  }, [selectedRuleId, activeMode, activeSize, dimensionCandidates, activePaperType]);
 
   useEffect(() => {
     if (!selectedDimension) {
@@ -223,7 +237,11 @@ export function FinancePricing() {
       .map((range, idx) => ({ ...range, display_order: idx + 1 }))
       .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
     const updatedDimensions = selectedRule.dimensions.map((dimension) => {
-      if (dimension.print_mode !== activeMode || dimension.size_code !== activeSize) return dimension;
+      const match =
+        dimension.print_mode === activeMode &&
+        dimension.size_code === activeSize &&
+        (dimension.paper_type ?? null) === activePaperType;
+      if (!match) return dimension;
       return { ...dimension, ranges: normalized };
     });
     const updatedRule = await dashboardApi.updateFinancialRule(selectedRule.id, { dimensions: updatedDimensions });
@@ -318,6 +336,25 @@ export function FinancePricing() {
                   </button>
                 ))}
               </div>
+              {dimensionCandidates.length > 1 && (
+                <div className="finance-tabs__row finance-tabs__row--paper">
+                  <span className="finance-tabs__label">{labels.paperType}:</span>
+                  {dimensionCandidates.map((d) => {
+                    const pt = d.paper_type ?? null;
+                    const label = pt === null ? labels.paperTypeAny : pt;
+                    return (
+                      <button
+                        key={label}
+                        type="button"
+                        className={(pt === activePaperType ? 'finance-tab finance-tab--active' : 'finance-tab')}
+                        onClick={() => setActivePaperType(pt)}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               <div className="finance-ranges">
                 <div className="finance-ranges__head">
                   <h4>{labels.ranges}</h4>

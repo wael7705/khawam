@@ -18,12 +18,14 @@ export type SizeCodeFinancial =
 export interface FinancialPricingParams {
   print_mode: PrintModeFinancial;
   size_code: SizeCodeFinancial;
+  paper_type?: string | null;
   unit_value: number;
 }
 
 /** مواصفات كما ترسلها الواجهة (جزء منها) */
 export interface FrontendSpecsLike {
   paper_size?: string;
+  paper_type?: string | null;
   print_color?: string;
   print_quality?: string;
   number_of_pages?: number;
@@ -85,5 +87,6 @@ export function specsToFinancialParams(specs: FrontendSpecsLike): FinancialPrici
   const unit_value = numPages ?? totalPages ?? 1;
   if (unit_value < 0 || !Number.isFinite(unit_value)) return null;
 
-  return { print_mode, size_code: sizeCode, unit_value };
+  const paper_type = typeof specs.paper_type === 'string' ? specs.paper_type.trim() || null : null;
+  return { print_mode, size_code: sizeCode, paper_type: paper_type ?? undefined, unit_value };
 }

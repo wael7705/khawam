@@ -155,6 +155,7 @@ export interface FinancialDimension {
   id?: string;
   print_mode: PrintMode;
   size_code: SizeCode;
+  paper_type?: string | null;
   display_order?: number;
   ranges: FinancialRange[];
 }

@@ -6,6 +6,7 @@ import type { FastifyInstance } from 'fastify';
 import { PassThrough } from 'node:stream';
 import Busboy from 'busboy';
 import { UPLOAD_FIELD_NAME } from '../../shared/upload/upload.constants.js';
+import { countPdfPagesFromBuffer } from '../../algorithms/file-analysis.algorithm.js';
 import * as ordersService from './orders.service.js';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
@@ -127,6 +128,24 @@ function getBodyStream(request: { body: unknown; raw: unknown }): NodeJS.Readabl
   return request.raw as NodeJS.ReadableStream;
 }
 
+function streamToBuffer(stream: NodeJS.ReadableStream, maxBytes: number): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    let total = 0;
+    stream.on('data', (chunk: Buffer) => {
+      total += chunk.length;
+      if (total > maxBytes) {
+        stream.removeAllListeners();
+        reject(new Error('FILE_TOO_LARGE'));
+        return;
+      }
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    });
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+    stream.on('error', reject);
+  });
+}
+
 export async function ordersUploadRoutes(app: FastifyInstance): Promise<void> {
   app.post('/upload', async (request, reply) => {
     const headers: Record<string, string | string[] | undefined> = {};
@@ -242,5 +261,49 @@ export async function ordersUploadRoutes(app: FastifyInstance): Promise<void> {
       return reply.code(400).send({ detail: 'لم يتم إرسال أي ملفات' });
     }
     return { files: results };
+  });
+
+  app.post('/analyze-pages', async (request, reply) => {
+    const headers: Record<string, string | string[] | undefined> = {};
+    for (const [k, v] of Object.entries(request.headers)) {
+      if (v !== undefined) headers[k.toLowerCase()] = v;
+    }
+    const ct = headers['content-type'];
+    let ctStr = typeof ct === 'string' ? ct : Array.isArray(ct) ? ct[0] : '';
+    let stream: NodeJS.ReadableStream = getBodyStream(request);
+
+    if (!ctStr || !ctStr.toLowerCase().includes('multipart/form-data')) {
+      try {
+        const { buffer, rest } = await readFirstChunk(stream);
+        stream = rest;
+        const boundary = getBoundaryFromPeek(buffer);
+        if (!boundary) {
+          return reply.code(415).send({ detail: 'ارسل الطلب كـ multipart/form-data بحقل "file".' });
+        }
+        ctStr = `multipart/form-data; boundary=${boundary}`;
+      } catch {
+        return reply.code(415).send({ detail: 'ارسل الطلب كـ multipart/form-data بحقل "file".' });
+      }
+    }
+
+    try {
+      const part = await parseOneFile(stream, ctStr ?? 'application/octet-stream', headers);
+      const buf = await streamToBuffer(part.file, MAX_FILE_SIZE);
+      const ext = part.filename.toLowerCase().endsWith('.pdf') ? 'pdf' : '';
+      if (ext !== 'pdf') {
+        return reply.send({ pages: 0, unsupported: true });
+      }
+      const pages = await countPdfPagesFromBuffer(buf);
+      return reply.send({ pages });
+    } catch (e) {
+      const msg = (e as Error).message;
+      if (msg === 'NO_FILE') {
+        return reply.code(400).send({ detail: 'لم يتم إرسال ملف' });
+      }
+      if (msg === 'FILE_TOO_LARGE') {
+        return reply.code(400).send({ detail: 'حجم الملف يتجاوز الحد المسموح' });
+      }
+      return reply.code(400).send({ detail: msg ?? 'فشل تحليل الملف' });
+    }
   });
 }

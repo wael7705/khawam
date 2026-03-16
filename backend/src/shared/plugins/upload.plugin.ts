@@ -102,17 +102,20 @@ export async function saveUploadedFile(
     throw new Error('محتوى الملف لا يتطابق مع نوعه — الملف قد يكون تالفاً أو مزيّفاً');
   }
 
+  let displayUrl = `/uploads/${subDir}/${safeName}`;
   let thumbnailUrl: string | undefined;
   if (COMPRESSIBLE_EXTENSIONS.has(ext)) {
     try {
-      const thumbName = `${createId()}.webp`;
-      const thumbPath = join(targetDir, thumbName);
-      const result = await compressImage(filePath, thumbPath);
+      const compressedName = `${createId()}.webp`;
+      const compressedPath = join(targetDir, compressedName);
+      const result = await compressImage(filePath, compressedPath);
       if (result.compressed) {
-        thumbnailUrl = `/uploads/${subDir}/${thumbName}`;
+        const compressedUrl = `/uploads/${subDir}/${compressedName}`;
+        thumbnailUrl = compressedUrl;
+        displayUrl = compressedUrl;
       }
     } catch {
-      // compression is optional — keep original
+      // compression is optional — keep original as display
     }
   }
 
@@ -120,7 +123,7 @@ export async function saveUploadedFile(
     filename: safeName,
     originalName: file.filename,
     path: filePath,
-    url: `/uploads/${subDir}/${safeName}`,
+    url: displayUrl,
     mimeType: file.mimetype,
     size,
     thumbnailUrl,

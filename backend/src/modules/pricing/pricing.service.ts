@@ -65,6 +65,7 @@ interface FinancialRangeInput {
 interface FinancialDimensionInput {
   print_mode: 'bw' | 'color_normal' | 'color_laser';
   size_code: 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'BOOKLET_A5' | 'BOOKLET_B5' | 'BOOKLET_A4';
+  paper_type?: string | null;
   display_order?: number;
   ranges: FinancialRangeInput[];
 }
@@ -85,6 +86,7 @@ interface CalculateFinancialPriceInput {
   service_id: string;
   print_mode: 'bw' | 'color_normal' | 'color_laser';
   size_code: 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'BOOKLET_A5' | 'BOOKLET_B5' | 'BOOKLET_A4';
+  paper_type?: string | null;
   unit_value: number;
   quantity: number;
 }
@@ -136,10 +138,12 @@ export async function calculatePriceFromRules(input: CalculatePriceInput & Parti
   const quantity = input.quantity;
 
   if (serviceId && printMode && sizeCode && unitValue != null) {
+    const paperType = (input.specifications as Record<string, unknown> | undefined)?.paper_type as string | null | undefined;
     const result = await calculateFinancialPrice({
       service_id: serviceId,
       print_mode: printMode,
       size_code: sizeCode as 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'BOOKLET_A5' | 'BOOKLET_B5' | 'BOOKLET_A4',
+      paper_type: paperType ?? undefined,
       unit_value: unitValue,
       quantity,
     });
@@ -313,20 +317,34 @@ export async function getFinancialRules(serviceId?: string) {
 }
 
 function groupRangesByDimension(
-  ranges: Array<{ id: string; printMode: string; sizeCode: string; minValue: unknown; maxValue: unknown; unitPrice: unknown; displayOrder: number }>,
+  ranges: Array<{
+    id: string;
+    printMode: string;
+    sizeCode: string;
+    paperType: string | null;
+    minValue: unknown;
+    maxValue: unknown;
+    unitPrice: unknown;
+    displayOrder: number;
+  }>,
 ) {
   const byKey = new Map<string, typeof ranges>();
   for (const r of ranges) {
-    const key = `${r.printMode}:${r.sizeCode}`;
+    const paper = r.paperType ?? '';
+    const key = `${r.printMode}:${r.sizeCode}:${paper}`;
     if (!byKey.has(key)) byKey.set(key, []);
     byKey.get(key)!.push(r);
   }
   return Array.from(byKey.entries()).map(([key, rs]) => {
-    const [printMode, sizeCode] = key.split(':');
+    const parts = key.split(':');
+    const printMode = parts[0] ?? '';
+    const sizeCode = parts[1] ?? '';
+    const paperType = parts[2] || null;
     return {
       id: rs[0]?.id ?? '',
       printMode,
       sizeCode,
+      paperType: paperType || null,
       displayOrder: rs[0]?.displayOrder ?? 0,
       isActive: true,
       ranges: rs.sort((a, b) => a.displayOrder - b.displayOrder).map((r) => ({
@@ -370,6 +388,7 @@ export async function createFinancialRule(input: CreateFinancialRuleInput) {
             ruleId: createdRule.id,
             printMode: dimension.print_mode,
             sizeCode: dimension.size_code,
+            paperType: dimension.paper_type ?? null,
             minValue: new Prisma.Decimal(range.min_value),
             maxValue: range.max_value != null ? new Prisma.Decimal(range.max_value) : null,
             unitPrice: new Prisma.Decimal(range.unit_price),
@@ -416,6 +435,7 @@ export async function updateFinancialRule(ruleId: string, input: UpdateFinancial
               ruleId,
               printMode: dimension.print_mode,
               sizeCode: dimension.size_code,
+              paperType: dimension.paper_type ?? null,
               minValue: new Prisma.Decimal(range.min_value),
               maxValue: range.max_value != null ? new Prisma.Decimal(range.max_value) : null,
               unitPrice: new Prisma.Decimal(range.unit_price),
@@ -457,8 +477,18 @@ export async function calculateFinancialPrice(input: CalculateFinancialPriceInpu
     throw { statusCode: 404, message: 'التسعير لهذه الخدمة غير كامل أو غير موجود' };
   }
 
+  const requestPaperType = input.paper_type ?? null;
+  const paperNorm = (v: string | null) => (v == null || v === '' ? null : v);
+  const req = paperNorm(requestPaperType);
+  const candidateRanges = rule.ranges
+    .filter((r) => {
+      const rPaper = paperNorm(r.paperType);
+      return rPaper === req || rPaper === null;
+    })
+    .sort((a, b) => (paperNorm(a.paperType) === req ? 0 : 1) - (paperNorm(b.paperType) === req ? 0 : 1));
+
   const unitValue = input.unit_value;
-  const matchedRange = rule.ranges.find((range) => {
+  const matchedRange = candidateRanges.find((range) => {
     const min = Number(range.minValue);
     const max = range.maxValue != null ? Number(range.maxValue) : null;
     if (max == null) return unitValue >= min;
@@ -566,6 +596,8 @@ const DEFAULT_FINANCIAL_DIMENSIONS: FinancialDimensionInput[] = (
 /**
  * ملء قاعدة مالية كاملة لجميع الخدمات النشطة/المرئية: قاعدة تسعير افتراضية واحدة لكل خدمة
  * بأبعاد (print_mode × size_code) وشرائح أسعار افتراضية. يبقى على المدير تعديل الأرقام من لوحة التسعير.
+ * التسعير «كامل» خدمةً بخدمة: محاضرات، فليكس، تسليك، غلاف فني، كروت، إلخ — كلها تحصل على قاعدة افتراضية؛
+ * إضافة أبعاد نوع الورق (paper_type) أو قواعد إضافية (مثلاً تسليك/غلاف فني كقواعد منفصلة) من لوحة التسعير.
  */
 export async function seedFullFinancialPricing(): Promise<{
   created: number;

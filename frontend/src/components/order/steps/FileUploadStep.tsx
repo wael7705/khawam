@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback } from 'react';
+import { ordersAPI } from '../../../lib/api';
 import type { OrderData } from '../OrderWizard';
 
 interface Props {
@@ -30,18 +31,35 @@ export function FileUploadStep({ orderData, updateData, stepConfig, locale }: Pr
       updateData('files', updated);
 
       if (analyzePages) {
+        const pdfs = arr.filter((f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+        if (pdfs.length === 0) return;
+
         const newAnalyzing = new Set(analyzing);
-        arr.forEach((f) => {
-          if (f.type === 'application/pdf') {
-            newAnalyzing.add(f.name);
-          }
-        });
+        pdfs.forEach((f) => newAnalyzing.add(f.name));
         setAnalyzing(newAnalyzing);
 
-        setTimeout(() => {
-          setAnalyzing(new Set());
-          updateData('number_of_pages', updated.length);
-        }, 1500);
+        (async () => {
+          let newPages = 0;
+          for (const file of pdfs) {
+            try {
+              const result = await ordersAPI.analyzePages(file);
+              if (!result.unsupported && result.pages > 0) {
+                newPages += result.pages;
+              }
+            } catch {
+              // skip failed file
+            }
+          }
+          setAnalyzing((prev) => {
+            const next = new Set(prev);
+            pdfs.forEach((f) => next.delete(f.name));
+            return next;
+          });
+          if (newPages > 0) {
+            const current = Number(orderData.number_of_pages) || 0;
+            updateData('number_of_pages', current + newPages);
+          }
+        })();
       }
     },
     [orderData.files, updateData, analyzePages, analyzing],

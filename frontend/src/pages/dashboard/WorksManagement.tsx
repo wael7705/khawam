@@ -4,6 +4,8 @@ import { dashboardApi, type ManagedWork, type ManagedWorkPayload } from '../../l
 import { useTranslation } from '../../i18n';
 import './WorksManagement.css';
 
+type UploadPhase = 'idle' | 'uploading' | 'processing' | 'done';
+
 interface WorkFormState {
   title: string;
   title_ar: string;
@@ -12,7 +14,7 @@ interface WorkFormState {
   category: string;
   category_ar: string;
   image_url: string;
-  images_raw: string;
+  subImages: string[];
   is_featured: boolean;
 }
 
@@ -24,7 +26,7 @@ const initialForm: WorkFormState = {
   category: '',
   category_ar: '',
   image_url: '',
-  images_raw: '',
+  subImages: [],
   is_featured: false,
 };
 
@@ -34,8 +36,8 @@ export function WorksManagement() {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState<WorkFormState>(initialForm);
-  const [uploadingMain, setUploadingMain] = useState(false);
-  const [uploadingSub, setUploadingSub] = useState(false);
+  const [uploadPhaseMain, setUploadPhaseMain] = useState<UploadPhase>('idle');
+  const [uploadPhaseSub, setUploadPhaseSub] = useState<UploadPhase>('idle');
   const mainImageInputRef = useRef<HTMLInputElement>(null);
   const subImagesInputRef = useRef<HTMLInputElement>(null);
 
@@ -50,8 +52,11 @@ export function WorksManagement() {
             empty: 'لا توجد أعمال حالياً',
             mainImage: 'الصورة الرئيسية',
             uploadMain: 'رفع صورة رئيسية',
-            subImages: 'الصور الفرعية (رابط بكل سطر)',
+            subImages: 'الصور الفرعية',
             uploadSub: 'رفع صور فرعية',
+            phaseUploading: 'جاري الرفع',
+            phaseProcessing: 'جاري المعالجة',
+            phaseDone: 'تم',
             featured: 'عمل مميز',
             openCreate: 'إنشاء عمل جديد',
             save: 'حفظ العمل',
@@ -68,8 +73,11 @@ export function WorksManagement() {
             empty: 'No works found',
             mainImage: 'Main image',
             uploadMain: 'Upload main image',
-            subImages: 'Sub images (one URL per line)',
+            subImages: 'Sub images',
             uploadSub: 'Upload sub images',
+            phaseUploading: 'Uploading',
+            phaseProcessing: 'Processing',
+            phaseDone: 'Done',
             featured: 'Featured work',
             openCreate: 'Create new work',
             save: 'Save work',
@@ -105,10 +113,7 @@ export function WorksManagement() {
       category: form.category.trim() || undefined,
       category_ar: form.category_ar.trim() || undefined,
       image_url: form.image_url.trim(),
-      images: form.images_raw
-        .split('\n')
-        .map((item) => item.trim())
-        .filter(Boolean),
+      images: form.subImages,
       is_featured: form.is_featured,
       is_visible: true,
     };
@@ -136,12 +141,16 @@ export function WorksManagement() {
   const handleMainImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploadingMain(true);
+    setUploadPhaseMain('uploading');
     try {
+      setUploadPhaseMain('processing');
       const { url } = await dashboardApi.uploadAdminFile(file, 'general');
       setForm((p) => ({ ...p, image_url: url }));
+      setUploadPhaseMain('done');
+      setTimeout(() => setUploadPhaseMain('idle'), 1200);
+    } catch {
+      setUploadPhaseMain('idle');
     } finally {
-      setUploadingMain(false);
       e.target.value = '';
     }
   };
@@ -149,19 +158,38 @@ export function WorksManagement() {
   const handleSubImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files?.length) return;
-    setUploadingSub(true);
+    setUploadPhaseSub('uploading');
     try {
+      setUploadPhaseSub('processing');
       const { urls } = await dashboardApi.uploadAdminMultiple(Array.from(files), 'general');
-      const newLines = urls.join('\n');
-      setForm((p) => ({
-        ...p,
-        images_raw: p.images_raw ? `${p.images_raw.trim()}\n${newLines}` : newLines,
-      }));
+      setForm((p) => ({ ...p, subImages: [...p.subImages, ...urls] }));
+      setUploadPhaseSub('done');
+      setTimeout(() => setUploadPhaseSub('idle'), 1200);
+    } catch {
+      setUploadPhaseSub('idle');
     } finally {
-      setUploadingSub(false);
       e.target.value = '';
     }
   };
+
+  const mainUploadLabel =
+    uploadPhaseMain === 'uploading'
+      ? labels.phaseUploading
+      : uploadPhaseMain === 'processing'
+        ? labels.phaseProcessing
+        : uploadPhaseMain === 'done'
+          ? labels.phaseDone
+          : labels.uploadMain;
+  const subUploadLabel =
+    uploadPhaseSub === 'uploading'
+      ? labels.phaseUploading
+      : uploadPhaseSub === 'processing'
+        ? labels.phaseProcessing
+        : uploadPhaseSub === 'done'
+          ? labels.phaseDone
+          : labels.uploadSub;
+  const mainUploadTitle = [labels.phaseUploading, labels.phaseProcessing, labels.phaseDone].join(' → ');
+  const subUploadTitle = [labels.phaseUploading, labels.phaseProcessing, labels.phaseDone].join(' → ');
 
   return (
     <div className="works-page">
@@ -188,12 +216,7 @@ export function WorksManagement() {
               <input value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder="Title (EN)" />
               <input value={form.category_ar} onChange={(e) => setForm((p) => ({ ...p, category_ar: e.target.value }))} placeholder="التصنيف (AR)" />
               <input value={form.category} onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))} placeholder="Category (EN)" />
-              <div className="works-create__field-row">
-                <input
-                  value={form.image_url}
-                  onChange={(e) => setForm((p) => ({ ...p, image_url: e.target.value }))}
-                  placeholder={labels.mainImage}
-                />
+              <div className="works-create__field-row works-create__upload-row" title={mainUploadTitle}>
                 <input
                   ref={mainImageInputRef}
                   type="file"
@@ -205,12 +228,21 @@ export function WorksManagement() {
                 <button
                   type="button"
                   className="works-btn works-btn--secondary"
-                  disabled={uploadingMain}
+                  disabled={uploadPhaseMain !== 'idle' && uploadPhaseMain !== 'done'}
                   onClick={() => mainImageInputRef.current?.click()}
+                  title={mainUploadTitle}
+                  aria-label={mainUploadLabel}
                 >
                   <Upload size={14} />
-                  {uploadingMain ? (locale === 'ar' ? 'جاري الرفع...' : 'Uploading...') : labels.uploadMain}
+                  {mainUploadLabel}
                 </button>
+                {uploadPhaseMain !== 'idle' && (
+                  <span className="works-create__upload-phase" aria-live="polite">
+                    {uploadPhaseMain === 'uploading' && labels.phaseUploading}
+                    {uploadPhaseMain === 'processing' && labels.phaseProcessing}
+                    {uploadPhaseMain === 'done' && labels.phaseDone}
+                  </span>
+                )}
               </div>
               <label className="works-create__check">
                 <input
@@ -226,13 +258,12 @@ export function WorksManagement() {
                 placeholder="الوصف (AR)"
               />
               <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Description (EN)" />
-              <div className="works-create__sub-images-wrap">
-                <textarea
-                  className="works-create__sub-images"
-                  value={form.images_raw}
-                  onChange={(e) => setForm((p) => ({ ...p, images_raw: e.target.value }))}
-                  placeholder={labels.subImages}
-                />
+              <div className="works-create__sub-images-wrap works-create__upload-row" title={subUploadTitle}>
+                {form.subImages.length > 0 && (
+                  <span className="works-create__sub-count">
+                    {labels.subImages}: {form.subImages.length}
+                  </span>
+                )}
                 <input
                   ref={subImagesInputRef}
                   type="file"
@@ -245,12 +276,21 @@ export function WorksManagement() {
                 <button
                   type="button"
                   className="works-btn works-btn--secondary"
-                  disabled={uploadingSub}
+                  disabled={uploadPhaseSub !== 'idle' && uploadPhaseSub !== 'done'}
                   onClick={() => subImagesInputRef.current?.click()}
+                  title={subUploadTitle}
+                  aria-label={subUploadLabel}
                 >
                   <Upload size={14} />
-                  {uploadingSub ? (locale === 'ar' ? 'جاري الرفع...' : 'Uploading...') : labels.uploadSub}
+                  {subUploadLabel}
                 </button>
+                {uploadPhaseSub !== 'idle' && (
+                  <span className="works-create__upload-phase" aria-live="polite">
+                    {uploadPhaseSub === 'uploading' && labels.phaseUploading}
+                    {uploadPhaseSub === 'processing' && labels.phaseProcessing}
+                    {uploadPhaseSub === 'done' && labels.phaseDone}
+                  </span>
+                )}
               </div>
             </div>
             <button type="button" className="works-btn works-btn--primary" onClick={() => void handleCreate()}>

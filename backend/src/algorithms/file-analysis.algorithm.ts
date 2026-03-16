@@ -4,11 +4,15 @@ import { readFile } from 'node:fs/promises';
  * Analyzes uploaded files (PDF/Word) to extract page counts
  */
 
-export async function countPdfPages(filePath: string): Promise<number> {
+export async function countPdfPagesFromBuffer(buffer: Buffer): Promise<number> {
   const pdfParse = (await import('pdf-parse')).default;
-  const buffer = await readFile(filePath);
   const result = await pdfParse(buffer);
   return result.numpages;
+}
+
+export async function countPdfPages(filePath: string): Promise<number> {
+  const buffer = await readFile(filePath);
+  return countPdfPagesFromBuffer(buffer);
 }
 
 export async function estimateWordPages(filePath: string): Promise<number> {

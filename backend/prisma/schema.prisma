@@ -222,6 +222,7 @@ model PricingRuleRange {
   ruleId       String     @map("rule_id")
   printMode    PrintMode  @map("print_mode")
   sizeCode     SizeCode   @map("size_code")
+  paperType    String?    @map("paper_type") @db.VarChar(50)
   minValue     Decimal    @map("min_value") @db.Decimal(12, 4)
   maxValue     Decimal?   @map("max_value") @db.Decimal(12, 4)
   unitPrice    Decimal    @map("unit_price") @db.Decimal(12, 4)

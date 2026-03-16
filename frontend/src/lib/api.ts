@@ -193,6 +193,15 @@ export const ordersAPI = {
     return results;
   },
 
+  analyzePages: async (file: File): Promise<{ pages: number; unsupported?: boolean }> => {
+    const form = new FormData();
+    form.append('file', file);
+    const { data } = await api.post<{ pages: number; unsupported?: boolean }>('/orders/analyze-pages', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+  },
+
   create: (data: Record<string, unknown>) => api.post('/orders/', data),
   getOrders: (params?: { status?: string; page?: number; limit?: number }) =>
     api.get<{ data: Array<Record<string, unknown>>; total: number; page: number; limit: number; totalPages: number }>('/orders/', { params }),

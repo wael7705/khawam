@@ -24,6 +24,7 @@ interface PricingSpecs {
   service_id?: string;
   print_mode?: 'bw' | 'color_normal' | 'color_laser';
   size_code?: 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'BOOKLET_A5' | 'BOOKLET_B5' | 'BOOKLET_A4';
+  paper_type?: string | null;
   unit_value?: number;
 }
 
@@ -91,6 +92,7 @@ export async function createOrder(
       ? {
           print_mode: specs.print_mode as FinancialPricingParams['print_mode'],
           size_code: specs.size_code as FinancialPricingParams['size_code'],
+          paper_type: specs.paper_type ?? undefined,
           unit_value: Number(specs.unit_value),
         }
       : specs.service_id
@@ -98,17 +100,18 @@ export async function createOrder(
         : null;
 
     if (specs.service_id && financialParams) {
-      const { print_mode: pm, size_code: sc, unit_value: uv } = financialParams;
+      const { print_mode: pm, size_code: sc, paper_type: pt, unit_value: uv } = financialParams;
       try {
         const priced = await calculateFinancialPrice({
           service_id: specs.service_id,
           print_mode: pm,
           size_code: sc,
+          paper_type: pt ?? undefined,
           unit_value: uv,
           quantity: item.quantity,
         });
         resolvedUnitPrice = priced.unitPrice * uv;
-        effectiveSpecs = { ...specs, print_mode: pm, size_code: sc, unit_value: uv };
+        effectiveSpecs = { ...specs, print_mode: pm, size_code: sc, paper_type: pt, unit_value: uv };
       } catch {
         // غياب قاعدة أو شريحة مناسبة: نبقى على السعر 0 ولا نرفض الطلب
       }

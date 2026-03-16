@@ -89,6 +89,7 @@ export const financialRangeSchema = z.object({
 export const financialDimensionSchema = z.object({
   print_mode: printModeSchema,
   size_code: sizeCodeSchema,
+  paper_type: z.string().max(50).optional().nullable(),
   display_order: z.number().int().optional().default(0),
   ranges: z.array(financialRangeSchema).min(1),
 });
@@ -109,6 +110,7 @@ export const calculateFinancialPriceSchema = z.object({
   service_id: z.string().min(1),
   print_mode: printModeSchema,
   size_code: sizeCodeSchema,
+  paper_type: z.string().max(50).optional().nullable(),
   unit_value: z.number().nonnegative(),
   quantity: z.number().int().positive().default(1),
 });

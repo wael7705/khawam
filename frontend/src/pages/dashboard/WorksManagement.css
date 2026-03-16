@@ -77,6 +77,23 @@
   gap: 8px;
 }
 
+.works-create__upload-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.works-create__upload-phase {
+  font-size: 0.85rem;
+  color: var(--text-muted, #666);
+}
+
+.works-create__sub-count {
+  font-size: 0.9rem;
+  color: var(--text-muted, #666);
+}
+
 .works-btn--secondary {
   border-color: var(--border);
   color: var(--text);

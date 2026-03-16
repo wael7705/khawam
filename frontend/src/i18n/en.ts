@@ -19,7 +19,7 @@ export const en = {
   hero: {
     badge: 'Welcome To Our Company',
     title: 'First & Quality\nPrinting Press',
-    desc: 'When we say we\'re not happy until you\'re happy, we really do mean it.\nYou will be happy with service.',
+    desc: 'High-quality printing and reliable delivery. We commit to clear standards and results you can count on.',
     cta: 'Make An Order',
     howItWorks: 'How It Works',
   },
