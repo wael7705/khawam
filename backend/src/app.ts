@@ -18,7 +18,6 @@ import { portfolioRoutes } from './modules/portfolio/portfolio.routes.js';
 import { studioRoutes } from './modules/studio/studio.routes.js';
 import { workflowsRoutes } from './modules/workflows/workflows.routes.js';
 import { pricingRoutes } from './modules/pricing/pricing.routes.js';
-import { heroSlidesRoutes } from './modules/hero-slides/hero-slides.routes.js';
 import { analyticsRoutes } from './modules/analytics/analytics.routes.js';
 import { notificationsRoutes } from './modules/notifications/notifications.routes.js';
 import { savedLocationsRoutes } from './modules/saved-locations/saved-locations.routes.js';
@@ -97,8 +96,7 @@ export async function buildApp() {
             path === '/api/orders/upload-batch' ||
             path.startsWith('/api/studio/') ||
             path === '/api/admin/upload' ||
-            path.startsWith('/api/admin/upload/') ||
-            path === '/api/hero-slides/upload'
+            path.startsWith('/api/admin/upload/')
           );
         },
       });
@@ -125,7 +123,6 @@ export async function buildApp() {
       await apiApp.register(studioRoutes, { prefix: '/studio' });
       await apiApp.register(workflowsRoutes, { prefix: '/workflows' });
       await apiApp.register(pricingRoutes, { prefix: '/' });
-      await apiApp.register(heroSlidesRoutes, { prefix: '/' });
       await apiApp.register(analyticsRoutes, { prefix: '/analytics' });
       await apiApp.register(notificationsRoutes, { prefix: '/ws' });
     },

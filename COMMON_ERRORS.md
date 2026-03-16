@@ -38,6 +38,10 @@ pnpm db:migrate  # للإنتاج
 - الأنواع المسموحة: PDF, DOC, DOCX, JPG, JPEG, PNG, WEBP, GIF, SVG, AI, PSD, EPS
 - الحد الأقصى: 50MB
 
+### صور الأعمال 404 (GET /uploads/general/xxx.webp Not Found)
+- **السبب:** على Railway (ومثيلات السحابة المشابهة) نظام الملفات **مؤقت** — الملفات المرفوعة تُحذف عند إعادة النشر أو إعادة التشغيل.
+- **الحل:** أضف **Volume** لخدمة التطبيق في Railway: Service → Volumes → Add Volume (مسار مثلاً `/data`). التطبيق يستخدم تلقائياً `RAILWAY_VOLUME_MOUNT_PATH` لحفظ الملفات في مسار دائم.
+
 ## Socket.IO
 
 ### لا تصل الإشعارات

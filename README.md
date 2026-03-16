@@ -89,7 +89,6 @@ khawam/
 | `/api/studio/*` | أدوات التصميم |
 | `/api/workflows/*` | سير العمل |
 | `/api/pricing-rules/*` | التسعير |
-| `/api/hero-slides/*` | الشرائح |
 | `/api/analytics/*` | التحليلات |
 | `/api/ws/*` | الاتصال الفوري |
 
@@ -171,10 +170,10 @@ git push origin main
 | `PUBLIC_BASE_URL` | نعم | عنوان الـ API العام، مثال: `https://khawam-backend.up.railway.app` |
 | `FRONTEND_URL` | نعم | عنوان الواجهة. عند النشر الواحد (الواجهة من نفس الخدمة) ضعه مساوياً لـ `PUBLIC_BASE_URL` |
 | `REMOVE_BG_API_KEY` | لا | مفتاح [remove.bg](https://remove.bg) لاستديو إزالة الخلفية |
-| `UPLOAD_DIR` | لا | مجلد حفظ الملفات المرفوعة. مع Volume: `/data/uploads` |
+| `UPLOAD_DIR` | لا | مجلد حفظ الملفات. إن أضفت Volume لخدمة khawam يُستخدم تلقائياً مسار التخزين الدائم ولا تحتاج لضبطه. |
 | `NODE_ENV` | لا | `production` في النشر |
 
-**الرفع إلى السيرفر:** الخادم يحفظ الملفات المرفوعة في المجلد المُعرّف بـ `UPLOAD_DIR`، أو في `./uploads` إن لم يُضبَط. لاستمرارية الملفات على Railway أضف Volume واربطه بمسار (مثل `/data`) ثم ضبط `UPLOAD_DIR=/data/uploads`.
+**الرفع إلى السيرفر (استمرارية صور الأعمال والملفات):** على Railway نظام الملفات **مؤقت** — أي ملف يُحفظ في `./uploads` يختفي بعد إعادة النشر. **الحل:** أضف **Volume** لخدمة khawam من لوحة Railway: Service → **Volumes** → **Add Volume** واختر مسار التثبيت (مثل `/data`). Railway يضبط تلقائياً المتغير `RAILWAY_VOLUME_MOUNT_PATH`؛ التطبيق يستخدمه لحفظ الملفات في مسار دائم.
 
 ### إدارة الاستهلاك على Railway (خطة الهواة / حد 10$)
 

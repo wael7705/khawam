@@ -33,7 +33,13 @@ function loadConfig() {
   }
 
   const data = result.data;
-  const uploadDir = data.UPLOAD_DIR ? resolve(data.UPLOAD_DIR) : join(process.cwd(), 'uploads');
+  // على Railway الملفات المؤقتة تُفقد عند إعادة النشر؛ استخدم Volume أو UPLOAD_DIR
+  const railwayVolume = process.env.RAILWAY_VOLUME_MOUNT_PATH;
+  const uploadDir = data.UPLOAD_DIR
+    ? resolve(data.UPLOAD_DIR)
+    : railwayVolume
+      ? join(railwayVolume, 'uploads')
+      : join(process.cwd(), 'uploads');
   return { ...data, uploadDir };
 }
 

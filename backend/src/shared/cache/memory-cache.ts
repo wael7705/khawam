@@ -7,7 +7,6 @@ const TTL_PRESETS = {
   services: 5 * 60 * 1000,
   portfolio: 10 * 60 * 1000,
   dashboard: 1 * 60 * 1000,
-  heroSlides: 10 * 60 * 1000,
   short: 30 * 1000,
   default: DEFAULT_TTL_MS,
 } as const;

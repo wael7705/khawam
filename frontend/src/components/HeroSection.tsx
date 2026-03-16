@@ -6,27 +6,25 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
+  Printer,
+  Shirt,
+  Megaphone,
+  Palette,
+  PenTool,
+  CreditCard,
 } from 'lucide-react';
-import {
-  FaPrint,
-  FaShirt,
-  FaPersonChalkboard,
-  FaSwatchbook,
-  FaCopyright,
-  FaIdCard,
-} from 'react-icons/fa6';
+import type { LucideIcon } from 'lucide-react';
 import { useTranslation } from '../i18n/index';
 import { HERO_LINKS, getHeroLinkLabel } from '../lib/servicesCatalog';
-import type { IconType } from 'react-icons';
 import './HeroSection.css';
 
-const HERO_ICONS: Record<string, IconType> = {
-  printing: FaPrint,
-  tshirt: FaShirt,
-  billboard: FaPersonChalkboard,
-  branding: FaSwatchbook,
-  copyright: FaCopyright,
-  businessCard: FaIdCard,
+const HERO_ICONS: Record<string, LucideIcon> = {
+  printing: Printer,
+  tshirt: Shirt,
+  billboard: Megaphone,
+  branding: Palette,
+  copyright: PenTool,
+  businessCard: CreditCard,
 };
 
 export function HeroSection() {
@@ -92,7 +90,7 @@ export function HeroSection() {
                 return (
                   <Link key={link.key} to={`/services/${link.slug}`} className="hero__svc">
                     <span className="hero__svc-icon">
-                      {Icon ? <Icon size={34} /> : null}
+                      {Icon ? <Icon size={32} strokeWidth={1.8} /> : null}
                     </span>
                     <span className="hero__svc-label">{getHeroLinkLabel(link, locale)}</span>
                   </Link>
