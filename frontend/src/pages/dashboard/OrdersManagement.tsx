@@ -15,7 +15,6 @@ import {
   getOrderStatusLabel,
   getNextOrderStatus,
   getOrderStatusActionLabel,
-  ORDER_CANCEL_ACTION_LABELS,
 } from '../../lib/servicesCatalog';
 import type { LucideIcon } from 'lucide-react';
 
@@ -149,7 +148,8 @@ function formatSpecValue(
 }
 
 export function OrdersManagement() {
-  const { locale } = useTranslation();
+  const { t, locale } = useTranslation();
+  const d = t.dashboard.ordersPage;
   const useMockData = canUseDashboardMockData();
   const [status, setStatus] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
@@ -169,76 +169,9 @@ export function OrdersManagement() {
   const [paymentPaidAmount, setPaymentPaidAmount] = useState(0);
   const [savingPayment, setSavingPayment] = useState(false);
 
-  const labels = useMemo(
-    () =>
-      locale === 'ar'
-        ? {
-            title: 'إدارة الطلبات',
-            subtitle: 'إدارة سريعة لحالة الطلبات مع واجهة متوافقة مع التصميم الجديد.',
-            search: 'ابحث برقم الطلب أو اسم العميل أو الهاتف',
-            all: 'الكل',
-            pending: getOrderStatusLabel('pending', 'ar'),
-            confirmed: getOrderStatusLabel('confirmed', 'ar'),
-            processing: getOrderStatusLabel('processing', 'ar'),
-            completed: getOrderStatusLabel('completed', 'ar'),
-            cancelled: getOrderStatusLabel('cancelled', 'ar'),
-            orderNo: 'رقم الطلب',
-            service: 'الخدمة',
-            customer: 'العميل',
-            status: 'الحالة',
-            amount: 'الإجمالي',
-            created: 'تاريخ الإنشاء',
-            paid: 'الدفع',
-            yes: 'مدفوع',
-            no: 'غير مدفوع',
-            totalOrders: 'إجمالي الطلبات',
-            activeOrders: 'الطلبات النشطة',
-            todayOrders: 'طلبات اليوم',
-            prev: 'السابق',
-            next: 'التالي',
-            empty: 'لا توجد طلبات مطابقة للفلاتر الحالية.',
-            loading: 'تحميل الطلبات...',
-            failed: 'تعذر تحميل الطلبات',
-            nextStatus: 'المرحلة التالية',
-            cancelOrder: 'إلغاء الطلب',
-            actions: 'إجراء',
-            mockHint: 'وضع بيانات وهمية مفعل (بدون سيرفر)',
-            pricingWarningPrefix: 'تنبيه تسعير:',
-          }
-        : {
-            title: 'Orders Management',
-            subtitle: 'Manage and track orders in a modern responsive interface.',
-            search: 'Search by order number, customer, or phone',
-            all: 'All',
-            pending: getOrderStatusLabel('pending', 'en'),
-            confirmed: getOrderStatusLabel('confirmed', 'en'),
-            processing: getOrderStatusLabel('processing', 'en'),
-            completed: getOrderStatusLabel('completed', 'en'),
-            cancelled: getOrderStatusLabel('cancelled', 'en'),
-            orderNo: 'Order #',
-            service: 'Service',
-            customer: 'Customer',
-            status: 'Status',
-            amount: 'Total',
-            created: 'Created At',
-            paid: 'Payment',
-            yes: 'Paid',
-            no: 'Unpaid',
-            totalOrders: 'Total Orders',
-            activeOrders: 'Active Orders',
-            todayOrders: 'Today Orders',
-            prev: 'Previous',
-            next: 'Next',
-            empty: 'No orders found for current filters.',
-            loading: 'Loading orders...',
-            failed: 'Failed to load orders',
-            nextStatus: 'Next status',
-            cancelOrder: 'Cancel order',
-            actions: 'Action',
-            mockHint: 'Mock mode enabled (no server)',
-            pricingWarningPrefix: 'Pricing warning:',
-          },
-    [locale],
+  const statusFilterLabel = useCallback(
+    (filter: StatusFilter) => (filter === 'all' ? d.all : getOrderStatusLabel(filter, locale)),
+    [d.all, locale],
   );
 
   useEffect(() => {
@@ -275,11 +208,11 @@ export function OrdersManagement() {
         });
         setPricingCoverage(coverageRes.filter((item) => !item.has_pricing));
       } catch {
-        setError(labels.failed);
+        setError(d.failed);
       } finally {
         setLoading(false);
       }
-    }, [labels.failed, query, status]);
+    }, [d.failed, query, status]);
 
   useEffect(() => {
     void loadOrders();
@@ -306,13 +239,12 @@ export function OrdersManagement() {
         setSelectedOrder((prev) => (prev ? { ...prev, status: nextStatus } : null));
       }
     } catch {
-      setError(locale === 'ar' ? 'فشل تحديث الحالة' : 'Failed to update status');
+      setError(d.updateStatusFailed);
     }
   };
 
   const handleCancelOrder = async (orderId: string) => {
-    const msg = locale === 'ar' ? 'هل تريد إلغاء هذا الطلب؟' : 'Do you want to cancel this order?';
-    if (!window.confirm(msg)) return;
+    if (!window.confirm(d.cancelConfirm)) return;
     try {
       if (useMockData) {
         setMockOrderCancelled(orderId);
@@ -324,7 +256,7 @@ export function OrdersManagement() {
         setSelectedOrder(null);
       }
     } catch {
-      setError(locale === 'ar' ? 'فشل إلغاء الطلب' : 'Failed to cancel order');
+      setError(d.cancelFailed);
     }
   };
 
@@ -335,7 +267,7 @@ export function OrdersManagement() {
       await dashboardApi.updateOrderStaffNotes(selectedOrder.id, staffNotesDraft);
       setSelectedOrder((prev) => (prev ? { ...prev, staff_notes: staffNotesDraft } : null));
     } catch {
-      setDetailError(locale === 'ar' ? 'فشل حفظ الملاحظات' : 'Failed to save notes');
+      setDetailError(d.saveNotesFailed);
     } finally {
       setSavingStaffNotes(false);
     }
@@ -353,7 +285,7 @@ export function OrdersManagement() {
         prev ? { ...prev, is_paid: isPaid, paid_amount: paidAmount, remaining_amount: remaining } : null
       );
     } catch {
-      setDetailError(locale === 'ar' ? 'فشل تحديث التسديد' : 'Failed to update payment');
+      setDetailError(d.updatePaymentFailed);
     } finally {
       setSavingPayment(false);
     }
@@ -433,7 +365,7 @@ export function OrdersManagement() {
           });
         }
       } else {
-        setDetailError(locale === 'ar' ? 'فشل تحميل تفاصيل الطلب' : 'Failed to load order details');
+        setDetailError(d.loadDetailFailed);
       }
     } finally {
       setDetailLoading(false);
@@ -451,7 +383,7 @@ export function OrdersManagement() {
     if (entries.length === 0) return null;
     return (
       <div className="detail-specs">
-        <h4>{locale === 'ar' ? 'مواصفات الطلب' : 'Order Specifications'}</h4>
+        <h4>{d.orderSpecs}</h4>
         <div className="detail-specs__grid">
           {entries.map(([k, v]) => (
             <div key={k} className="detail-specs__item">
@@ -468,35 +400,35 @@ export function OrdersManagement() {
     <div className="orders-page">
       <header className="orders-page__head">
         <div>
-          <h1>{labels.title}</h1>
-          <p>{labels.subtitle}</p>
+          <h1>{d.title}</h1>
+          <p>{d.subtitle}</p>
         </div>
         <div className="orders-summary">
           <article>
-            <span>{labels.totalOrders}</span>
+            <span>{d.totalOrders}</span>
             <strong>{totals.total}</strong>
           </article>
           <article>
-            <span>{labels.activeOrders}</span>
+            <span>{d.activeOrders}</span>
             <strong>{totals.active}</strong>
           </article>
           <article>
-            <span>{labels.todayOrders}</span>
+            <span>{d.todayOrders}</span>
             <strong>{totals.today}</strong>
           </article>
         </div>
       </header>
-      {useMockData && <p className="orders-mock-hint">{labels.mockHint}</p>}
+      {useMockData && <p className="orders-mock-hint">{d.mockHint}</p>}
       {pricingCoverage.length > 0 && (
         <p className="orders-pricing-warning">
-          {labels.pricingWarningPrefix} {pricingCoverage.map((item) => item.service_name_ar).join('، ')}
+          {d.pricingWarningPrefix} {pricingCoverage.map((item) => item.service_name_ar).join('، ')}
         </p>
       )}
 
       <section className="orders-controls">
         <div className="orders-search">
           <Search size={18} />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={labels.search} />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={d.search} />
         </div>
         <div className="orders-tabs">
           {STATUS_FILTERS.map((item) => (
@@ -506,32 +438,32 @@ export function OrdersManagement() {
               className={status === item ? 'orders-tab orders-tab--active' : 'orders-tab'}
               onClick={() => setStatus(item)}
             >
-              {labels[item]}
+              {statusFilterLabel(item)}
             </button>
           ))}
         </div>
       </section>
 
       {loading ? (
-        <div className="orders-state">{labels.loading}</div>
+        <div className="orders-state">{d.loading}</div>
       ) : error ? (
         <div className="orders-state orders-state--error">{error}</div>
       ) : !orders || orders.data.length === 0 ? (
-        <div className="orders-state">{labels.empty}</div>
+        <div className="orders-state">{d.empty}</div>
       ) : (
         <section className="orders-table-card">
           <div className="orders-table-wrap">
             <table className="orders-table">
               <thead>
                 <tr>
-                  <th>{labels.orderNo}</th>
-                  <th>{labels.service}</th>
-                  <th>{labels.customer}</th>
-                  <th>{labels.status}</th>
-                  <th>{labels.amount}</th>
-                  <th>{labels.created}</th>
-                  <th>{labels.paid}</th>
-                  <th>{labels.actions}</th>
+                  <th>{d.orderNo}</th>
+                  <th>{d.service}</th>
+                  <th>{d.customer}</th>
+                  <th>{d.status}</th>
+                  <th>{d.amount}</th>
+                  <th>{d.created}</th>
+                  <th>{d.paid}</th>
+                  <th>{d.actions}</th>
                 </tr>
               </thead>
               <tbody>
@@ -567,7 +499,7 @@ export function OrdersManagement() {
                       </td>
                       <td>{order.final_amount.toLocaleString()}</td>
                       <td>{new Date(order.created_at).toLocaleDateString()}</td>
-                      <td>{order.is_paid ? labels.yes : labels.no}</td>
+                      <td>{order.is_paid ? d.yes : d.no}</td>
                       <td className="orders-actions-cell" onClick={(e) => e.stopPropagation()}>
                         {nextStatus != null && (() => {
                           const StatusIcon = getOrderStatusNextIcon(order.status, nextStatus);
@@ -588,9 +520,9 @@ export function OrdersManagement() {
                           <button
                             type="button"
                             className="orders-status-icon orders-status-icon--cancel"
-                            title={locale === 'ar' ? ORDER_CANCEL_ACTION_LABELS.ar : ORDER_CANCEL_ACTION_LABELS.en}
+                            title={d.cancelOrder}
                             onClick={() => void handleCancelOrder(order.id)}
-                            aria-label={locale === 'ar' ? ORDER_CANCEL_ACTION_LABELS.ar : ORDER_CANCEL_ACTION_LABELS.en}
+                            aria-label={d.cancelOrder}
                           >
                             <Ban size={18} />
                           </button>
@@ -617,7 +549,7 @@ export function OrdersManagement() {
               <div className="order-detail__error">
                 <p>{detailError}</p>
                 <button type="button" className="btn btn-primary" onClick={() => { setSelectedOrder(null); setDetailError(''); }}>
-                  {locale === 'ar' ? 'إغلاق' : 'Close'}
+                  {d.close}
                 </button>
               </div>
             ) : selectedOrder && (
@@ -650,9 +582,9 @@ export function OrdersManagement() {
                       <button
                         type="button"
                         className="orders-status-icon orders-status-icon--cancel"
-                        title={locale === 'ar' ? ORDER_CANCEL_ACTION_LABELS.ar : ORDER_CANCEL_ACTION_LABELS.en}
+                        title={d.cancelOrder}
                         onClick={() => void handleCancelOrder(selectedOrder.id)}
-                        aria-label={locale === 'ar' ? ORDER_CANCEL_ACTION_LABELS.ar : ORDER_CANCEL_ACTION_LABELS.en}
+                        aria-label={d.cancelOrder}
                       >
                         <Ban size={20} />
                       </button>
@@ -667,7 +599,7 @@ export function OrdersManagement() {
                   {/* Service */}
                   {selectedOrder.service_id && (
                     <div className="detail-section">
-                      <h4><Package size={16} /> {locale === 'ar' ? 'الخدمة' : 'Service'}</h4>
+                      <h4><Package size={16} /> {d.service}</h4>
                       <p className="detail-service-name">
                         {getServiceDisplayName(selectedOrder.service_id, locale, { nameAr: selectedOrder.service_name_ar, nameEn: selectedOrder.service_name_en }).mainName}
                         {' → '}
@@ -678,7 +610,7 @@ export function OrdersManagement() {
 
                   {/* Customer Info */}
                   <div className="detail-section">
-                    <h4><User size={16} /> {locale === 'ar' ? 'بيانات العميل' : 'Customer Info'}</h4>
+                    <h4><User size={16} /> {d.customerInfo}</h4>
                     <div className="detail-info-grid">
                       <div className="detail-info-item">
                         <User size={14} />
@@ -714,17 +646,17 @@ export function OrdersManagement() {
                     <div className="detail-section detail-section--delivery">
                       <h4>
                         {selectedOrder.delivery_type === 'delivery' ? <Truck size={16} /> : <MapPin size={16} />}
-                        {' '}{locale === 'ar' ? 'الاستلام' : 'Delivery'}
+                        {' '}{d.delivery}
                       </h4>
                       <p className="detail-delivery-type">
                         {formatSpecValue('delivery_type', selectedOrder.delivery_type, locale)}
                       </p>
                       {(selectedOrder.delivery_street || selectedOrder.delivery_neighborhood || selectedOrder.delivery_building_floor || selectedOrder.delivery_extra) && (
                         <div className="detail-delivery-parts">
-                          {selectedOrder.delivery_street && <p className="detail-delivery-line"><span className="detail-delivery-part-label">{locale === 'ar' ? 'الشارع:' : 'Street:'}</span> {selectedOrder.delivery_street}</p>}
-                          {selectedOrder.delivery_neighborhood && <p className="detail-delivery-line"><span className="detail-delivery-part-label">{locale === 'ar' ? 'الحي:' : 'Neighborhood:'}</span> {selectedOrder.delivery_neighborhood}</p>}
-                          {selectedOrder.delivery_building_floor && <p className="detail-delivery-line"><span className="detail-delivery-part-label">{locale === 'ar' ? 'المبنى/الطابق:' : 'Building/Floor:'}</span> {selectedOrder.delivery_building_floor}</p>}
-                          {selectedOrder.delivery_extra && <p className="detail-delivery-line"><span className="detail-delivery-part-label">{locale === 'ar' ? 'تفاصيل:' : 'Details:'}</span> {selectedOrder.delivery_extra}</p>}
+                          {selectedOrder.delivery_street && <p className="detail-delivery-line"><span className="detail-delivery-part-label">{d.street}</span> {selectedOrder.delivery_street}</p>}
+                          {selectedOrder.delivery_neighborhood && <p className="detail-delivery-line"><span className="detail-delivery-part-label">{d.neighborhood}</span> {selectedOrder.delivery_neighborhood}</p>}
+                          {selectedOrder.delivery_building_floor && <p className="detail-delivery-line"><span className="detail-delivery-part-label">{d.buildingFloor}</span> {selectedOrder.delivery_building_floor}</p>}
+                          {selectedOrder.delivery_extra && <p className="detail-delivery-line"><span className="detail-delivery-part-label">{d.details}</span> {selectedOrder.delivery_extra}</p>}
                         </div>
                       )}
                       {selectedOrder.delivery_address && (
@@ -735,7 +667,7 @@ export function OrdersManagement() {
                         selectedOrder.delivery_longitude != null && (
                           <div className="detail-map-wrap">
                             <iframe
-                              title={locale === 'ar' ? 'موقع التوصيل' : 'Delivery location'}
+                              title={d.deliveryLocation}
                               className="detail-map-iframe"
                               src={`https://www.openstreetmap.org/export/embed.html?bbox=${selectedOrder.delivery_longitude - 0.008},${selectedOrder.delivery_latitude - 0.005},${selectedOrder.delivery_longitude + 0.008},${selectedOrder.delivery_latitude + 0.005}&layer=mapnik&marker=${selectedOrder.delivery_latitude},${selectedOrder.delivery_longitude}`}
                             />
@@ -747,7 +679,7 @@ export function OrdersManagement() {
                                 rel="noopener noreferrer"
                               >
                                 <ExternalLink size={14} />
-                                {locale === 'ar' ? 'فتح Google Maps' : 'Open Google Maps'}
+                                {d.openGoogleMaps}
                               </a>
                               <a
                                 className="detail-map-link"
@@ -756,7 +688,7 @@ export function OrdersManagement() {
                                 rel="noopener noreferrer"
                               >
                                 <MapPin size={14} />
-                                {locale === 'ar' ? 'اتجاهات GPS' : 'Directions'}
+                                {d.directions}
                               </a>
                               <button
                                 type="button"
@@ -767,7 +699,7 @@ export function OrdersManagement() {
                                 }}
                               >
                                 <Copy size={14} />
-                                {locale === 'ar' ? 'نسخ الإحداثيات' : 'Copy coords'}
+                                {d.copyCoords}
                               </button>
                               <button
                                 type="button"
@@ -778,7 +710,7 @@ export function OrdersManagement() {
                                 }}
                               >
                                 <ExternalLink size={14} />
-                                {locale === 'ar' ? 'نسخ رابط الموقع' : 'Copy map link'}
+                                {d.copyMapLink}
                               </button>
                               <button
                                 type="button"
@@ -803,7 +735,7 @@ export function OrdersManagement() {
                                 }}
                               >
                                 <Share2 size={14} />
-                                {locale === 'ar' ? 'مشاركة الموقع' : 'Share location'}
+                                {d.shareLocation}
                               </button>
                             </div>
                           </div>
@@ -817,7 +749,7 @@ export function OrdersManagement() {
                   {/* Items */}
                   {selectedOrder.items.length > 0 && (
                     <div className="detail-section">
-                      <h4><Package size={16} /> {locale === 'ar' ? 'عناصر الطلب' : 'Order Items'}</h4>
+                      <h4><Package size={16} /> {d.orderItems}</h4>
                       <div className="detail-items">
                         {selectedOrder.items.map((item) => (
                           <div key={item.id} className="detail-item-row">
@@ -833,7 +765,7 @@ export function OrdersManagement() {
                   {/* Files */}
                   {selectedOrder.files && selectedOrder.files.length > 0 && (
                     <div className="detail-section">
-                      <h4><FileText size={16} /> {locale === 'ar' ? 'الملفات المرفقة' : 'Attached Files'}</h4>
+                      <h4><FileText size={16} /> {d.attachedFiles}</h4>
                       <div className="detail-files">
                         {selectedOrder.files.map((fileUrl, i) => {
                           const name = fileUrl.split('/').pop() || `file-${i + 1}`;
@@ -859,15 +791,15 @@ export function OrdersManagement() {
                   {/* Notes */}
                   {selectedOrder.notes && (
                     <div className="detail-section">
-                      <h4>{locale === 'ar' ? 'ملاحظات' : 'Notes'}</h4>
+                      <h4>{d.notes}</h4>
                       <p className="detail-notes">{selectedOrder.notes}</p>
                     </div>
                   )}
 
                   {/* Amount */}
                   <div className="detail-section detail-total">
-                    <span>{locale === 'ar' ? 'الإجمالي' : 'Total'}</span>
-                    <strong>{selectedOrder.final_amount.toLocaleString()} {locale === 'ar' ? 'ل.س' : 'SYP'}</strong>
+                    <span>{d.total}</span>
+                    <strong>{selectedOrder.final_amount.toLocaleString()} {d.syb}</strong>
                   </div>
 
                   {/* Staff notes */}
@@ -875,13 +807,13 @@ export function OrdersManagement() {
                     <div className="detail-section">
                       <h4 className="detail-subtitle">
                         <StickyNote size={18} />
-                        {locale === 'ar' ? 'ملاحظات الموظفين' : 'Staff notes'}
+                        {d.staffNotes}
                       </h4>
                       <textarea
                         className="detail-staff-notes"
                         value={staffNotesDraft}
                         onChange={(e) => setStaffNotesDraft(e.target.value)}
-                        placeholder={locale === 'ar' ? 'ملاحظات داخلية...' : 'Internal notes...'}
+                        placeholder={d.internalNotes}
                         rows={3}
                       />
                       <button
@@ -890,7 +822,7 @@ export function OrdersManagement() {
                         onClick={handleSaveStaffNotes}
                         disabled={savingStaffNotes}
                       >
-                        {savingStaffNotes ? (locale === 'ar' ? 'جاري الحفظ...' : 'Saving...') : locale === 'ar' ? 'حفظ' : 'Save'}
+                        {savingStaffNotes ? d.saving : d.save}
                       </button>
                     </div>
                   )}
@@ -900,19 +832,19 @@ export function OrdersManagement() {
                     <div className="detail-section">
                       <h4 className="detail-subtitle">
                         <Banknote size={18} />
-                        {locale === 'ar' ? 'التسديد' : 'Payment'}
+                        {d.payment}
                       </h4>
                       <div className="detail-payment-row">
-                        <span>{locale === 'ar' ? 'الإجمالي' : 'Total'}</span>
-                        <strong>{selectedOrder.final_amount.toLocaleString()} {locale === 'ar' ? 'ل.س' : 'SYP'}</strong>
+                        <span>{d.total}</span>
+                        <strong>{selectedOrder.final_amount.toLocaleString()} {d.syb}</strong>
                       </div>
                       <div className="detail-payment-row">
-                        <span>{locale === 'ar' ? 'المدفوع' : 'Paid'}</span>
-                        <strong>{(selectedOrder.paid_amount ?? 0).toLocaleString()} {locale === 'ar' ? 'ل.س' : 'SYP'}</strong>
+                        <span>{d.paidLabel}</span>
+                        <strong>{(selectedOrder.paid_amount ?? 0).toLocaleString()} {d.syb}</strong>
                       </div>
                       <div className="detail-payment-row">
-                        <span>{locale === 'ar' ? 'المتبقي' : 'Remaining'}</span>
-                        <strong>{(selectedOrder.remaining_amount ?? selectedOrder.final_amount ?? 0).toLocaleString()} {locale === 'ar' ? 'ل.س' : 'SYP'}</strong>
+                        <span>{d.remaining}</span>
+                        <strong>{(selectedOrder.remaining_amount ?? selectedOrder.final_amount ?? 0).toLocaleString()} {d.syb}</strong>
                       </div>
                       <div className="detail-payment-actions">
                         <label className="detail-radio">
@@ -922,7 +854,7 @@ export function OrdersManagement() {
                             checked={paymentIsPaid}
                             onChange={() => setPaymentIsPaid(true)}
                           />
-                          {locale === 'ar' ? 'تم التسديد' : 'Paid'}
+                          {d.yes}
                         </label>
                         <label className="detail-radio">
                           <input
@@ -931,12 +863,12 @@ export function OrdersManagement() {
                             checked={!paymentIsPaid}
                             onChange={() => setPaymentIsPaid(false)}
                           />
-                          {locale === 'ar' ? 'لم يتم التسديد' : 'Not paid'}
+                          {d.no}
                         </label>
                       </div>
                       {!paymentIsPaid && (
                         <div className="detail-payment-input">
-                          <label>{locale === 'ar' ? 'المبلغ المدفوع' : 'Amount paid'}</label>
+                          <label>{d.amountPaid}</label>
                           <input
                             type="number"
                             min={0}
@@ -952,7 +884,7 @@ export function OrdersManagement() {
                         onClick={handleSavePayment}
                         disabled={savingPayment}
                       >
-                        {savingPayment ? (locale === 'ar' ? 'جاري الحفظ...' : 'Saving...') : locale === 'ar' ? 'حفظ' : 'Save'}
+                        {savingPayment ? d.saving : d.save}
                       </button>
                     </div>
                   )}

@@ -34,7 +34,7 @@ interface NavItem {
 }
 
 export function DashboardLayout() {
-  const { locale, toggleLocale } = useTranslation();
+  const { t, locale, toggleLocale } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -73,55 +73,23 @@ export function DashboardLayout() {
     };
   }, [isDarkMode]);
 
-  const labels = useMemo(
-    () =>
-      locale === 'ar'
-        ? {
-            title: 'لوحة التحكم',
-            welcome: 'مرحبًا',
-            home: 'الرئيسية',
-            orders: 'إدارة الطلبات',
-            customers: 'إدارة العملاء',
-            works: 'إدارة الأعمال',
-            archive: 'الأرشيف',
-            finance: 'القاعدة المالية',
-            langSwitch: 'English',
-            analytics: 'التحليلات',
-            logout: 'تسجيل الخروج',
-            backToSite: 'العودة للموقع',
-          }
-        : {
-            title: 'Dashboard',
-            welcome: 'Welcome',
-            home: 'Home',
-            orders: 'Orders',
-            customers: 'Customers',
-            works: 'Works',
-            archive: 'Archive',
-            finance: 'Finance',
-            langSwitch: 'العربية',
-            analytics: 'Analytics',
-            logout: 'Logout',
-            backToSite: 'Back to site',
-          },
-    [locale],
-  );
+  const d = t.dashboard;
 
   const navItems: NavItem[] = useMemo(() => {
     const all: NavItem[] = [
-      { to: '/dashboard', label: labels.home, Icon: Home },
-      { to: '/dashboard/orders', label: labels.orders, Icon: ClipboardList },
-      { to: '/dashboard/customers', label: labels.customers, Icon: Users },
-      { to: '/dashboard/works', label: labels.works, Icon: FolderOpen },
-      { to: '/dashboard/archive', label: labels.archive, Icon: ArchiveIcon },
-      { to: '/dashboard/finance', label: labels.finance, Icon: Wallet },
-      { to: '/dashboard/analytics', label: labels.analytics, Icon: BarChart3 },
+      { to: '/dashboard', label: d.home, Icon: Home },
+      { to: '/dashboard/orders', label: d.orders, Icon: ClipboardList },
+      { to: '/dashboard/customers', label: d.customers, Icon: Users },
+      { to: '/dashboard/works', label: d.works, Icon: FolderOpen },
+      { to: '/dashboard/archive', label: d.archive, Icon: ArchiveIcon },
+      { to: '/dashboard/finance', label: d.finance, Icon: Wallet },
+      { to: '/dashboard/analytics', label: d.analytics, Icon: BarChart3 },
     ];
     if (user?.role === 'موظف') {
-      return [{ to: '/dashboard/orders', label: labels.orders, Icon: ClipboardList }];
+      return [{ to: '/dashboard/orders', label: d.orders, Icon: ClipboardList }];
     }
     return all;
-  }, [user?.role, labels]);
+  }, [user?.role, d]);
 
   useOrderCreated(
     useCallback((payload: OrderCreatedPayload) => {
@@ -157,7 +125,7 @@ export function DashboardLayout() {
         <div className="dashboard-order-toast" role="alert">
           <div className="dashboard-order-toast__inner">
             <span className="dashboard-order-toast__title">
-              {locale === 'ar' ? 'طلب جديد' : 'New order'}
+              {d.newOrder}
             </span>
             <span className="dashboard-order-toast__number">
               #{newOrderNotification.order_number}
@@ -167,13 +135,13 @@ export function DashboardLayout() {
               className="dashboard-order-toast__link"
               onClick={dismissNewOrderNotification}
             >
-              {locale === 'ar' ? 'عرض الطلبات' : 'View orders'}
+              {d.viewOrders}
             </Link>
             <button
               type="button"
               className="dashboard-order-toast__close"
               onClick={dismissNewOrderNotification}
-              aria-label={locale === 'ar' ? 'إغلاق' : 'Close'}
+              aria-label={d.close}
             >
               <X size={18} />
             </button>
@@ -184,13 +152,13 @@ export function DashboardLayout() {
         <div className="dashboard-sidebar__brand">
           <img src="/images/logo.jpeg" alt="Khawam" />
           <div className="dashboard-sidebar__brand-text">
-            <strong>{labels.title}</strong>
+            <strong>{d.title}</strong>
             <span>Khawam Pro</span>
           </div>
           <button
             type="button"
             className="dashboard-sidebar__collapse-btn"
-            aria-label={isCollapsed ? (locale === 'ar' ? 'توسيع القائمة' : 'Expand sidebar') : (locale === 'ar' ? 'طي القائمة' : 'Collapse sidebar')}
+            aria-label={isCollapsed ? d.expandSidebar : d.collapseSidebar}
             onClick={() => setIsCollapsed((c) => !c)}
           >
             {locale === 'ar' ? (
@@ -211,35 +179,35 @@ export function DashboardLayout() {
         </nav>
 
         <div className="dashboard-sidebar__helper">
-          <Link to="/" className="dashboard-sidebar__link dashboard-sidebar__helper-link" title={labels.backToSite}>
+          <Link to="/" className="dashboard-sidebar__link dashboard-sidebar__helper-link" title={d.backToSite}>
             <Home size={18} />
-            <span className="dashboard-sidebar__link-label">{labels.backToSite}</span>
+            <span className="dashboard-sidebar__link-label">{d.backToSite}</span>
           </Link>
           <button
             type="button"
             className="dashboard-sidebar__link dashboard-sidebar__helper-link"
-            onClick={() => setIsDarkMode((d) => !d)}
-            title={isDarkMode ? (locale === 'ar' ? 'الوضع الفاتح' : 'Light mode') : (locale === 'ar' ? 'الوضع الليلي' : 'Dark mode')}
+            onClick={() => setIsDarkMode((x) => !x)}
+            title={isDarkMode ? d.lightMode : d.darkMode}
           >
             {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
             <span className="dashboard-sidebar__link-label">
-              {isDarkMode ? (locale === 'ar' ? 'وضع فاتح' : 'Light') : (locale === 'ar' ? 'وضع ليلي' : 'Dark')}
+              {isDarkMode ? d.light : d.dark}
             </span>
           </button>
           <button
             type="button"
             className="dashboard-sidebar__link dashboard-sidebar__helper-link"
             onClick={toggleLocale}
-            title={labels.langSwitch}
+            title={d.langSwitch}
           >
             <Globe size={18} />
-            <span className="dashboard-sidebar__link-label">{labels.langSwitch}</span>
+            <span className="dashboard-sidebar__link-label">{d.langSwitch}</span>
           </button>
         </div>
 
-        <button type="button" className="dashboard-sidebar__logout" onClick={handleLogout} title={labels.logout}>
+        <button type="button" className="dashboard-sidebar__logout" onClick={handleLogout} title={d.logout}>
           <LogOut size={18} />
-          <span className="dashboard-sidebar__link-label">{labels.logout}</span>
+          <span className="dashboard-sidebar__link-label">{d.logout}</span>
         </button>
       </aside>
 
@@ -254,7 +222,7 @@ export function DashboardLayout() {
             <Menu size={20} />
           </button>
           <div className="dashboard-topbar__welcome">
-            <p>{labels.welcome}</p>
+            <p>{d.welcome}</p>
             <strong>{user?.name ?? '—'}</strong>
           </div>
         </header>
@@ -267,7 +235,7 @@ export function DashboardLayout() {
       <div className={`dashboard-drawer ${drawerOpen ? 'dashboard-drawer--open' : ''}`}>
         <div className="dashboard-drawer__panel">
           <div className="dashboard-drawer__head">
-            <strong>{labels.title}</strong>
+            <strong>{d.title}</strong>
             <button type="button" aria-label="Close menu" onClick={() => setDrawerOpen(false)}>
               <X size={18} />
             </button>
@@ -293,15 +261,15 @@ export function DashboardLayout() {
               onClick={() => setDrawerOpen(false)}
             >
               <Home size={18} />
-              <span>{labels.backToSite}</span>
+              <span>{d.backToSite}</span>
             </Link>
             <button
               type="button"
               className="dashboard-sidebar__link dashboard-sidebar__helper-link"
-              onClick={() => { setIsDarkMode((d) => !d); setDrawerOpen(false); }}
+              onClick={() => { setIsDarkMode((x) => !x); setDrawerOpen(false); }}
             >
               {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-              <span>{isDarkMode ? (locale === 'ar' ? 'وضع فاتح' : 'Light') : (locale === 'ar' ? 'وضع ليلي' : 'Dark')}</span>
+              <span>{isDarkMode ? d.light : d.dark}</span>
             </button>
             <button
               type="button"
@@ -309,12 +277,12 @@ export function DashboardLayout() {
               onClick={() => { toggleLocale(); setDrawerOpen(false); }}
             >
               <Globe size={18} />
-              <span>{labels.langSwitch}</span>
+              <span>{d.langSwitch}</span>
             </button>
           </div>
           <button type="button" className="dashboard-sidebar__logout" onClick={handleLogout}>
             <LogOut size={18} />
-            <span>{labels.logout}</span>
+            <span>{d.logout}</span>
           </button>
         </div>
         <button type="button" className="dashboard-drawer__overlay" onClick={() => setDrawerOpen(false)} />

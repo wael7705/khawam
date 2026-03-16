@@ -10,6 +10,7 @@ import { Register } from './pages/Register';
 import { Settings } from './pages/Settings';
 import { ServicesCatalog } from './pages/ServicesCatalog';
 import { Portfolio } from './pages/Portfolio';
+import { WorkDetailPage } from './pages/WorkDetailPage';
 import { MyOrders } from './pages/MyOrders';
 import { ReorderPage } from './pages/ReorderPage';
 
@@ -110,6 +111,7 @@ export default function App() {
             <Route path="/services" element={<ServicesCatalog />} />
             <Route path="/services/:category" element={<ServicesCatalog />} />
             <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/portfolio/work/:id" element={<WorkDetailPage />} />
             <Route path="/my-orders" element={<MyOrders />} />
             <Route path="/order/reorder/:orderId" element={<ReorderPage />} />
           </Route>

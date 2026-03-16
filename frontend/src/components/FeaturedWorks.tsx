@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from '../i18n/index';
 import { dashboardApi, type PublicWork } from '../lib/dashboard-api';
-import { WorkModal } from './WorkModal';
 import './FeaturedWorks.css';
 
 export interface Work {
@@ -35,8 +34,8 @@ function normalizeWork(raw: PublicWork): Work {
 
 export function FeaturedWorks() {
   const { t, locale } = useTranslation();
+  const navigate = useNavigate();
   const [works, setWorks] = useState<Work[]>([]);
-  const [selectedWork, setSelectedWork] = useState<Work | null>(null);
 
   useEffect(() => {
     dashboardApi
@@ -56,14 +55,15 @@ export function FeaturedWorks() {
         <span className="section-badge">{t.works.badge}</span>
         <h2 className="section-title">{t.works.title}</h2>
         <p className="featured-works__subtitle">{t.works.subtitle}</p>
-        <div className="featured-works__carousel" dir="ltr">
-          <div className="featured-works__track">
+        <div className="featured-works__carousel-wrap">
+          <div className="featured-works__carousel" dir="ltr">
+            <div className="featured-works__track">
             {works.map((work) => (
               <button
                 key={work.id}
                 type="button"
                 className="featured-works__card"
-                onClick={() => setSelectedWork(work)}
+                onClick={() => navigate(`/portfolio/work/${work.id}`)}
               >
                 <div className="featured-works__card-image-wrap">
                   <img
@@ -76,15 +76,13 @@ export function FeaturedWorks() {
                 <h3 className="featured-works__card-title">{getTitle(work)}</h3>
               </button>
             ))}
+            </div>
           </div>
         </div>
         <Link to="/portfolio" className="btn btn-primary featured-works__cta">
           {t.works.viewAll}
         </Link>
       </div>
-      {selectedWork && (
-        <WorkModal work={selectedWork} onClose={() => setSelectedWork(null)} locale={locale} />
-      )}
     </section>
   );
 }

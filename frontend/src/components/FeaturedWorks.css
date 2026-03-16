@@ -8,6 +8,11 @@
   margin-bottom: 32px;
 }
 
+.featured-works__carousel-wrap {
+  position: relative;
+  margin-bottom: 32px;
+}
+
 .featured-works__carousel {
   overflow-x: auto;
   overflow-y: hidden;
@@ -15,7 +20,6 @@
   scroll-behavior: smooth;
   cursor: grab;
   padding-bottom: 16px;
-  margin-bottom: 32px;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -98,5 +102,28 @@
 
   .featured-works__track {
     gap: 16px;
+  }
+
+  .featured-works__carousel-wrap {
+    position: relative;
+  }
+  .featured-works__carousel-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 16px;
+    width: 48px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  [dir="ltr"] .featured-works__carousel-wrap::after {
+    right: 0;
+    left: auto;
+    background: linear-gradient(to left, var(--bg) 0%, transparent 100%);
+  }
+  [dir="rtl"] .featured-works__carousel-wrap::after {
+    left: 0;
+    right: auto;
+    background: linear-gradient(to right, var(--bg) 0%, transparent 100%);
   }
 }

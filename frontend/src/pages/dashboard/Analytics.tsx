@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -40,45 +40,12 @@ function getDateRange(days: DatePreset): { startDate: string; endDate: string } 
 }
 
 export function Analytics() {
-  const { locale } = useTranslation();
+  const { t, locale } = useTranslation();
+  const d = t.dashboard.analyticsPage;
   const [preset, setPreset] = useState<DatePreset>(30);
   const [data, setData] = useState<AnalyticsViewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  const labels = useMemo(
-    () =>
-      locale === 'ar'
-        ? {
-            title: 'تحليل البيانات والزوار',
-            subtitle: 'تحليلات سلوكية وزمنية لدعم قرارات التشغيل والتحسين.',
-            totalVisitors: 'إجمالي الزوار',
-            totalViews: 'إجمالي المشاهدات',
-            topPages: 'أكثر الصفحات زيارة',
-            devices: 'توزيع الأجهزة',
-            browsers: 'توزيع المتصفحات',
-            exitRate: 'معدل الخروج',
-            funnel: 'تحليل المسار (Funnel)',
-            loading: 'تحميل بيانات التحليلات...',
-            failed: 'تعذر تحميل بيانات التحليلات',
-            noData: 'لا توجد بيانات كافية',
-          }
-        : {
-            title: 'Data & Visitors Analytics',
-            subtitle: 'Behavioral and timeline insights for better operational decisions.',
-            totalVisitors: 'Total Visitors',
-            totalViews: 'Total Views',
-            topPages: 'Top Pages',
-            devices: 'Device Distribution',
-            browsers: 'Browser Distribution',
-            exitRate: 'Exit Rate',
-            funnel: 'Funnel Analysis',
-            loading: 'Loading analytics data...',
-            failed: 'Failed to load analytics data',
-            noData: 'No sufficient data',
-          },
-    [locale],
-  );
 
   useEffect(() => {
     const load = async () => {
@@ -93,28 +60,28 @@ export function Analytics() {
         ]);
         setData({ stats, exitRates, funnels });
       } catch {
-        setError(labels.failed);
+        setError(d.failed);
       } finally {
         setLoading(false);
       }
     };
     void load();
-  }, [labels.failed, preset]);
+  }, [d.failed, preset]);
 
   if (loading) {
-    return <div className="analytics-state">{labels.loading}</div>;
+    return <div className="analytics-state">{d.loading}</div>;
   }
 
   if (error || !data) {
-    return <div className="analytics-state analytics-state--error">{error || labels.failed}</div>;
+    return <div className="analytics-state analytics-state--error">{error || d.failed}</div>;
   }
 
   return (
     <div className="analytics-page">
       <header className="analytics-head">
         <div>
-          <h1>{labels.title}</h1>
-          <p>{labels.subtitle}</p>
+          <h1>{d.title}</h1>
+          <p>{d.subtitle}</p>
         </div>
         <div className="analytics-periods">
           {[7, 30, 90].map((days) => (
@@ -124,7 +91,7 @@ export function Analytics() {
               className={preset === days ? 'analytics-period analytics-period--active' : 'analytics-period'}
               onClick={() => setPreset(days as DatePreset)}
             >
-              {locale === 'ar' ? `${days} يوم` : `${days} days`}
+              {locale === 'ar' ? `${days} ${d.days}` : `${days} ${d.days}`}
             </button>
           ))}
         </div>
@@ -132,18 +99,18 @@ export function Analytics() {
 
       <section className="analytics-kpis">
         <article>
-          <span>{labels.totalVisitors}</span>
+          <span>{d.totalVisitors}</span>
           <strong>{data.stats.totalVisitors.toLocaleString()}</strong>
         </article>
         <article>
-          <span>{labels.totalViews}</span>
+          <span>{d.totalViews}</span>
           <strong>{data.stats.totalPageViews.toLocaleString()}</strong>
         </article>
       </section>
 
       <section className="analytics-grid">
         <article className="analytics-panel">
-          <h3>{labels.devices}</h3>
+          <h3>{d.devices}</h3>
           <div className="analytics-chart">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -159,7 +126,7 @@ export function Analytics() {
         </article>
 
         <article className="analytics-panel">
-          <h3>{labels.browsers}</h3>
+          <h3>{d.browsers}</h3>
           <div className="analytics-chart">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.stats.browsers}>
@@ -174,7 +141,7 @@ export function Analytics() {
         </article>
 
         <article className="analytics-panel analytics-panel--wide">
-          <h3>{labels.exitRate}</h3>
+          <h3>{d.exitRate}</h3>
           <div className="analytics-chart">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.exitRates.slice(0, 8)}>
@@ -189,9 +156,9 @@ export function Analytics() {
         </article>
 
         <article className="analytics-panel analytics-panel--wide">
-          <h3>{labels.funnel}</h3>
+          <h3>{d.funnel}</h3>
           {data.funnels.length === 0 ? (
-            <div className="analytics-empty">{labels.noData}</div>
+            <div className="analytics-empty">{d.noData}</div>
           ) : (
             <div className="analytics-chart">
               <ResponsiveContainer width="100%" height="100%">
@@ -208,7 +175,7 @@ export function Analytics() {
         </article>
 
         <article className="analytics-panel analytics-panel--wide">
-          <h3>{labels.topPages}</h3>
+          <h3>{d.topPages}</h3>
           <ul className="analytics-list">
             {data.stats.topPages.map((page) => (
               <li key={page.pagePath}>

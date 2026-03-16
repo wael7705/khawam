@@ -52,3 +52,14 @@ export function useTranslation(): I18nContextValue {
   if (!ctx) throw new Error('useTranslation must be used within I18nProvider');
   return ctx;
 }
+
+/** API returns role in Arabic (مدير, موظف, عميل). Use this for display only; keep permission checks as user?.role === 'موظف' etc. */
+export function getRoleDisplayName(role: string, locale: Locale): string {
+  const map: Record<string, { ar: string; en: string }> = {
+    مدير: { ar: 'مدير', en: 'Admin' },
+    موظف: { ar: 'موظف', en: 'Employee' },
+    عميل: { ar: 'عميل', en: 'Customer' },
+  };
+  const entry = map[role];
+  return entry ? entry[locale] : role;
+}

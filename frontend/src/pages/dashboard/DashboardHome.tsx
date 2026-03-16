@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -37,66 +37,11 @@ function getTodayDateRange() {
 }
 
 export function DashboardHome() {
-  const { locale } = useTranslation();
+  const { t } = useTranslation();
+  const d = t.dashboard.homePage;
   const [data, setData] = useState<DashboardHomeDataModel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  const labels = useMemo(
-    () =>
-      locale === 'ar'
-        ? {
-            pageTitle: 'نظرة عامة على لوحة التحكم',
-            pageDesc: 'متابعة مباشرة لأداء الطلبات والخدمات والزوار.',
-            totalOrders: 'إجمالي الطلبات',
-            activeOrders: 'الطلبات النشطة',
-            todayOrders: 'طلبات اليوم',
-            totalRevenue: 'إجمالي الإيراد',
-            completionRate: 'معدل الإنجاز',
-            processingHours: 'متوسط ساعات الإنجاز',
-            visitorsToday: 'زوار اليوم',
-            pageViewsToday: 'مشاهدات اليوم',
-            topService: 'الأكثر طلبًا',
-            ordersTrend: 'تطور الطلبات والإيراد',
-            servicesPerformance: 'تحليل أداء الخدمات',
-            statusDistribution: 'توزيع حالات الطلبات',
-            visitorsInsights: 'تحليلات الزوار',
-            recentOrders: 'آخر الطلبات',
-            orderNo: 'رقم الطلب',
-            customer: 'العميل',
-            status: 'الحالة',
-            amount: 'القيمة',
-            noData: 'لا توجد بيانات حالياً',
-            loading: 'جاري تحميل البيانات...',
-            failed: 'تعذر تحميل بيانات لوحة التحكم',
-          }
-        : {
-            pageTitle: 'Dashboard Overview',
-            pageDesc: 'Live tracking for orders, services, and visitors.',
-            totalOrders: 'Total Orders',
-            activeOrders: 'Active Orders',
-            todayOrders: 'Today Orders',
-            totalRevenue: 'Total Revenue',
-            completionRate: 'Completion Rate',
-            processingHours: 'Avg Processing Hours',
-            visitorsToday: 'Visitors Today',
-            pageViewsToday: 'Page Views Today',
-            topService: 'Most Requested',
-            ordersTrend: 'Orders & Revenue Trend',
-            servicesPerformance: 'Service Performance',
-            statusDistribution: 'Order Status Distribution',
-            visitorsInsights: 'Visitors Insights',
-            recentOrders: 'Recent Orders',
-            orderNo: 'Order #',
-            customer: 'Customer',
-            status: 'Status',
-            amount: 'Amount',
-            noData: 'No data yet',
-            loading: 'Loading dashboard data...',
-            failed: 'Failed to load dashboard data',
-          },
-    [locale],
-  );
 
   useEffect(() => {
     const loadData = async () => {
@@ -139,32 +84,32 @@ export function DashboardHome() {
         });
         setData(adapted);
       } catch {
-        setError(labels.failed);
+        setError(d.failed);
       } finally {
         setLoading(false);
       }
     };
 
     void loadData();
-  }, [labels.failed]);
+  }, [d.failed]);
 
   if (loading) {
-    return <div className="dashboard-state">{labels.loading}</div>;
+    return <div className="dashboard-state">{d.loading}</div>;
   }
 
   if (error || !data) {
-    return <div className="dashboard-state dashboard-state--error">{error || labels.failed}</div>;
+    return <div className="dashboard-state dashboard-state--error">{error || d.failed}</div>;
   }
 
   const kpis = [
-    { label: labels.totalOrders, value: data.kpis.totalOrders, icon: ShoppingCart },
-    { label: labels.activeOrders, value: data.kpis.activeOrders, icon: Layers3 },
-    { label: labels.todayOrders, value: data.kpis.todayOrders, icon: TrendingUp },
-    { label: labels.totalRevenue, value: data.kpis.totalRevenue.toLocaleString(), icon: AlertCircle },
-    { label: labels.completionRate, value: `${data.kpis.completionRate}%`, icon: TrendingUp },
-    { label: labels.processingHours, value: data.kpis.averageProcessingHours, icon: Clock3 },
-    { label: labels.visitorsToday, value: data.kpis.totalVisitorsToday, icon: Users },
-    { label: labels.pageViewsToday, value: data.kpis.totalPageViewsToday, icon: Eye },
+    { label: d.totalOrders, value: data.kpis.totalOrders, icon: ShoppingCart },
+    { label: d.activeOrders, value: data.kpis.activeOrders, icon: Layers3 },
+    { label: d.todayOrders, value: data.kpis.todayOrders, icon: TrendingUp },
+    { label: d.totalRevenue, value: data.kpis.totalRevenue.toLocaleString(), icon: AlertCircle },
+    { label: d.completionRate, value: `${data.kpis.completionRate}%`, icon: TrendingUp },
+    { label: d.processingHours, value: data.kpis.averageProcessingHours, icon: Clock3 },
+    { label: d.visitorsToday, value: data.kpis.totalVisitorsToday, icon: Users },
+    { label: d.pageViewsToday, value: data.kpis.totalPageViewsToday, icon: Eye },
   ];
   const statusChartData: Array<{ name: string; value: number }> = data.statusDistribution.map((item) => ({
     name: item.name,
@@ -175,11 +120,11 @@ export function DashboardHome() {
     <div className="dashboard-home">
       <section className="dashboard-home__heading">
         <div>
-          <h1>{labels.pageTitle}</h1>
-          <p>{labels.pageDesc}</p>
+          <h1>{d.pageTitle}</h1>
+          <p>{d.pageDesc}</p>
         </div>
         <div className="dashboard-home__badge">
-          <span>{labels.topService}</span>
+          <span>{d.topService}</span>
           <strong>{data.kpis.mostRequestedService}</strong>
         </div>
       </section>
@@ -198,7 +143,7 @@ export function DashboardHome() {
 
       <section className="dashboard-grid">
         <article className="dashboard-panel dashboard-panel--wide">
-          <h3>{labels.ordersTrend}</h3>
+          <h3>{d.ordersTrend}</h3>
           <div className="dashboard-chart">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data.ordersTrend}>
@@ -216,7 +161,7 @@ export function DashboardHome() {
         </article>
 
         <article className="dashboard-panel">
-          <h3>{labels.statusDistribution}</h3>
+          <h3>{d.statusDistribution}</h3>
           <div className="dashboard-chart dashboard-chart--small">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -240,7 +185,7 @@ export function DashboardHome() {
         </article>
 
         <article className="dashboard-panel">
-          <h3>{labels.servicesPerformance}</h3>
+          <h3>{d.servicesPerformance}</h3>
           <div className="dashboard-chart dashboard-chart--small">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.servicePerformance}>
@@ -255,10 +200,10 @@ export function DashboardHome() {
         </article>
 
         <article className="dashboard-panel dashboard-panel--wide">
-          <h3>{labels.visitorsInsights}</h3>
+          <h3>{d.visitorsInsights}</h3>
           <ul className="dashboard-visitors-list">
             {data.visitorsSnapshot.topPages.length === 0 ? (
-              <li>{labels.noData}</li>
+              <li>{d.noData}</li>
             ) : (
               data.visitorsSnapshot.topPages.map((page) => (
                 <li key={page.pagePath}>
@@ -272,15 +217,15 @@ export function DashboardHome() {
       </section>
 
       <section className="dashboard-panel">
-        <h3>{labels.recentOrders}</h3>
+        <h3>{d.recentOrders}</h3>
         <div className="dashboard-table-wrap">
           <table className="dashboard-table">
             <thead>
               <tr>
-                <th>{labels.orderNo}</th>
-                <th>{labels.customer}</th>
-                <th>{labels.status}</th>
-                <th>{labels.amount}</th>
+                <th>{d.orderNo}</th>
+                <th>{d.customer}</th>
+                <th>{d.status}</th>
+                <th>{d.amount}</th>
               </tr>
             </thead>
             <tbody>

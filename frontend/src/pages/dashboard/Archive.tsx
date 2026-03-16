@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CalendarDays, FolderArchive, Package, TrendingUp } from 'lucide-react';
 import { dashboardApi, type ManagedWork } from '../../lib/dashboard-api';
 import { useTranslation } from '../../i18n';
@@ -18,7 +18,8 @@ function toYmd(value: string): string {
 }
 
 export function Archive() {
-  const { locale } = useTranslation();
+  const { t, locale } = useTranslation();
+  const d = t.dashboard.archivePage;
   const [mode, setMode] = useState<'daily' | 'monthly'>('daily');
   const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [year, setYear] = useState<number>(new Date().getFullYear());
@@ -26,34 +27,6 @@ export function Archive() {
   const [orders, setOrders] = useState<ArchivedOrder[]>([]);
   const [archivedWorks, setArchivedWorks] = useState<ManagedWork[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const labels = useMemo(
-    () =>
-      locale === 'ar'
-        ? {
-            title: 'الأرشيف',
-            subtitle: 'متابعة الطلبات المؤرشفة والأعمال المخفية.',
-            daily: 'يومي',
-            monthly: 'شهري',
-            archivedOrders: 'الطلبات المؤرشفة',
-            archivedWorks: 'الأعمال المخفية',
-            noOrders: 'لا توجد طلبات في الأرشيف للفترة المحددة',
-            noWorks: 'لا توجد أعمال مخفية',
-            loading: 'تحميل بيانات الأرشيف...',
-          }
-        : {
-            title: 'Archive',
-            subtitle: 'Track archived orders and hidden works.',
-            daily: 'Daily',
-            monthly: 'Monthly',
-            archivedOrders: 'Archived Orders',
-            archivedWorks: 'Hidden Works',
-            noOrders: 'No archived orders for selected period',
-            noWorks: 'No hidden works',
-            loading: 'Loading archive...',
-          },
-    [locale],
-  );
 
   useEffect(() => {
     const load = async () => {
@@ -77,22 +50,22 @@ export function Archive() {
 
   const totalRevenue = orders.reduce((sum, order) => sum + (order.final_amount || 0), 0);
 
-  if (loading) return <div className="archive-state">{labels.loading}</div>;
+  if (loading) return <div className="archive-state">{d.loading}</div>;
 
   return (
     <div className="archive-page">
       <header className="archive-header">
-        <h1>{labels.title}</h1>
-        <p>{labels.subtitle}</p>
+        <h1>{d.title}</h1>
+        <p>{d.subtitle}</p>
       </header>
 
       <section className="archive-filters">
         <div className="archive-mode">
           <button type="button" className={mode === 'daily' ? 'active' : ''} onClick={() => setMode('daily')}>
-            {labels.daily}
+            {d.daily}
           </button>
           <button type="button" className={mode === 'monthly' ? 'active' : ''} onClick={() => setMode('monthly')}>
-            {labels.monthly}
+            {d.monthly}
           </button>
         </div>
         {mode === 'daily' ? (
@@ -129,18 +102,18 @@ export function Archive() {
       <section className="archive-card">
         <h3>
           <CalendarDays size={16} />
-          {labels.archivedOrders}
+          {d.archivedOrders}
         </h3>
         {orders.length === 0 ? (
-          <p className="archive-empty">{labels.noOrders}</p>
+          <p className="archive-empty">{d.noOrders}</p>
         ) : (
           <table className="archive-table">
             <thead>
               <tr>
                 <th>#</th>
-                <th>{locale === 'ar' ? 'العميل' : 'Customer'}</th>
-                <th>{locale === 'ar' ? 'الحالة' : 'Status'}</th>
-                <th>{locale === 'ar' ? 'المبلغ' : 'Amount'}</th>
+                <th>{d.customer}</th>
+                <th>{d.status}</th>
+                <th>{d.amount}</th>
               </tr>
             </thead>
             <tbody>
@@ -158,9 +131,9 @@ export function Archive() {
       </section>
 
       <section className="archive-card">
-        <h3>{labels.archivedWorks}</h3>
+        <h3>{d.archivedWorks}</h3>
         {archivedWorks.length === 0 ? (
-          <p className="archive-empty">{labels.noWorks}</p>
+          <p className="archive-empty">{d.noWorks}</p>
         ) : (
           <div className="archive-works">
             {archivedWorks.map((work) => (

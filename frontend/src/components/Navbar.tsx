@@ -188,6 +188,14 @@ export function Navbar() {
           </div>
           <button
             type="button"
+            className="navbar__lang-mobile"
+            onClick={toggleLocale}
+            aria-label={langLabel}
+          >
+            {langLabel}
+          </button>
+          <button
+            type="button"
             className="navbar__hamburger"
             onClick={() => setMobileOpen((o) => !o)}
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}

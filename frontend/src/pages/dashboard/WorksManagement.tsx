@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Eye, EyeOff, Pencil, Plus, Star, Trash2, Upload } from 'lucide-react';
 import { dashboardApi, type ManagedWork, type ManagedWorkPayload } from '../../lib/dashboard-api';
 import { useTranslation } from '../../i18n';
@@ -31,7 +31,8 @@ const initialForm: WorkFormState = {
 };
 
 export function WorksManagement() {
-  const { locale } = useTranslation();
+  const { t, locale } = useTranslation();
+  const d = t.dashboard.worksPage;
   const [works, setWorks] = useState<ManagedWork[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
@@ -43,56 +44,6 @@ export function WorksManagement() {
   const [createError, setCreateError] = useState<string | null>(null);
   const mainImageInputRef = useRef<HTMLInputElement>(null);
   const subImagesInputRef = useRef<HTMLInputElement>(null);
-
-  const labels = useMemo(
-    () =>
-      locale === 'ar'
-        ? {
-            title: 'إدارة الأعمال',
-            subtitle: 'إضافة الأعمال وتصنيفها كمميزة أو عادية.',
-            create: 'إضافة عمل جديد',
-            loading: 'تحميل الأعمال...',
-            empty: 'لا توجد أعمال حالياً',
-            mainImage: 'الصورة الرئيسية',
-            uploadMain: 'رفع صورة رئيسية',
-            subImages: 'الصور الفرعية',
-            uploadSub: 'رفع صور فرعية',
-            phaseUploading: 'جاري الرفع',
-            phaseProcessing: 'جاري المعالجة',
-            phaseDone: 'تم',
-            featured: 'عمل مميز',
-            openCreate: 'إنشاء عمل جديد',
-            save: 'حفظ العمل',
-            delete: 'حذف',
-            hide: 'إخفاء',
-            show: 'إظهار',
-            close: 'إغلاق',
-            edit: 'تعديل',
-          }
-        : {
-            title: 'Works Management',
-            subtitle: 'Create works and control featured visibility.',
-            create: 'Create Work',
-            loading: 'Loading works...',
-            empty: 'No works found',
-            mainImage: 'Main image',
-            uploadMain: 'Upload main image',
-            subImages: 'Sub images',
-            uploadSub: 'Upload sub images',
-            phaseUploading: 'Uploading',
-            phaseProcessing: 'Processing',
-            phaseDone: 'Done',
-            featured: 'Featured work',
-            openCreate: 'Create new work',
-            save: 'Save work',
-            delete: 'Delete',
-            hide: 'Hide',
-            show: 'Show',
-            close: 'Close',
-            edit: 'Edit',
-          },
-    [locale],
-  );
 
   const loadWorks = async () => {
     setLoading(true);
@@ -127,7 +78,7 @@ export function WorksManagement() {
   const handleCreate = async () => {
     setCreateError(null);
     if (!form.title.trim() || !form.title_ar.trim() || !form.image_url.trim()) {
-      setCreateError(locale === 'ar' ? 'العنوان (عربي وإنجليزي) والصورة الرئيسية مطلوبة.' : 'Title (AR & EN) and main image are required.');
+      setCreateError(d.requiredFields);
       return;
     }
     try {
@@ -156,7 +107,7 @@ export function WorksManagement() {
       const msg = err && typeof err === 'object' && 'response' in err
         ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
         : null;
-      setCreateError(typeof msg === 'string' ? msg : (locale === 'ar' ? 'فشل إنشاء العمل. تحقق من الاتصال بالخادم.' : 'Failed to create work. Check server connection.'));
+      setCreateError(typeof msg === 'string' ? msg : d.createFailed);
     }
   };
 
@@ -218,27 +169,27 @@ export function WorksManagement() {
 
   const mainUploadLabel =
     uploadPhaseMain === 'uploading'
-      ? labels.phaseUploading
+      ? d.phaseUploading
       : uploadPhaseMain === 'processing'
-        ? labels.phaseProcessing
+        ? d.phaseProcessing
         : uploadPhaseMain === 'done'
-          ? labels.phaseDone
-          : labels.uploadMain;
+          ? d.phaseDone
+          : d.uploadMain;
   const subUploadLabel =
     uploadPhaseSub === 'uploading'
-      ? labels.phaseUploading
+      ? d.phaseUploading
       : uploadPhaseSub === 'processing'
-        ? labels.phaseProcessing
+        ? d.phaseProcessing
         : uploadPhaseSub === 'done'
-          ? labels.phaseDone
-          : labels.uploadSub;
-  const mainUploadTitle = [labels.phaseUploading, labels.phaseProcessing, labels.phaseDone].join(' → ');
+          ? d.phaseDone
+          : d.uploadSub;
+  const mainUploadTitle = [d.phaseUploading, d.phaseProcessing, d.phaseDone].join(' → ');
   const subUploadTitle =
     uploadPhaseSub !== 'idle'
       ? (locale === 'ar'
           ? `جاري رفع ${subUploadProgress.current} من ${subUploadProgress.total} صورة`
           : `Uploading ${subUploadProgress.current} of ${subUploadProgress.total} images`)
-      : [labels.phaseUploading, labels.phaseProcessing, labels.phaseDone].join(' → ');
+      : [d.phaseUploading, d.phaseProcessing, d.phaseDone].join(' → ');
   const subUploadPct =
     subUploadProgress.total > 0
       ? Math.round((subUploadProgress.current / subUploadProgress.total) * 100)
@@ -247,11 +198,11 @@ export function WorksManagement() {
   return (
     <div className="works-page">
       <header className="works-page__head">
-        <h1>{labels.title}</h1>
-        <p>{labels.subtitle}</p>
+        <h1>{d.title}</h1>
+        <p>{d.subtitle}</p>
         <button type="button" className="works-btn works-btn--primary" onClick={() => setCreateOpen(true)}>
           <Plus size={14} />
-          {labels.openCreate}
+          {d.openCreate}
         </button>
       </header>
 
@@ -259,9 +210,9 @@ export function WorksManagement() {
         <div className="works-modal" onClick={() => setCreateOpen(false)}>
           <section className="works-create" onClick={(e) => e.stopPropagation()}>
             <div className="works-create__head">
-              <h3>{editingWorkId ? (locale === 'ar' ? 'تعديل العمل' : 'Edit work') : labels.create}</h3>
+              <h3>{editingWorkId ? d.editWork : d.create}</h3>
               <button type="button" className="works-btn" onClick={() => { setCreateOpen(false); setCreateError(null); setEditingWorkId(null); }}>
-                {labels.close}
+                {d.close}
               </button>
             </div>
             {createError && (
@@ -296,9 +247,9 @@ export function WorksManagement() {
                 </button>
                 {uploadPhaseMain !== 'idle' && (
                   <span className="works-create__upload-phase" aria-live="polite">
-                    {uploadPhaseMain === 'uploading' && labels.phaseUploading}
-                    {uploadPhaseMain === 'processing' && labels.phaseProcessing}
-                    {uploadPhaseMain === 'done' && labels.phaseDone}
+                    {uploadPhaseMain === 'uploading' && d.phaseUploading}
+                    {uploadPhaseMain === 'processing' && d.phaseProcessing}
+                    {uploadPhaseMain === 'done' && d.phaseDone}
                   </span>
                 )}
               </div>
@@ -308,7 +259,7 @@ export function WorksManagement() {
                   checked={form.is_featured}
                   onChange={(e) => setForm((p) => ({ ...p, is_featured: e.target.checked }))}
                 />
-                {labels.featured}
+                {d.featured}
               </label>
               <textarea
                 value={form.description_ar}
@@ -319,7 +270,7 @@ export function WorksManagement() {
               <div className="works-create__sub-images-wrap works-create__upload-row" title={subUploadTitle}>
                 {form.subImages.length > 0 && (
                   <span className="works-create__sub-count">
-                    {labels.subImages}: {form.subImages.length}
+                    {d.subImages}: {form.subImages.length}
                   </span>
                 )}
                 <input
@@ -344,9 +295,9 @@ export function WorksManagement() {
                 </button>
                 {uploadPhaseSub !== 'idle' && (
                   <span className="works-create__upload-phase" aria-live="polite">
-                    {uploadPhaseSub === 'uploading' && labels.phaseUploading}
-                    {uploadPhaseSub === 'processing' && labels.phaseProcessing}
-                    {uploadPhaseSub === 'done' && labels.phaseDone}
+                    {uploadPhaseSub === 'uploading' && d.phaseUploading}
+                    {uploadPhaseSub === 'processing' && d.phaseProcessing}
+                    {uploadPhaseSub === 'done' && d.phaseDone}
                     {subUploadProgress.total > 0 && ` (${subUploadPct}%)`}
                   </span>
                 )}
@@ -366,16 +317,16 @@ export function WorksManagement() {
             </div>
             <button type="button" className="works-btn works-btn--primary" onClick={() => void handleCreate()}>
               <Plus size={14} />
-              {labels.save}
+              {d.save}
             </button>
           </section>
         </div>
       )}
 
       {loading ? (
-        <div className="works-state">{labels.loading}</div>
+        <div className="works-state">{d.loading}</div>
       ) : works.length === 0 ? (
-        <div className="works-state">{labels.empty}</div>
+        <div className="works-state">{d.empty}</div>
       ) : (
         <section className="works-grid">
           {works.map((work) => (
@@ -385,9 +336,9 @@ export function WorksManagement() {
                 <h4>{locale === 'ar' ? work.title_ar : work.title}</h4>
                 <p>{locale === 'ar' ? (work.description_ar ?? '') : (work.description ?? work.description_ar ?? '')}</p>
                 <div className="works-card__actions">
-                  <button type="button" className="works-btn" onClick={() => void openEdit(work)} title={labels.edit}>
+                  <button type="button" className="works-btn" onClick={() => void openEdit(work)} title={d.edit}>
                     <Pencil size={14} />
-                    {labels.edit}
+                    {d.edit}
                   </button>
                   <button type="button" className="works-btn" onClick={() => void toggleFeatured(work)}>
                     <Star size={14} />
@@ -395,11 +346,11 @@ export function WorksManagement() {
                   </button>
                   <button type="button" className="works-btn" onClick={() => void toggleVisible(work)}>
                     {work.is_visible ? <EyeOff size={14} /> : <Eye size={14} />}
-                    {work.is_visible ? labels.hide : labels.show}
+                    {work.is_visible ? d.hide : d.show}
                   </button>
                   <button type="button" className="works-btn works-btn--danger" onClick={() => void removeWork(work)}>
                     <Trash2 size={14} />
-                    {labels.delete}
+                    {d.delete}
                   </button>
                 </div>
               </div>

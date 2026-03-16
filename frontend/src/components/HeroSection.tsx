@@ -46,6 +46,7 @@ export function HeroSection() {
         <div className="hero__bg-image">
           <img src="/images/hero-mockup.jpg" alt="" />
         </div>
+        <div className="hero__overlay" aria-hidden="true" />
 
         <div className="hero__text-col">
           <div className="hero__text-wrap">

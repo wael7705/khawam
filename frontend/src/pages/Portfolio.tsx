@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { dashboardApi, type PublicWork } from '../lib/dashboard-api';
 import { useTranslation } from '../i18n';
-import { WorkModal } from '../components/WorkModal';
 import type { Work } from '../components/FeaturedWorks';
 import './Portfolio.css';
 
@@ -23,10 +23,10 @@ function normalizeWork(raw: PublicWork): Work {
 
 export function Portfolio() {
   const { locale } = useTranslation();
+  const navigate = useNavigate();
   const [works, setWorks] = useState<Work[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
-  const [selectedWork, setSelectedWork] = useState<Work | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -80,7 +80,7 @@ export function Portfolio() {
         ) : (
           <div className="portfolio-grid">
             {filteredWorks.map((work) => (
-              <button key={work.id} type="button" className="portfolio-card" onClick={() => setSelectedWork(work)}>
+              <button key={work.id} type="button" className="portfolio-card" onClick={() => navigate(`/portfolio/work/${work.id}`)}>
                 <div className="portfolio-card__image-wrap">
                   <img src={work.image_url} alt={locale === 'ar' ? work.title_ar : work.title} className="portfolio-card__image" />
                   {work.is_featured ? (
@@ -96,7 +96,6 @@ export function Portfolio() {
           </div>
         )}
       </div>
-      {selectedWork && <WorkModal work={selectedWork} onClose={() => setSelectedWork(null)} locale={locale} />}
     </section>
   );
 }
