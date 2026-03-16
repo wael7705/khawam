@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Eye, EyeOff, Plus, Star, Trash2, Upload } from 'lucide-react';
+import { Eye, EyeOff, Pencil, Plus, Star, Trash2, Upload } from 'lucide-react';
 import { dashboardApi, type ManagedWork, type ManagedWorkPayload } from '../../lib/dashboard-api';
 import { useTranslation } from '../../i18n';
 import './WorksManagement.css';
@@ -35,6 +35,7 @@ export function WorksManagement() {
   const [works, setWorks] = useState<ManagedWork[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
+  const [editingWorkId, setEditingWorkId] = useState<string | null>(null);
   const [form, setForm] = useState<WorkFormState>(initialForm);
   const [uploadPhaseMain, setUploadPhaseMain] = useState<UploadPhase>('idle');
   const [uploadPhaseSub, setUploadPhaseSub] = useState<UploadPhase>('idle');
@@ -66,6 +67,7 @@ export function WorksManagement() {
             hide: 'إخفاء',
             show: 'إظهار',
             close: 'إغلاق',
+            edit: 'تعديل',
           }
         : {
             title: 'Works Management',
@@ -87,6 +89,7 @@ export function WorksManagement() {
             hide: 'Hide',
             show: 'Show',
             close: 'Close',
+            edit: 'Edit',
           },
     [locale],
   );
@@ -104,6 +107,22 @@ export function WorksManagement() {
   useEffect(() => {
     void loadWorks();
   }, []);
+
+  const openEdit = (work: ManagedWork) => {
+    setForm({
+      title: work.title ?? '',
+      title_ar: work.title_ar ?? '',
+      description: work.description ?? '',
+      description_ar: work.description_ar ?? '',
+      category: work.category ?? '',
+      category_ar: work.category_ar ?? '',
+      image_url: work.image_url ?? '',
+      subImages: Array.isArray(work.images) ? work.images : [],
+      is_featured: work.is_featured ?? false,
+    });
+    setEditingWorkId(work.id);
+    setCreateOpen(true);
+  };
 
   const handleCreate = async () => {
     setCreateError(null);
@@ -124,7 +143,12 @@ export function WorksManagement() {
         is_featured: form.is_featured,
         is_visible: true,
       };
-      await dashboardApi.createManagedWork(payload);
+      if (editingWorkId) {
+        await dashboardApi.updateManagedWork(editingWorkId, payload);
+        setEditingWorkId(null);
+      } else {
+        await dashboardApi.createManagedWork(payload);
+      }
       setForm(initialForm);
       setCreateOpen(false);
       await loadWorks();
@@ -176,8 +200,8 @@ export function WorksManagement() {
     setUploadPhaseSub('uploading');
     try {
       setUploadPhaseSub('processing');
-      const { urls } = await dashboardApi.uploadAdminMultiple(Array.from(files), 'general');
       setSubUploadProgress((p) => ({ ...p, current: p.total }));
+      const { urls } = await dashboardApi.uploadAdminMultiple(Array.from(files), 'general');
       setForm((p) => ({ ...p, subImages: [...p.subImages, ...(urls ?? [])] }));
       setUploadPhaseSub('done');
       setTimeout(() => {
@@ -235,8 +259,8 @@ export function WorksManagement() {
         <div className="works-modal" onClick={() => setCreateOpen(false)}>
           <section className="works-create" onClick={(e) => e.stopPropagation()}>
             <div className="works-create__head">
-              <h3>{labels.create}</h3>
-              <button type="button" className="works-btn" onClick={() => { setCreateOpen(false); setCreateError(null); }}>
+              <h3>{editingWorkId ? (locale === 'ar' ? 'تعديل العمل' : 'Edit work') : labels.create}</h3>
+              <button type="button" className="works-btn" onClick={() => { setCreateOpen(false); setCreateError(null); setEditingWorkId(null); }}>
                 {labels.close}
               </button>
             </div>
@@ -361,6 +385,10 @@ export function WorksManagement() {
                 <h4>{locale === 'ar' ? work.title_ar : work.title}</h4>
                 <p>{locale === 'ar' ? (work.description_ar ?? '') : (work.description ?? work.description_ar ?? '')}</p>
                 <div className="works-card__actions">
+                  <button type="button" className="works-btn" onClick={() => void openEdit(work)} title={labels.edit}>
+                    <Pencil size={14} />
+                    {labels.edit}
+                  </button>
                   <button type="button" className="works-btn" onClick={() => void toggleFeatured(work)}>
                     <Star size={14} />
                     {work.is_featured ? '★' : '☆'}

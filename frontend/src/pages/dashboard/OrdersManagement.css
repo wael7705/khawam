@@ -134,6 +134,7 @@
   border-bottom: 1px solid var(--border);
   text-align: start;
   white-space: nowrap;
+  vertical-align: middle;
 }
 
 .orders-table th {
@@ -243,6 +244,11 @@
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.orders-table td.orders-actions-cell {
+  white-space: nowrap;
 }
 
 .orders-status-icon {

@@ -80,15 +80,33 @@ export function Navbar() {
             <img src="/images/logo.jpeg" alt="Khawam" height={50} />
           </Link>
           <nav className="navbar__nav">
-            {navItems.map((item) => (
-              <Link
-                key={item.key}
-                to={item.to}
-                className="navbar__link"
-              >
-                {t.nav[item.key]}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const isHome = location.pathname === '/';
+              const sectionId = item.to.replace(/^\/#/, '');
+              if (isHome && sectionId && ['home', 'about', 'process', 'works', 'services', 'contact'].includes(sectionId)) {
+                return (
+                  <a
+                    key={item.key}
+                    href={`#${sectionId}`}
+                    className="navbar__link"
+                    onClick={(e) => {
+                      const el = document.getElementById(sectionId);
+                      if (el) {
+                        e.preventDefault();
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }}
+                  >
+                    {t.nav[item.key]}
+                  </a>
+                );
+              }
+              return (
+                <Link key={item.key} to={item.to} className="navbar__link">
+                  {t.nav[item.key]}
+                </Link>
+              );
+            })}
             {(user?.role === 'مدير' || user?.role === 'موظف') && (
               <>
                 {user?.role === 'مدير' && (

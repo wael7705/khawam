@@ -40,11 +40,19 @@
   border-radius: var(--radius-lg);
   overflow: hidden;
   transition: transform 0.3s, box-shadow 0.3s;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.08),
+    0 10px 20px -5px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
 }
 
 .featured-works__card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.04),
+    0 0 24px rgba(180, 40, 40, 0.08);
 }
 
 .featured-works__card-image-wrap {

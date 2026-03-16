@@ -254,8 +254,8 @@ export function OrdersManagement() {
           dashboardApi.getOrders({
             status: status === 'all' ? undefined : status,
             search: query || undefined,
-            page,
-            limit: 20,
+            page: 1,
+            limit: 500,
           }),
           dashboardApi.getStats(),
           dashboardApi.getOrders({
@@ -279,15 +279,12 @@ export function OrdersManagement() {
       } finally {
         setLoading(false);
       }
-    }, [labels.failed, page, query, status]);
+    }, [labels.failed, query, status]);
 
   useEffect(() => {
     void loadOrders();
   }, [loadOrders]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [status, query]);
 
   useEffect(() => {
     if (selectedOrder) {
@@ -604,22 +601,6 @@ export function OrdersManagement() {
                 })}
               </tbody>
             </table>
-          </div>
-
-          <div className="orders-pagination">
-            <button type="button" disabled={orders.page <= 1} onClick={() => setPage((prev) => prev - 1)}>
-              {labels.prev}
-            </button>
-            <span>
-              {orders.page} / {orders.totalPages}
-            </span>
-            <button
-              type="button"
-              disabled={orders.page >= orders.totalPages}
-              onClick={() => setPage((prev) => prev + 1)}
-            >
-              {labels.next}
-            </button>
           </div>
         </section>
       )}
