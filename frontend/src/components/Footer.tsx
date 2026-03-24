@@ -5,6 +5,7 @@ import { Phone, Mail, MapPin, Facebook, Send } from 'lucide-react';
 import './Footer.css';
 
 const CONTACT_PHONE = '963112134640';
+const DISPLAY_PHONE = '+963112134640';
 const WHATSAPP_URL = `https://wa.me/${CONTACT_PHONE}`;
 const FACEBOOK_URL = 'https://www.facebook.com/Khawam.me/?locale=ar_AR';
 
@@ -42,7 +43,7 @@ export function Footer() {
           </a>
           <a href="tel:+963112134640" className="footer__top-link">
             <Phone size={18} />
-            <span>+963112134640</span>
+            <span className="footer__phone" dir="ltr">{DISPLAY_PHONE}</span>
           </a>
           <a href="mailto:eyadmrx@gmail.com" className="footer__top-link">
             <Mail size={18} />
@@ -84,7 +85,7 @@ export function Footer() {
               <li>
                 <a href="tel:+963112134640">
                   <Phone size={16} />
-                  <span>+963112134640</span>
+                  <span className="footer__phone" dir="ltr">{DISPLAY_PHONE}</span>
                 </a>
               </li>
               <li>

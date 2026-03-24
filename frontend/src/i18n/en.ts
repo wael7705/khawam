@@ -48,7 +48,7 @@ export const en = {
       thu: 'Thursday',
       fri: 'Friday',
     },
-    time: '8 AM - 9 PM',
+    time: '8 AM - 7 PM',
     offDay: 'Off Day',
   },
   process: {

@@ -36,6 +36,12 @@
   opacity: 1;
 }
 
+.footer__phone {
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: inline-block;
+}
+
 .footer__social {
   display: flex;
   gap: 12px;
