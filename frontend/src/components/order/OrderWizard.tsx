@@ -143,7 +143,6 @@ export interface OrderData {
   uv_material_type: UvMaterialOption;
   uv_cardboard_weight_g: UvCardboardWeightG;
   uv_material_other_text: string;
-  uv_thickness_mm: number | null;
 }
 
 interface InitialDeliveryData {
@@ -224,7 +223,6 @@ const INITIAL_ORDER_DATA: OrderData = {
   uv_material_type: '',
   uv_cardboard_weight_g: 160,
   uv_material_other_text: '',
-  uv_thickness_mm: null,
 };
 
 export function OrderWizard({
@@ -364,16 +362,6 @@ export function OrderWizard({
       setSubmitError(locale === 'ar' ? 'معرّف الخدمة غير متوفر.' : 'Service ID not available.');
       return;
     }
-    if (
-      service.slug === 'uv-printing' &&
-      orderData.uv_thickness_mm != null &&
-      orderData.uv_thickness_mm > 14
-    ) {
-      setSubmitError(
-        locale === 'ar' ? 'سماكة المادة تتجاوز 14 مم — عدّل القيمة أو غيّر الخدمة.' : 'Thickness exceeds 14 mm — adjust or choose another service.',
-      );
-      return;
-    }
     setSubmitting(true);
     setSubmitProgress(0);
     setSubmitPhase('uploading');
@@ -461,7 +449,6 @@ export function OrderWizard({
         uv_material_type: orderData.uv_material_type,
         uv_cardboard_weight_g: orderData.uv_cardboard_weight_g,
         uv_material_other_text: orderData.uv_material_other_text,
-        uv_thickness_mm: orderData.uv_thickness_mm,
       };
 
       const payload: Record<string, unknown> = {

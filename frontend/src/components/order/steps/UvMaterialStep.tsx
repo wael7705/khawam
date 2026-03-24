@@ -37,10 +37,6 @@ export function UvMaterialStep({ orderData, updateData, stepConfig, locale }: Pr
   const needsCardboardWeight =
     orderData.uv_material_type === 'cardboard' || orderData.uv_material_type === 'cardboard_reinforced';
 
-  const thicknessError =
-    orderData.uv_thickness_mm != null &&
-    orderData.uv_thickness_mm > maxThickness;
-
   const onMaterialChange = (value: UvMaterialOption) => {
     updateData('uv_material_type', value);
     if (value !== 'other') {
@@ -55,16 +51,6 @@ export function UvMaterialStep({ orderData, updateData, stepConfig, locale }: Pr
 
   const onOtherText = (e: ChangeEvent<HTMLInputElement>) => {
     updateData('uv_material_other_text', e.target.value);
-  };
-
-  const onThickness = (e: ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
-    if (raw === '') {
-      updateData('uv_thickness_mm', null);
-      return;
-    }
-    const n = parseFloat(raw);
-    updateData('uv_thickness_mm', Number.isFinite(n) ? n : null);
   };
 
   return (
@@ -134,31 +120,11 @@ export function UvMaterialStep({ orderData, updateData, stepConfig, locale }: Pr
           background: 'var(--surface-muted, rgba(0,0,0,0.04))',
         }}
       >
-        <p style={{ margin: 0, marginBottom: '0.75rem', fontWeight: 600 }}>
+        <p style={{ margin: 0, fontWeight: 600 }}>
           {locale === 'ar'
             ? `تنبيه: أقصى سماكة للطباعة UV هي ${maxThickness} مم.`
             : `Note: maximum printable thickness is ${maxThickness} mm.`}
         </p>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span className="step-section__label" style={{ fontSize: '0.85rem' }}>
-            {locale === 'ar' ? 'سماكة المادة (مم) — اختياري' : 'Material thickness (mm) — optional'}
-          </span>
-          <input
-            type="number"
-            className="step-input"
-            min={0}
-            step={0.1}
-            value={orderData.uv_thickness_mm ?? ''}
-            onChange={onThickness}
-          />
-        </label>
-        {thicknessError && (
-          <p style={{ color: 'var(--danger, #c0392b)', marginTop: '0.5rem', marginBottom: 0 }}>
-            {locale === 'ar'
-              ? `السماكة تتجاوز ${maxThickness} مم — راجع المادة أو غيّر الخدمة.`
-              : `Thickness exceeds ${maxThickness} mm — adjust or choose another service.`}
-          </p>
-        )}
       </div>
     </div>
   );
