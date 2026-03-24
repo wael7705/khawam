@@ -12,7 +12,8 @@ import {
   Ruler,
   Book,
   GraduationCap,
-  PenTool,
+  Layers,
+  Sun,
   type LucideIcon,
 } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
@@ -34,7 +35,8 @@ const SERVICE_ICONS: Record<string, LucideIcon> = {
   'books-printing': Book,
   'thesis-printing': GraduationCap,
   'quran-certificate': BookMarked,
-  'graphic-design': PenTool,
+  'dtf-printing': Layers,
+  'uv-printing': Sun,
 };
 
 function getServiceIcon(slug: string): LucideIcon {
@@ -54,15 +56,17 @@ function clearOrderWizardStorage(): void {
   }
 }
 
-function resolveCategoryFilter(
-  category: string | undefined,
-): { category: ServiceCategory; subgroup?: string } | null {
+type CategoryFilter =
+  | { category: ServiceCategory; subgroup?: string }
+  | { category: ServiceCategory; subgroupIn: string[] };
+
+function resolveCategoryFilter(category: string | undefined): CategoryFilter | null {
   if (!category) return null;
-  const map: Record<string, { category: ServiceCategory; subgroup?: string }> = {
+  const map: Record<string, CategoryFilter> = {
     printing: { category: 'printing' },
     tshirt: { category: 'printing', subgroup: 'clothing' },
     billboard: { category: 'branding' },
-    branding: { category: 'design' },
+    branding: { category: 'printing', subgroupIn: ['digital-dtf', 'digital-uv'] },
     copyright: { category: 'design' },
     businesscard: { category: 'cards' },
   };
@@ -108,11 +112,15 @@ export function ServicesCatalog({ initialOrderSlug }: ServicesCatalogProps) {
     return CATALOG_SERVICES.filter((service) => {
       if (categoryFilter) {
         if (service.category !== categoryFilter.category) return false;
-        if (categoryFilter.subgroup) {
+        if ('subgroupIn' in categoryFilter && categoryFilter.subgroupIn.length > 0) {
+          if (!service.subgroup || !categoryFilter.subgroupIn.includes(service.subgroup)) return false;
+        } else if ('subgroup' in categoryFilter && categoryFilter.subgroup) {
           if (service.subgroup !== categoryFilter.subgroup) return false;
         } else if (category === 'printing') {
           // خدمة طباعة الملابس تظهر فقط في /services/tshirt وليس في الطباعة الرئيسية
           if (service.subgroup === 'clothing') return false;
+          // طباعة ديجيتال (DTF/UV) تظهر فقط تحت /services/branding
+          if (service.subgroup === 'digital-dtf' || service.subgroup === 'digital-uv') return false;
         }
       }
       return serviceMatchesSearch(service, normalizedQuery);
@@ -164,6 +172,7 @@ export function ServicesCatalog({ initialOrderSlug }: ServicesCatalogProps) {
           serviceSlug={orderModalSlug}
           onClose={closeOrderModal}
           initialDeliveryData={location.state?.deliveryResult ?? undefined}
+          onSwitchServiceSlug={(slug) => setOrderModalSlug(slug)}
         />
       )}
     </section>

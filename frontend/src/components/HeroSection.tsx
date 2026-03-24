@@ -9,7 +9,7 @@ import {
   Printer,
   Shirt,
   Megaphone,
-  Palette,
+  ScanLine,
   PenTool,
   CreditCard,
 } from 'lucide-react';
@@ -22,7 +22,7 @@ const HERO_ICONS: Record<string, LucideIcon> = {
   printing: Printer,
   tshirt: Shirt,
   billboard: Megaphone,
-  branding: Palette,
+  branding: ScanLine,
   copyright: PenTool,
   businessCard: CreditCard,
 };

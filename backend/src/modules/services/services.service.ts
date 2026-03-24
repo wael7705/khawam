@@ -393,36 +393,30 @@ const LEGACY_SERVICE_SEEDS: LegacyServiceSeed[] = [
     steps: BASIC_PRINTING_STEPS,
   },
   {
-    nameAr: 'التصميم الجرافيكي',
-    nameEn: 'Graphic Design',
-    descriptionAr: 'خدمات تصميم الهوية والمحتوى البصري.',
-    descriptionEn: 'Identity and visual content design.',
-    groupKey: 'design',
-    groupLabelAr: 'خدمات التصميم',
-    groupLabelEn: 'Design Services',
-    steps: [
-      {
-        stepNameAr: 'استلام المتطلبات',
-        stepNameEn: 'Receive Requirements',
-        stepDescriptionAr: 'جمع متطلبات العميل.',
-        stepDescriptionEn: 'Collect customer requirements.',
-        stepType: 'brief',
-      },
-      {
-        stepNameAr: 'التنفيذ والمراجعة',
-        stepNameEn: 'Design & Review',
-        stepDescriptionAr: 'تنفيذ التصميم وإرسال نسخة للمراجعة.',
-        stepDescriptionEn: 'Create design and send for review.',
-        stepType: 'design',
-      },
-      {
-        stepNameAr: 'التسليم',
-        stepNameEn: 'Delivery',
-        stepDescriptionAr: 'تسليم الملفات النهائية.',
-        stepDescriptionEn: 'Deliver final files.',
-        stepType: 'delivery',
-      },
-    ],
+    nameAr: 'طباعة DTF',
+    nameEn: 'DTF Printing',
+    descriptionAr: 'طباعة ديجيتال DTF بألوان وقياسات مخصصة.',
+    descriptionEn: 'Digital DTF printing with custom colors and dimensions.',
+    groupKey: 'printing',
+    groupLabelAr: 'خدمات الطباعة',
+    groupLabelEn: 'Printing Services',
+    subgroupKey: 'digital-dtf',
+    subgroupLabelAr: 'DTF',
+    subgroupLabelEn: 'DTF',
+    steps: BASIC_PRINTING_STEPS,
+  },
+  {
+    nameAr: 'طباعة UV',
+    nameEn: 'UV Printing',
+    descriptionAr: 'طباعة UV على مواد متنوعة ضمن أبعاد محددة.',
+    descriptionEn: 'UV printing on various materials within set dimensions.',
+    groupKey: 'printing',
+    groupLabelAr: 'خدمات الطباعة',
+    groupLabelEn: 'Printing Services',
+    subgroupKey: 'digital-uv',
+    subgroupLabelAr: 'UV',
+    subgroupLabelEn: 'UV',
+    steps: BASIC_PRINTING_STEPS,
   },
 ];
 
@@ -430,6 +424,11 @@ export async function importLegacyServicesSeed(): Promise<{ created: number; upd
   let created = 0;
   let updated = 0;
   let workflows = 0;
+
+  await prisma.service.updateMany({
+    where: { nameAr: 'التصميم الجرافيكي' },
+    data: { isActive: false, isVisible: false },
+  });
 
   for (let i = 0; i < LEGACY_SERVICE_SEEDS.length; i += 1) {
     const seed = LEGACY_SERVICE_SEEDS[i]!;

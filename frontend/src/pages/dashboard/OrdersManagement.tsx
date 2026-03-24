@@ -121,6 +121,14 @@ const SPEC_LABELS: Record<string, { ar: string; en: string }> = {
   clothing_source: { ar: 'مصدر الملابس', en: 'Clothing Source' },
   quantity: { ar: 'الكمية', en: 'Quantity' },
   delivery_type: { ar: 'طريقة الاستلام', en: 'Delivery' },
+  digital_aspect_ratio: { ar: 'نسبة العرض للارتفاع', en: 'Aspect ratio' },
+  digital_aspect_anchor: { ar: 'مرجع التناسب', en: 'Aspect anchor' },
+  digital_color_mode: { ar: 'لون الطباعة (ديجيتال)', en: 'Digital print color' },
+  digital_custom_hex: { ar: 'لون مخصص (HEX)', en: 'Custom color (HEX)' },
+  uv_material_type: { ar: 'نوع مادة UV', en: 'UV substrate' },
+  uv_cardboard_weight_g: { ar: 'وزن الكرتون (غ/م²)', en: 'Cardboard weight (g/m²)' },
+  uv_material_other_text: { ar: 'وصف مادة أخرى', en: 'Other material note' },
+  uv_thickness_mm: { ar: 'سماكة المادة (مم)', en: 'Thickness (mm)' },
 };
 
 /** يحافظ على الواحدات (مم، سم، م) عند عرض الأبعاد */
@@ -136,6 +144,39 @@ function formatSpecValue(
   if (key === 'print_sides') return value === 'single' ? (locale === 'ar' ? 'وجه واحد' : 'Single') : (locale === 'ar' ? 'وجهين' : 'Double');
   if (key === 'delivery_type') return value === 'delivery' ? (locale === 'ar' ? 'توصيل' : 'Delivery') : (locale === 'ar' ? 'استلام من المحل' : 'Self Pickup');
   if (key === 'clothing_source') return value === 'customer' ? (locale === 'ar' ? 'من العميل' : 'Customer') : (locale === 'ar' ? 'من المتجر' : 'Store');
+  if (key === 'digital_aspect_anchor') {
+    if (value === 'width') return locale === 'ar' ? 'حسب العرض' : 'From width';
+    if (value === 'height') return locale === 'ar' ? 'حسب الارتفاع' : 'From height';
+  }
+  if (key === 'digital_color_mode') {
+    const m = String(value);
+    const map: Record<string, { ar: string; en: string }> = {
+      silver: { ar: 'فضي', en: 'Silver' },
+      gold: { ar: 'ذهبي', en: 'Gold' },
+      black: { ar: 'أسود', en: 'Black' },
+      white: { ar: 'أبيض', en: 'White' },
+      file: { ar: 'ألوان الملف', en: 'As in file' },
+      custom: { ar: 'لون مخصص', en: 'Custom' },
+    };
+    const lab = map[m];
+    return lab ? (locale === 'ar' ? lab.ar : lab.en) : m;
+  }
+  if (key === 'uv_material_type') {
+    const m = String(value);
+    const map: Record<string, { ar: string; en: string }> = {
+      vinyl: { ar: 'فينيل', en: 'Vinyl' },
+      cardboard: { ar: 'كرتون', en: 'Cardboard' },
+      cardboard_reinforced: { ar: 'كرتون معجن', en: 'Reinforced cardboard' },
+      transparent: { ar: 'شفافية', en: 'Transparent' },
+      leather: { ar: 'جلد', en: 'Leather' },
+      fabric: { ar: 'قماش', en: 'Fabric' },
+      plex: { ar: 'بليكس', en: 'Plex' },
+      glass: { ar: 'بلور / زجاج', en: 'Glass' },
+      other: { ar: 'غير ذلك', en: 'Other' },
+    };
+    const lab = map[m];
+    return lab ? (locale === 'ar' ? lab.ar : lab.en) : m;
+  }
   if (key === 'width' || key === 'height' || key === 'dimensions') {
     if (typeof value === 'string') return value || '';
     if (typeof value === 'number') {

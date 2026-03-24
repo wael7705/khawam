@@ -7,6 +7,7 @@ import {
   FileText,
   FileUp,
   LayoutGrid,
+  Package,
   Palette,
   Printer,
   Ruler,
@@ -29,6 +30,9 @@ import { ClothingSourceStep } from './steps/ClothingSourceStep';
 import { ClothingDesignsStep } from './steps/ClothingDesignsStep';
 import { NotesStep } from './steps/NotesStep';
 import { CustomerInfoStep } from './steps/CustomerInfoStep';
+import { DigitalDimensionsStep } from './steps/DigitalDimensionsStep';
+import { DigitalPrintColorStep } from './steps/DigitalPrintColorStep';
+import { UvMaterialStep } from './steps/UvMaterialStep';
 import { SubmitOverlay } from './SubmitOverlay';
 import { OrderSuccess } from './OrderSuccess';
 import './OrderWizard.css';
@@ -59,6 +63,9 @@ const STEP_TYPE_ICONS: Record<string, LucideIcon> = {
   paper_type: FileStack,
   clothing_source: Shirt,
   clothing_designs: Shirt,
+  digital_dimensions: Ruler,
+  digital_print_color: Palette,
+  uv_material: Package,
 };
 function getStepIcon(stepType: string): LucideIcon | null {
   return STEP_TYPE_ICONS[stepType] ?? null;
@@ -72,6 +79,22 @@ interface ServiceInfo {
   descriptionAr: string;
   descriptionEn: string;
 }
+
+export type DigitalColorMode = 'silver' | 'gold' | 'black' | 'white' | 'file' | 'custom';
+
+export type UvCardboardWeightG = 160 | 250 | 300;
+
+export type UvMaterialOption =
+  | ''
+  | 'vinyl'
+  | 'cardboard'
+  | 'cardboard_reinforced'
+  | 'transparent'
+  | 'leather'
+  | 'fabric'
+  | 'plex'
+  | 'glass'
+  | 'other';
 
 export interface OrderData {
   files: File[];
@@ -113,6 +136,14 @@ export interface OrderData {
   delivery_location_label: 'home' | 'work' | 'other' | null;
   number_of_pages: number;
   total_pages: number;
+  digital_aspect_ratio: number | null;
+  digital_aspect_anchor: 'width' | 'height' | null;
+  digital_color_mode: DigitalColorMode;
+  digital_custom_hex: string;
+  uv_material_type: UvMaterialOption;
+  uv_cardboard_weight_g: UvCardboardWeightG;
+  uv_material_other_text: string;
+  uv_thickness_mm: number | null;
 }
 
 interface InitialDeliveryData {
@@ -143,6 +174,8 @@ interface OrderWizardProps {
   initialCustomerData?: InitialCustomerData | null;
   /** معرّف المستخدم لربط الطلب بحسابه (يُرسل كـ customer_id) */
   customerId?: string | null;
+  /** للانتقال لخدمة أخرى (مثلاً من UV إلى DTF) مع حفظ لقطة في sessionStorage */
+  onSwitchServiceSlug?: (slug: string) => void;
 }
 
 const INITIAL_ORDER_DATA: OrderData = {
@@ -184,6 +217,14 @@ const INITIAL_ORDER_DATA: OrderData = {
   delivery_location_label: null,
   number_of_pages: 0,
   total_pages: 0,
+  digital_aspect_ratio: null,
+  digital_aspect_anchor: null,
+  digital_color_mode: 'file',
+  digital_custom_hex: '#000000',
+  uv_material_type: '',
+  uv_cardboard_weight_g: 160,
+  uv_material_other_text: '',
+  uv_thickness_mm: null,
 };
 
 export function OrderWizard({
@@ -195,6 +236,7 @@ export function OrderWizard({
   initialDeliveryData,
   initialCustomerData,
   customerId,
+  onSwitchServiceSlug,
 }: OrderWizardProps) {
   const { locale } = useTranslation();
   const initialMerged: OrderData = {
@@ -225,20 +267,30 @@ export function OrderWizard({
   );
 
   useEffect(() => {
-    if (!initialDeliveryData || !service) return;
+    if (!service) return;
     const key = `orderWizard_${service.slug}`;
     try {
       const raw = sessionStorage.getItem(key);
       if (raw) {
-        const parsed = JSON.parse(raw) as Omit<OrderData, 'files' | 'clothing_designs'> & { files?: unknown; clothing_designs?: unknown; currentStep?: number };
+        const parsed = JSON.parse(raw) as Omit<OrderData, 'files' | 'clothing_designs'> & {
+          files?: unknown;
+          clothing_designs?: unknown;
+          currentStep?: number;
+        };
         const restored: OrderData = {
+          ...INITIAL_ORDER_DATA,
           ...parsed,
           files: [],
           clothing_designs: parsed.clothing_designs && typeof parsed.clothing_designs === 'object' ? {} : {},
-          uploadedFileResults: Array.isArray(parsed.uploadedFileResults) ? parsed.uploadedFileResults as UploadedFileResult[] : [],
+          uploadedFileResults: Array.isArray(parsed.uploadedFileResults)
+            ? (parsed.uploadedFileResults as UploadedFileResult[])
+            : [],
         };
-        setOrderData(deliveryMerge(restored));
-        const step = typeof parsed.currentStep === 'number' ? Math.min(Math.max(0, parsed.currentStep), steps.length - 1) : 0;
+        setOrderData(initialDeliveryData ? deliveryMerge(restored) : restored);
+        const step =
+          typeof parsed.currentStep === 'number'
+            ? Math.min(Math.max(0, parsed.currentStep), Math.max(0, steps.length - 1))
+            : 0;
         setCurrentStep(step);
         sessionStorage.removeItem(key);
         return;
@@ -246,8 +298,10 @@ export function OrderWizard({
     } catch {
       // ignore parse/storage errors
     }
-    setOrderData((prev) => deliveryMerge(prev));
-  }, [initialDeliveryData, service, deliveryMerge, steps.length]);
+    if (initialDeliveryData) {
+      setOrderData((prev) => deliveryMerge(prev));
+    }
+  }, [initialDeliveryData, service.slug, deliveryMerge, steps.length]);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitProgress, setSubmitProgress] = useState(0);
@@ -269,6 +323,26 @@ export function OrderWizard({
     }
   }, [orderData, service.slug, currentStep]);
 
+  const handleSwitchServiceSlug = useCallback(
+    (targetSlug: string) => {
+      try {
+        const { files: _f, clothing_designs: _c, ...rest } = orderData;
+        const snapshot = {
+          ...rest,
+          files: [],
+          clothing_designs: {},
+          uploadedFileResults: [],
+          currentStep: 0,
+        };
+        sessionStorage.setItem(`orderWizard_${targetSlug}`, JSON.stringify(snapshot));
+      } catch {
+        // ignore storage errors
+      }
+      onSwitchServiceSlug?.(targetSlug);
+    },
+    [orderData, onSwitchServiceSlug],
+  );
+
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep((s) => s + 1);
@@ -288,6 +362,16 @@ export function OrderWizard({
     }
     if (!backendServiceId) {
       setSubmitError(locale === 'ar' ? 'معرّف الخدمة غير متوفر.' : 'Service ID not available.');
+      return;
+    }
+    if (
+      service.slug === 'uv-printing' &&
+      orderData.uv_thickness_mm != null &&
+      orderData.uv_thickness_mm > 14
+    ) {
+      setSubmitError(
+        locale === 'ar' ? 'سماكة المادة تتجاوز 14 مم — عدّل القيمة أو غيّر الخدمة.' : 'Thickness exceeds 14 mm — adjust or choose another service.',
+      );
       return;
     }
     setSubmitting(true);
@@ -369,6 +453,15 @@ export function OrderWizard({
         notes: orderData.notes,
         number_of_pages: orderData.number_of_pages,
         total_pages: orderData.total_pages,
+        digital_aspect_ratio: orderData.digital_aspect_ratio,
+        digital_aspect_anchor: orderData.digital_aspect_anchor,
+        digital_color_mode: orderData.digital_color_mode,
+        digital_custom_hex:
+          orderData.digital_color_mode === 'custom' ? orderData.digital_custom_hex : '',
+        uv_material_type: orderData.uv_material_type,
+        uv_cardboard_weight_g: orderData.uv_cardboard_weight_g,
+        uv_material_other_text: orderData.uv_material_other_text,
+        uv_thickness_mm: orderData.uv_thickness_mm,
       };
 
       const payload: Record<string, unknown> = {
@@ -413,7 +506,7 @@ export function OrderWizard({
       }
       void err;
     }
-  }, [orderData, service.id, backendServiceId, locale, submitProgress, useDemoMode, customerId]);
+  }, [orderData, service.id, service.slug, backendServiceId, locale, submitProgress, useDemoMode, customerId]);
 
   if (orderResult) {
     return <OrderSuccess orderNumber={orderResult.orderNumber} onClose={onClose} />;
@@ -483,7 +576,7 @@ export function OrderWizard({
             </p>
           )}
 
-          {renderStep(step, orderData, updateData, locale, service, onBeforeNavigateToMap)}
+          {renderStep(step, orderData, updateData, locale, service, onBeforeNavigateToMap, handleSwitchServiceSlug)}
         </div>
         );
       })()}
@@ -543,8 +636,9 @@ function renderStep(
   locale: 'ar' | 'en',
   service: ServiceInfo,
   onBeforeNavigateToMap?: () => void,
+  onSwitchServiceSlug?: (slug: string) => void,
 ) {
-  const config = step.step_config || {};
+  const config = (step.step_config ?? {}) as Record<string, unknown>;
 
   switch (step.step_type) {
     case 'files':
@@ -568,6 +662,34 @@ function renderStep(
     case 'dimensions':
       return (
         <DimensionsStep
+          orderData={orderData}
+          updateData={updateData}
+          stepConfig={config}
+          locale={locale}
+        />
+      );
+    case 'digital_dimensions':
+      return (
+        <DigitalDimensionsStep
+          orderData={orderData}
+          updateData={updateData}
+          stepConfig={config}
+          locale={locale}
+          onSwitchServiceSlug={onSwitchServiceSlug}
+        />
+      );
+    case 'digital_print_color':
+      return (
+        <DigitalPrintColorStep
+          orderData={orderData}
+          updateData={updateData}
+          stepConfig={config}
+          locale={locale}
+        />
+      );
+    case 'uv_material':
+      return (
+        <UvMaterialStep
           orderData={orderData}
           updateData={updateData}
           stepConfig={config}

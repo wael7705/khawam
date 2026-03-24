@@ -92,6 +92,7 @@ interface OrderModalProps {
   serviceSlug: string | null;
   onClose: () => void;
   initialDeliveryData?: DeliveryResult | null;
+  onSwitchServiceSlug?: (slug: string) => void;
 }
 
 function mapBackendStepToWorkflowStep(
@@ -124,7 +125,7 @@ function mapBackendStepToWorkflowStep(
   };
 }
 
-export function OrderModal({ serviceSlug, onClose, initialDeliveryData }: OrderModalProps) {
+export function OrderModal({ serviceSlug, onClose, initialDeliveryData, onSwitchServiceSlug }: OrderModalProps) {
   const { locale } = useTranslation();
   const [steps, setSteps] = useState<WorkflowStep[]>([]);
   const [backendServiceId, setBackendServiceId] = useState<string | null>(null);
@@ -256,6 +257,7 @@ export function OrderModal({ serviceSlug, onClose, initialDeliveryData }: OrderM
                 </p>
               )}
               <OrderWizard
+                key={service.slug}
                 service={service}
                 backendServiceId={useDemo ? null : backendServiceId}
                 steps={steps}
@@ -264,6 +266,7 @@ export function OrderModal({ serviceSlug, onClose, initialDeliveryData }: OrderM
                 initialDeliveryData={initialDeliveryData}
                 initialCustomerData={initialCustomerData}
                 customerId={customerId}
+                onSwitchServiceSlug={onSwitchServiceSlug}
               />
             </>
           )}

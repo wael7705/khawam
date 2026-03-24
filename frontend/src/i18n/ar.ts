@@ -27,7 +27,7 @@ export const ar = {
     printing: 'خدمات الطباعة',
     tshirt: 'طباعة الملابس',
     billboard: 'لوحات إعلانية',
-    branding: 'تصميم هوية',
+    branding: 'طباعة ديجيتال',
     copyright: 'تصميم شعارات',
     businessCard: 'كروت شخصية',
   },

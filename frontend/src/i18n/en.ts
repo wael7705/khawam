@@ -27,7 +27,7 @@ export const en = {
     printing: 'Printing Service',
     tshirt: 'T-Shirt Design',
     billboard: 'Bill-Board Design',
-    branding: 'Branding Design',
+    branding: 'Digital Printing',
     copyright: 'Copyright Design',
     businessCard: 'Business Card',
   },
@@ -48,7 +48,7 @@ export const en = {
       thu: 'Thursday',
       fri: 'Friday',
     },
-    time: '8 AM - 7 PM',
+    time: '9 AM - 6 PM',
     offDay: 'Off Day',
   },
   process: {

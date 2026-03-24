@@ -29,7 +29,26 @@ export const CATALOG_SERVICES: CatalogService[] = [
   { id: 'svc-books', slug: 'books-printing', nameAr: 'طباعة كتب', nameEn: 'Books Printing', descriptionAr: 'طباعة كتب مع خيارات ورق وتجليد متنوعة.', descriptionEn: 'Book printing with various paper and binding options.', category: 'printing', subgroup: 'books' },
   { id: 'svc-thesis', slug: 'thesis-printing', nameAr: 'طباعة رسائل (ماجستير/دكتوراه)', nameEn: 'Thesis Printing', descriptionAr: 'طباعة وتجليد الرسائل الجامعية بشكل احترافي.', descriptionEn: 'Professional thesis printing and binding.', category: 'printing', subgroup: 'thesis' },
   { id: 'svc-quran', slug: 'quran-certificate', nameAr: 'طباعة إجازة حفظ القرآن الكريم', nameEn: 'Quran Certificate Printing', descriptionAr: 'طباعة إجازات حفظ القرآن بتشطيبات مميزة.', descriptionEn: 'Quran certificate printing with premium finishing.', category: 'printing', subgroup: 'certificate' },
-  { id: 'svc-graphic', slug: 'graphic-design', nameAr: 'التصميم الجرافيكي', nameEn: 'Graphic Design', descriptionAr: 'تصميم شعارات وهوية بصرية ومحتوى إعلاني.', descriptionEn: 'Logo, brand identity, and marketing design services.', category: 'design', subgroup: 'graphic' },
+  {
+    id: 'svc-dtf',
+    slug: 'dtf-printing',
+    nameAr: 'طباعة DTF',
+    nameEn: 'DTF Printing',
+    descriptionAr: 'طباعة ديجيتال DTF بألوان وقياسات مخصصة.',
+    descriptionEn: 'Digital DTF printing with custom colors and dimensions.',
+    category: 'printing',
+    subgroup: 'digital-dtf',
+  },
+  {
+    id: 'svc-uv',
+    slug: 'uv-printing',
+    nameAr: 'طباعة UV',
+    nameEn: 'UV Printing',
+    descriptionAr: 'طباعة UV على مواد متنوعة ضمن أبعاد محددة.',
+    descriptionEn: 'UV printing on various materials within set dimensions.',
+    category: 'printing',
+    subgroup: 'digital-uv',
+  },
 ];
 
 /**
@@ -164,7 +183,7 @@ export const HERO_LINKS: HeroLink[] = [
   { key: 'printing', slug: 'printing', category: 'printing' },
   { key: 'tshirt', slug: 'tshirt', category: 'printing', labelAr: 'طباعة الملابس', labelEn: 'Clothing Printing' },
   { key: 'billboard', slug: 'billboard', category: 'branding', labelAr: 'لوحات إعلانية', labelEn: 'Billboards' },
-  { key: 'branding', slug: 'branding', category: 'design', labelAr: 'تصميم هوية', labelEn: 'Branding' },
+  { key: 'branding', slug: 'branding', category: 'printing', labelAr: 'طباعة ديجيتال', labelEn: 'Digital Printing' },
   { key: 'copyright', slug: 'copyright', category: 'design', labelAr: 'تصميم شعارات', labelEn: 'Logo Design' },
   { key: 'businessCard', slug: 'businesscard', category: 'cards', labelAr: 'كروت شخصية', labelEn: 'Business Cards' },
 ];

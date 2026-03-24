@@ -59,7 +59,8 @@ function buildServiceSlugMap(services: Array<{ id: string; nameAr: string | null
     if (nameAr.includes('بانر') || nameAr.includes('Roll')) slugMap['rollup-banners'] = svc.id;
     if (nameAr.includes('بروشور')) slugMap['brochure-printing'] = svc.id;
     if (nameAr.includes('فينيل')) slugMap['vinyl-printing'] = svc.id;
-    if (nameAr.includes('تصميم') && nameAr.includes('جرافيك')) slugMap['graphic-design'] = svc.id;
+    if (nameAr.includes('DTF')) slugMap['dtf-printing'] = svc.id;
+    if (nameAr.includes('UV') && nameAr.includes('طباعة')) slugMap['uv-printing'] = svc.id;
   }
   return slugMap;
 }
@@ -870,6 +871,141 @@ const VINYL_STEPS: Omit<CreateWorkflowInput, 'serviceId'>[] = [
   },
 ];
 
+const DTF_DIGITAL_STEPS: Omit<CreateWorkflowInput, 'serviceId'>[] = [
+  {
+    stepNumber: 1,
+    stepNameAr: 'رفع الملفات والكمية',
+    stepNameEn: 'Upload files & quantity',
+    stepDescriptionAr: 'ارفع ملفات التصميم وحدد الكمية',
+    stepDescriptionEn: 'Upload design files and set quantity',
+    stepType: 'files',
+    stepConfig: {
+      accept: '.pdf,.jpg,.jpeg,.png,.ai,.psd,.eps,.svg,.webp',
+      multiple: true,
+      required: true,
+      show_quantity: true,
+      max_size_mb: 100,
+    },
+    displayOrder: 0,
+  },
+  {
+    stepNumber: 2,
+    stepNameAr: 'القياس (العرض والارتفاع)',
+    stepNameEn: 'Dimensions (width & height)',
+    stepDescriptionAr: 'أدخل العرض والارتفاع بالسنتيمتر، أو استخدم أزرار التناسب',
+    stepDescriptionEn: 'Enter width and height in cm, or use fit buttons',
+    stepType: 'digital_dimensions',
+    stepConfig: {
+      unit: 'سم',
+      show_aspect_buttons: true,
+    },
+    displayOrder: 1,
+  },
+  {
+    stepNumber: 3,
+    stepNameAr: 'اللون',
+    stepNameEn: 'Color',
+    stepDescriptionAr: 'اختر لون الطباعة أو ألوان الملف أو لوناً مخصصاً',
+    stepDescriptionEn: 'Choose print color, file colors, or a custom color',
+    stepType: 'digital_print_color',
+    stepConfig: {},
+    displayOrder: 2,
+  },
+  {
+    stepNumber: 4,
+    stepNameAr: 'ملاحظات',
+    stepNameEn: 'Notes',
+    stepType: 'notes',
+    stepConfig: {},
+    displayOrder: 3,
+  },
+  {
+    stepNumber: 5,
+    stepNameAr: 'بيانات العميل والتوصيل',
+    stepNameEn: 'Customer Info & Delivery',
+    stepType: 'customer_info',
+    stepConfig: {
+      fields: ['name', 'whatsapp', 'phone_extra', 'shop_name'],
+      delivery: true,
+    },
+    displayOrder: 4,
+  },
+];
+
+const UV_DIGITAL_STEPS: Omit<CreateWorkflowInput, 'serviceId'>[] = [
+  {
+    stepNumber: 1,
+    stepNameAr: 'رفع الملفات والكمية',
+    stepNameEn: 'Upload files & quantity',
+    stepDescriptionAr: 'ارفع ملفات التصميم وحدد الكمية',
+    stepDescriptionEn: 'Upload design files and set quantity',
+    stepType: 'files',
+    stepConfig: {
+      accept: '.pdf,.jpg,.jpeg,.png,.ai,.psd,.eps,.svg,.webp',
+      multiple: true,
+      required: true,
+      show_quantity: true,
+      max_size_mb: 100,
+    },
+    displayOrder: 0,
+  },
+  {
+    stepNumber: 2,
+    stepNameAr: 'القياس (الحد الأقصى 90×60 سم)',
+    stepNameEn: 'Dimensions (max 90×60 cm)',
+    stepDescriptionAr: 'أقصى عرض 90 سم وأقصى ارتفاع 60 سم',
+    stepDescriptionEn: 'Maximum width 90 cm and height 60 cm',
+    stepType: 'digital_dimensions',
+    stepConfig: {
+      unit: 'سم',
+      show_aspect_buttons: true,
+      max_width_cm: 90,
+      max_height_cm: 60,
+      fallback_service_slug: 'dtf-printing',
+    },
+    displayOrder: 1,
+  },
+  {
+    stepNumber: 3,
+    stepNameAr: 'اللون',
+    stepNameEn: 'Color',
+    stepType: 'digital_print_color',
+    stepConfig: {},
+    displayOrder: 2,
+  },
+  {
+    stepNumber: 4,
+    stepNameAr: 'نوع المادة',
+    stepNameEn: 'Substrate',
+    stepDescriptionAr: 'أقصى سماكة للطباعة 14 مم',
+    stepDescriptionEn: 'Maximum printable thickness 14 mm',
+    stepType: 'uv_material',
+    stepConfig: {
+      max_thickness_mm: 14,
+    },
+    displayOrder: 3,
+  },
+  {
+    stepNumber: 5,
+    stepNameAr: 'ملاحظات',
+    stepNameEn: 'Notes',
+    stepType: 'notes',
+    stepConfig: {},
+    displayOrder: 4,
+  },
+  {
+    stepNumber: 6,
+    stepNameAr: 'بيانات العميل والتوصيل',
+    stepNameEn: 'Customer Info & Delivery',
+    stepType: 'customer_info',
+    stepConfig: {
+      fields: ['name', 'whatsapp', 'phone_extra', 'shop_name'],
+      delivery: true,
+    },
+    displayOrder: 5,
+  },
+];
+
 /* Mapping: slug -> steps definition */
 const WORKFLOW_MAP: Record<string, Omit<CreateWorkflowInput, 'serviceId'>[]> = {
   'lecture-printing': LECTURE_PRINTING_STEPS,
@@ -884,7 +1020,8 @@ const WORKFLOW_MAP: Record<string, Omit<CreateWorkflowInput, 'serviceId'>[]> = {
   'rollup-banners': BANNER_ROLLUP_STEPS,
   'brochure-printing': BROCHURE_STEPS,
   'vinyl-printing': VINYL_STEPS,
-  'graphic-design': GENERIC_PRINTING_STEPS,
+  'dtf-printing': DTF_DIGITAL_STEPS,
+  'uv-printing': UV_DIGITAL_STEPS,
 };
 
 async function seedServiceWorkflow(
@@ -954,7 +1091,8 @@ export async function seedAllWorkflows(): Promise<{ seeded: number; errors: stri
     if (nameAr.includes('بانر') || nameAr.includes('Roll')) slugMap['rollup-banners'] = svc.id;
     if (nameAr.includes('بروشور')) slugMap['brochure-printing'] = svc.id;
     if (nameAr.includes('فينيل')) slugMap['vinyl-printing'] = svc.id;
-    if (nameAr.includes('تصميم') && nameAr.includes('جرافيك')) slugMap['graphic-design'] = svc.id;
+    if (nameAr.includes('DTF')) slugMap['dtf-printing'] = svc.id;
+    if (nameAr.includes('UV') && nameAr.includes('طباعة')) slugMap['uv-printing'] = svc.id;
   }
 
   for (const [slug, steps] of Object.entries(WORKFLOW_MAP)) {

@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useTranslation } from '../i18n';
 import { workflowsAPI } from '../lib/api';
@@ -40,6 +40,7 @@ function mapBackendStepToWorkflowStep(
 
 export function OrderPage() {
   const { serviceSlug } = useParams<{ serviceSlug: string }>();
+  const navigate = useNavigate();
   const { locale } = useTranslation();
   const [steps, setSteps] = useState<WorkflowStep[]>([]);
   const [backendServiceId, setBackendServiceId] = useState<string | null>(null);
@@ -146,11 +147,15 @@ export function OrderPage() {
           <p>{locale === 'ar' ? service.descriptionAr : service.descriptionEn}</p>
         </header>
         <OrderWizard
+          key={service.slug}
           service={service}
           backendServiceId={backendServiceId}
           steps={steps}
           initialCustomerData={initialCustomerData}
           customerId={customerId}
+          onSwitchServiceSlug={(slug) => {
+            void navigate(`/order/${slug}`, { replace: true });
+          }}
         />
       </div>
     </div>

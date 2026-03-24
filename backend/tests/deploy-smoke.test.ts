@@ -39,6 +39,20 @@ describe('Deploy smoke', () => {
     workflowServiceId = body.serviceId;
   });
 
+  it('GET /api/workflows/service-by-slug/dtf-printing returns steps including digital flow', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/workflows/service-by-slug/dtf-printing',
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as { serviceId: string; steps: Array<{ stepType?: string }> };
+    expect(body.serviceId).toBeDefined();
+    expect(Array.isArray(body.steps)).toBe(true);
+    const types = body.steps.map((s) => s.stepType);
+    expect(types).toContain('digital_dimensions');
+    expect(types).toContain('digital_print_color');
+  });
+
   it('POST /api/orders creates order and returns id and order_number', async () => {
     const res = await app.inject({
       method: 'POST',
