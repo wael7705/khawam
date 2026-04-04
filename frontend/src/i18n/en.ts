@@ -18,10 +18,10 @@ export const en = {
   },
   hero: {
     badge: 'Welcome To Our Company',
-    title: 'First & Quality\nPrinting Press',
-    desc: 'High-quality printing and reliable delivery. We commit to clear standards and results you can count on.',
-    cta: 'Make An Order',
-    howItWorks: 'How It Works',
+    title: 'Print your identity professionally — from idea to delivery in days',
+    desc: 'Design, printing, and fast delivery with guaranteed quality — 500+ clients trusted us',
+    cta: 'Start your order now',
+    howItWorks: 'See our work',
   },
   services_icons: {
     printing: 'Printing Service',

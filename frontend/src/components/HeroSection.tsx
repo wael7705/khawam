@@ -65,10 +65,10 @@ export function HeroSection() {
                 <Sparkles size={18} />
                 {t.hero.cta}
               </Link>
-              <a href="#process" className="hero__btn-how">
+              <Link to="/portfolio" className="hero__btn-how">
                 {t.hero.howItWorks}
                 {locale === 'ar' ? <ArrowLeft size={18} /> : <ArrowRight size={18} />}
-              </a>
+              </Link>
             </div>
           </div>
         </div>

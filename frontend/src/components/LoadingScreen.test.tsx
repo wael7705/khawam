@@ -3,16 +3,13 @@ import { render, screen } from '@testing-library/react';
 import { LoadingScreen } from './LoadingScreen';
 
 describe('LoadingScreen', () => {
-  it('renders loading text', () => {
+  it('renders brand and headline copy', () => {
     render(<LoadingScreen />);
-    expect(screen.getByText(/جاري التحميل/)).toBeInTheDocument();
-  });
-
-  it('renders logo image with alt', () => {
-    render(<LoadingScreen />);
-    const img = screen.getByRole('img', { name: /خوام/ });
-    expect(img).toBeInTheDocument();
-    expect(img).toHaveAttribute('src', '/images/logo.jpeg');
+    expect(screen.getByText('خوام')).toBeInTheDocument();
+    expect(screen.getByText('KHAWAM')).toBeInTheDocument();
+    expect(screen.getByText(/جاهزون للإبداع/)).toBeInTheDocument();
+    expect(screen.getByText(/نحمل طابع طلبك/)).toBeInTheDocument();
+    expect(screen.getByText('يرجى الانتظار قليلاً')).toBeInTheDocument();
   });
 
   it('has status role for accessibility', () => {

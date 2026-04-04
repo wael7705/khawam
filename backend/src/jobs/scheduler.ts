@@ -54,7 +54,7 @@ async function runFileCleanup(): Promise<void> {
 
     const { config } = await import('../config/index.js');
     const tempDir = join(config.uploadDir, 'order-temp');
-    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+    const maxAge = 15 * 24 * 60 * 60 * 1000; // 15 days
 
     try {
       const files = await readdir(tempDir);

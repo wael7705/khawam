@@ -5,6 +5,7 @@ import { I18nProvider } from './i18n/index';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { Home } from './pages/Home';
+import { LocaleHome } from './components/LocaleHome';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Settings } from './pages/Settings';
@@ -105,6 +106,8 @@ export default function App() {
           </Route>
           <Route element={<PublicLayout />}>
             <Route path="/" element={<Home />} />
+            <Route path="/ar" element={<LocaleHome lang="ar" />} />
+            <Route path="/en" element={<LocaleHome lang="en" />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/settings" element={<Settings />} />

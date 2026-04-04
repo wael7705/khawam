@@ -17,15 +17,22 @@ import { getStoredUser, clearAuth } from '../lib/auth';
 import './Navbar.css';
 
 const navItems = [
-  { key: 'home', to: '/#home' },
-  { key: 'about', to: '/#about' },
-  { key: 'services', to: '/#services' },
-  { key: 'works', to: '/#works' },
-  { key: 'contact', to: '/#contact' },
+  { key: 'home', sectionId: 'home' },
+  { key: 'about', sectionId: 'about' },
+  { key: 'services', sectionId: 'services' },
+  { key: 'works', sectionId: 'works' },
+  { key: 'contact', sectionId: 'contact' },
 ] as const;
 
+/** روابط أقسام الصفحة الرئيسية مع دعم /ar و /en لـ SEO */
+function homeSectionHref(sectionId: string, pathname: string): string {
+  if (pathname === '/ar') return `/ar#${sectionId}`;
+  if (pathname === '/en') return `/en#${sectionId}`;
+  return `/#${sectionId}`;
+}
+
 export function Navbar() {
-  const { t, locale, toggleLocale } = useTranslation();
+  const { t, locale, toggleLocale, setLocale } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState<ReturnType<typeof getStoredUser>>(null);
@@ -52,6 +59,20 @@ export function Navbar() {
 
   const langLabel = locale === 'ar' ? 'English' : 'العربية';
 
+  const handleLangNavigation = () => {
+    const p = location.pathname;
+    if (p === '/' || p === '/ar' || p === '/en') {
+      const next = locale === 'ar' ? '/en' : '/ar';
+      const nextLocale = next === '/en' ? 'en' : 'ar';
+      setLocale(nextLocale);
+      navigate(next);
+    } else {
+      toggleLocale();
+    }
+  };
+
+  const isHome = location.pathname === '/' || location.pathname === '/ar' || location.pathname === '/en';
+
   return (
     <header className={`navbar ${scrolled ? 'navbar--scrolled' : ''}`}>
       <div className="navbar__top">
@@ -59,7 +80,7 @@ export function Navbar() {
           <button
             type="button"
             className="navbar__lang"
-            onClick={toggleLocale}
+            onClick={handleLangNavigation}
             aria-label={langLabel}
           >
             {langLabel}
@@ -81,8 +102,8 @@ export function Navbar() {
           </Link>
           <nav className="navbar__nav">
             {navItems.map((item) => {
-              const isHome = location.pathname === '/';
-              const sectionId = item.to.replace(/^\/#/, '');
+              const sectionId = item.sectionId;
+              const href = homeSectionHref(sectionId, location.pathname);
               if (isHome && sectionId && ['home', 'about', 'process', 'works', 'services', 'contact'].includes(sectionId)) {
                 return (
                   <a
@@ -102,7 +123,7 @@ export function Navbar() {
                 );
               }
               return (
-                <Link key={item.key} to={item.to} className="navbar__link">
+                <Link key={item.key} to={href} className="navbar__link">
                   {t.nav[item.key]}
                 </Link>
               );
@@ -189,7 +210,7 @@ export function Navbar() {
           <button
             type="button"
             className="navbar__lang-mobile"
-            onClick={toggleLocale}
+            onClick={handleLangNavigation}
             aria-label={langLabel}
           >
             {langLabel}
@@ -212,7 +233,7 @@ export function Navbar() {
             {navItems.map((item) => (
               <Link
                 key={item.key}
-                to={item.to}
+                to={homeSectionHref(item.sectionId, location.pathname)}
                 className="navbar__drawer-link"
                 onClick={() => setMobileOpen(false)}
               >
