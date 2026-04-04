@@ -408,3 +408,29 @@
   .hero__title { font-size: 1.5rem; }
   .hero__desc { display: none; }
 }
+
+/* شاشات كبيرة جداً: منع تداخل النص العربي مع صورة الـ mockup (كان 60% + 46% > 100%) */
+@media (min-width: 1201px) {
+  .hero__bg-image {
+    width: 52%;
+  }
+
+  .hero__text-col {
+    width: 40%;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  .hero__text-wrap {
+    max-width: 100%;
+  }
+
+  .hero__title {
+    overflow-wrap: anywhere;
+    word-wrap: break-word;
+  }
+
+  .hero__desc {
+    overflow-wrap: anywhere;
+  }
+}
