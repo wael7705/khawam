@@ -809,7 +809,8 @@ export function OrdersManagement() {
                       <h4><FileText size={16} /> {d.attachedFiles}</h4>
                       <div className="detail-files">
                         {selectedOrder.files.map((fileUrl, i) => {
-                          const name = fileUrl.split('/').pop() || `file-${i + 1}`;
+                          const name =
+                            (fileUrl.split('/').pop() || `file-${i + 1}`).split('?')[0] || `file-${i + 1}`;
                           const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(name);
                           return (
                             <div key={i} className="detail-file">
@@ -819,7 +820,7 @@ export function OrdersManagement() {
                                 <div className="detail-file__icon"><FileText size={24} /></div>
                               )}
                               <span className="detail-file__name">{name}</span>
-                              <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="detail-file__download">
+                              <a href={fileUrl} download={name} className="detail-file__download">
                                 <Download size={14} />
                               </a>
                             </div>
