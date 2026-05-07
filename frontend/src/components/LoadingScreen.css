@@ -10,11 +10,13 @@
   overflow-y: auto;
   width: 100%;
   max-width: 100%;
-  /* ارتفاع كامل مع دعم شريط العنوان في المتصفحات والجوال */
+  /* ارتفاع كامل فعلي للواجهة بدون اعتماد على fill-available */
+  height: 100vh;
   min-height: 100vh;
+  height: 100dvh;
   min-height: 100dvh;
+  height: 100svh;
   min-height: 100svh;
-  min-height: -webkit-fill-available;
   background: #ffffff;
   /* حواف آمنة (آيفون X+، أندرويد) */
   padding-top: max(1rem, env(safe-area-inset-top, 0px));
