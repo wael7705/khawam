@@ -72,10 +72,16 @@ function DashboardGuard({ children, authReady }: { children: ReactElement; authR
 export default function App() {
   const [authReady, setAuthReady] = useState(false);
   const authBootstrapStartedRef = useRef(false);
+  const authBootstrapDoneRef = useRef(false);
 
   useEffect(() => {
     if (authBootstrapStartedRef.current) return;
     authBootstrapStartedRef.current = true;
+    const timeoutId = window.setTimeout(() => {
+      if (!authBootstrapDoneRef.current) {
+        setAuthReady(true);
+      }
+    }, 10000);
 
     (async () => {
       try {
@@ -86,9 +92,15 @@ export default function App() {
       } catch {
         // لا جلسة — المستخدم غير مسجّل دخول
       } finally {
+        authBootstrapDoneRef.current = true;
+        window.clearTimeout(timeoutId);
         setAuthReady(true);
       }
     })();
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, []);
 
   return (
