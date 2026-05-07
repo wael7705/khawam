@@ -318,6 +318,12 @@ export const ar = {
     homePage: {
       pageTitle: 'نظرة عامة على لوحة التحكم',
       pageDesc: 'متابعة مباشرة لأداء الطلبات والخدمات والزوار.',
+      analyticsSummaryTitle: 'ملخص التحليلات',
+      totalVisitorsPeriod: 'إجمالي الزوار',
+      totalViewsPeriod: 'إجمالي المشاهدات',
+      totalRegisteredUsersPeriod: 'إجمالي المسجلين بالمنصة',
+      periodAll: 'الكامل',
+      days: 'يوم',
       totalOrders: 'إجمالي الطلبات',
       activeOrders: 'الطلبات النشطة',
       todayOrders: 'طلبات اليوم',

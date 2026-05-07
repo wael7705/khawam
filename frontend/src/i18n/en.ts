@@ -318,6 +318,12 @@ export const en = {
     homePage: {
       pageTitle: 'Dashboard overview',
       pageDesc: 'Live tracking for orders, services, and visitors.',
+      analyticsSummaryTitle: 'Analytics Summary',
+      totalVisitorsPeriod: 'Total Visitors',
+      totalViewsPeriod: 'Total Views',
+      totalRegisteredUsersPeriod: 'Total Registered Users',
+      periodAll: 'All Time',
+      days: 'days',
       totalOrders: 'Total Orders',
       activeOrders: 'Active Orders',
       todayOrders: 'Today Orders',

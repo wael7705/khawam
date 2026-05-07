@@ -99,6 +99,18 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
     }
   });
 
+  app.get('/registered-users', { preHandler: adminPreHandler }, async (request, reply) => {
+    try {
+      const query = request.query as { startDate?: string; endDate?: string };
+      const filters = parseDateFilters(query);
+      const result = await analyticsService.getRegisteredUsersCount(filters);
+      return { count: result };
+    } catch (err: unknown) {
+      const error = err as { statusCode?: number; message?: string };
+      return reply.code(error.statusCode ?? 500).send({ detail: error.message });
+    }
+  });
+
   app.get('/funnels', { preHandler: adminPreHandler }, async (request, reply) => {
     try {
       const query = request.query as { startDate?: string; endDate?: string };

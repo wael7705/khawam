@@ -941,6 +941,12 @@ export const dashboardApi = {
       return data.count;
     }, () => buildMockAnalyticsStats().totalVisitors);
   },
+  getRegisteredUsersCount: async (query?: DateRangeQuery): Promise<number> => {
+    return tryOrMock(async () => {
+      const { data } = await api.get<{ count: number }>('/analytics/registered-users', { params: query });
+      return data.count;
+    }, () => 57);
+  },
   getExitRates: async (query?: DateRangeQuery): Promise<ExitRateRow[]> => {
     return tryOrMock(async () => {
       const { data } = await api.get<ExitRateRow[]>('/analytics/exit-rates', { params: query });

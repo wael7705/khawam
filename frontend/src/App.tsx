@@ -26,7 +26,6 @@ import { api } from './lib/api';
 import { DashboardLayout } from './pages/dashboard/DashboardLayout';
 import { DashboardHome } from './pages/dashboard/DashboardHome';
 import { OrdersManagement } from './pages/dashboard/OrdersManagement';
-import { Analytics } from './pages/dashboard/Analytics';
 import { CustomersManagement } from './pages/dashboard/CustomersManagement';
 import { FinancePricing } from './pages/dashboard/FinancePricing';
 import { WorksManagement } from './pages/dashboard/WorksManagement';
@@ -133,7 +132,6 @@ export default function App() {
             <Route path="works" element={<WorksManagement />} />
             <Route path="archive" element={<Archive />} />
             <Route path="finance" element={<FinancePricing />} />
-            <Route path="analytics" element={<Analytics />} />
           </Route>
 
           <Route

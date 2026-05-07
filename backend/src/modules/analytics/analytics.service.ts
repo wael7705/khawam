@@ -275,6 +275,20 @@ export async function getVisitorCount(filters?: GetStatsFilters): Promise<number
   return result.length;
 }
 
+export async function getRegisteredUsersCount(filters?: GetStatsFilters): Promise<number> {
+  const normalized = normalizeDateFilters(filters);
+  const where: { createdAt?: { gte?: Date; lte?: Date } } = {};
+  if (normalized?.startDate || normalized?.endDate) {
+    where.createdAt = {};
+    if (normalized.startDate) where.createdAt.gte = normalized.startDate;
+    if (normalized.endDate) where.createdAt.lte = normalized.endDate;
+  }
+
+  return prisma.user.count({
+    where: Object.keys(where).length > 0 ? where : undefined,
+  });
+}
+
 export async function getFunnels(filters?: GetStatsFilters): Promise<FunnelStep[]> {
   const normalized = normalizeDateFilters(filters);
   const where: { createdAt?: { gte?: Date; lte?: Date } } = {};

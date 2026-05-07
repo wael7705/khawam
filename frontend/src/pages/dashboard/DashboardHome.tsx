@@ -21,6 +21,7 @@ import { useTranslation } from '../../i18n';
 import './DashboardHome.css';
 
 const STATUS_COLORS = ['#DC2626', '#F97316', '#A3A3A3'];
+type AnalyticsPreset = 7 | 30 | 90 | 'all';
 
 function getTodayDateRange() {
   const now = new Date();
@@ -40,6 +41,10 @@ export function DashboardHome() {
   const { t } = useTranslation();
   const d = t.dashboard.homePage;
   const [data, setData] = useState<DashboardHomeDataModel | null>(null);
+  const [analyticsPreset, setAnalyticsPreset] = useState<AnalyticsPreset>(30);
+  const [analyticsSummary, setAnalyticsSummary] = useState<{ totalVisitors: number; totalPageViews: number; totalRegisteredUsers: number } | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [analyticsError, setAnalyticsError] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -93,6 +98,30 @@ export function DashboardHome() {
     void loadData();
   }, [d.failed]);
 
+  useEffect(() => {
+    const loadAnalyticsSummary = async () => {
+      setAnalyticsLoading(true);
+      setAnalyticsError('');
+      try {
+        const range = analyticsPreset === 'all' ? undefined : getDateRange(analyticsPreset);
+        const [stats, registeredUsers] = await Promise.all([
+          dashboardApi.getAnalyticsStats(range),
+          dashboardApi.getRegisteredUsersCount(range),
+        ]);
+        setAnalyticsSummary({
+          totalVisitors: stats.totalVisitors,
+          totalPageViews: stats.totalPageViews,
+          totalRegisteredUsers: registeredUsers,
+        });
+      } catch {
+        setAnalyticsError(d.failed);
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
+    void loadAnalyticsSummary();
+  }, [analyticsPreset, d.failed]);
+
   if (loading) {
     return <div className="dashboard-state">{d.loading}</div>;
   }
@@ -139,6 +168,47 @@ export function DashboardHome() {
             <strong>{item.value}</strong>
           </article>
         ))}
+      </section>
+
+      <section className="dashboard-analytics-summary">
+        <header className="dashboard-analytics-summary__header">
+          <h3>{d.analyticsSummaryTitle}</h3>
+          <div className="dashboard-analytics-summary__filters">
+            {[7, 30, 90, 'all'].map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                className={analyticsPreset === preset ? 'dashboard-analytics-summary__filter dashboard-analytics-summary__filter--active' : 'dashboard-analytics-summary__filter'}
+                onClick={() => setAnalyticsPreset(preset as AnalyticsPreset)}
+              >
+                {preset === 'all' ? d.periodAll : `${preset} ${d.days}`}
+              </button>
+            ))}
+          </div>
+        </header>
+        {analyticsLoading ? (
+          <div className="dashboard-state">{d.loading}</div>
+        ) : analyticsError || !analyticsSummary ? (
+          <div className="dashboard-state dashboard-state--error">{analyticsError || d.failed}</div>
+        ) : (
+          <div className="dashboard-analytics-summary__cards">
+            <article className="dashboard-kpi-card">
+              <div className="dashboard-kpi-card__icon"><Users size={18} /></div>
+              <p>{d.totalVisitorsPeriod}</p>
+              <strong>{analyticsSummary.totalVisitors.toLocaleString()}</strong>
+            </article>
+            <article className="dashboard-kpi-card">
+              <div className="dashboard-kpi-card__icon"><Eye size={18} /></div>
+              <p>{d.totalViewsPeriod}</p>
+              <strong>{analyticsSummary.totalPageViews.toLocaleString()}</strong>
+            </article>
+            <article className="dashboard-kpi-card">
+              <div className="dashboard-kpi-card__icon"><Users size={18} /></div>
+              <p>{d.totalRegisteredUsersPeriod}</p>
+              <strong>{analyticsSummary.totalRegisteredUsers.toLocaleString()}</strong>
+            </article>
+          </div>
+        )}
       </section>
 
       <section className="dashboard-grid">
@@ -243,4 +313,16 @@ export function DashboardHome() {
       </section>
     </div>
   );
+}
+
+function getDateRange(days: 7 | 30 | 90): { startDate: string; endDate: string } {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - days);
+  start.setHours(0, 0, 0, 0);
+  end.setHours(23, 59, 59, 999);
+  return {
+    startDate: start.toISOString(),
+    endDate: end.toISOString(),
+  };
 }

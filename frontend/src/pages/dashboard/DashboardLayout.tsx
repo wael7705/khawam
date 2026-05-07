@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Archive as ArchiveIcon, BarChart3, ChevronLeft, ChevronRight, ClipboardList, FolderOpen, Globe, Home, LogOut, Menu, Moon, Sun, Users, Wallet, X } from 'lucide-react';
+import { Archive as ArchiveIcon, ChevronLeft, ChevronRight, ClipboardList, FolderOpen, Globe, Home, LogOut, Menu, Moon, Sun, Users, Wallet, X } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import { authAPI } from '../../lib/api';
 import { clearAuth, getStoredUser } from '../../lib/auth';
@@ -83,7 +83,6 @@ export function DashboardLayout() {
       { to: '/dashboard/works', label: d.works, Icon: FolderOpen },
       { to: '/dashboard/archive', label: d.archive, Icon: ArchiveIcon },
       { to: '/dashboard/finance', label: d.finance, Icon: Wallet },
-      { to: '/dashboard/analytics', label: d.analytics, Icon: BarChart3 },
     ];
     if (user?.role === 'موظف') {
       return [{ to: '/dashboard/orders', label: d.orders, Icon: ClipboardList }];

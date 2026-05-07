@@ -16,4 +16,9 @@ describe('Analytics API', () => {
     const res = await app.inject({ method: 'GET', url: '/api/analytics/stats' });
     expect(res.statusCode).toBe(401);
   });
+
+  it('GET /api/analytics/registered-users without auth returns 401', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/analytics/registered-users' });
+    expect(res.statusCode).toBe(401);
+  });
 });
