@@ -2,11 +2,21 @@
 set -e
 cd /app/backend
 
-echo "[start] Running prisma db push..."
-pnpm exec prisma db push
+echo "[start] drop orphan constraint..."
+node -e "
+const { PrismaClient } = require('@prisma/client');
+const p = new PrismaClient();
+p.\$executeRawUnsafe('ALTER TABLE products DROP CONSTRAINT IF EXISTS products_sku_unique')
+  .then(() => console.log('done'))
+  .catch(e => console.warn('skip:', e.message))
+  .finally(() => p.\$disconnect());
+"
 
-echo "[start] Running prisma db seed..."
+echo "[start] db push..."
+pnpm exec prisma db push --accept-data-loss
+
+echo "[start] seed..."
 pnpm exec prisma db seed
 
-echo "[start] Starting Node server on 0.0.0.0:${PORT:-8000}..."
-exec node dist/server.js
+echo "[start] server..."
+exec node dist/run.js
