@@ -45,6 +45,8 @@ WORKDIR /app/backend
 
 COPY --from=frontend-build /app/frontend/dist ./public
 
+RUN chmod +x /app/backend/scripts/start.sh
+
 EXPOSE 8000
 
 ENV NODE_ENV=production
@@ -54,5 +56,5 @@ ENV PORT=8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s \
   CMD node -e "const p=process.env.PORT||8000; fetch('http://127.0.0.1:'+p+'/api/health').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"
 
-# بدء التشغيل: db push ثم seed (يشمل الخدمات والـ workflow والقاعدة المالية) ثم السيرفر
+# بدء التشغيل عبر سكربت: إصلاح قيود قديمة ثم db push ثم seed ثم السيرفر
 CMD ["sh", "scripts/start.sh"]
