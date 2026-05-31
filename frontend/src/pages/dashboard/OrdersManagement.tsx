@@ -92,6 +92,82 @@ function toWhatsAppNumber(phone: string): string {
   return digits;
 }
 
+function canCancelOrderStatus(status: string): boolean {
+  const s = status?.toLowerCase() ?? '';
+  return ['pending', 'confirmed', 'processing'].includes(s);
+}
+
+function resolveAttachmentUrl(url: string): string {
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  if (url.startsWith('/')) return `${window.location.origin}${url}`;
+  return url;
+}
+
+function collectOrderAttachments(order: OrderDetail): Array<{ url: string; name: string }> {
+  const out: Array<{ url: string; name: string }> = [];
+  const seen = new Set<string>();
+
+  const push = (rawUrl: string, fallbackName: string) => {
+    const url = rawUrl.trim();
+    if (!url || seen.has(url)) return;
+    seen.add(url);
+    const base =
+      (url.split('/').pop() || fallbackName).split('?')[0] || fallbackName;
+    out.push({ url, name: base });
+  };
+
+  order.files?.forEach((url, i) => push(url, `file-${i + 1}`));
+  order.items.forEach((item, itemIdx) => {
+    const df = item.design_files;
+    if (!df || !Array.isArray(df)) return;
+    df.forEach((entry, fileIdx) => {
+      const url = typeof entry === 'string' ? entry : entry.url;
+      push(url, `item-${itemIdx + 1}-${fileIdx + 1}`);
+    });
+  });
+
+  return out;
+}
+
+async function downloadAllOrderAttachments(
+  files: Array<{ url: string; name: string }>,
+  orderNumber: string,
+): Promise<void> {
+  for (let i = 0; i < files.length; i += 1) {
+    const file = files[i];
+    if (!file) continue;
+    const downloadName =
+      files.length > 1 ? `${orderNumber}-${file.name}` : file.name;
+    const resolved = resolveAttachmentUrl(file.url);
+    try {
+      const response = await fetch(resolved, { credentials: 'include' });
+      if (!response.ok) throw new Error('fetch failed');
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = downloadName;
+      anchor.rel = 'noopener';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      const anchor = document.createElement('a');
+      anchor.href = resolved;
+      anchor.download = downloadName;
+      anchor.target = '_blank';
+      anchor.rel = 'noopener noreferrer';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+    }
+    await new Promise((resolve) => {
+      window.setTimeout(resolve, 350);
+    });
+  }
+}
+
 function buildShareText(orderNumber: string, customerName: string, address: string, lat: number, lon: number, locale: string): string {
   const parts = [
     locale === 'ar' ? `طلب #${orderNumber}` : `Order #${orderNumber}`,
@@ -209,6 +285,11 @@ export function OrdersManagement() {
   const [paymentIsPaid, setPaymentIsPaid] = useState(true);
   const [paymentPaidAmount, setPaymentPaidAmount] = useState(0);
   const [savingPayment, setSavingPayment] = useState(false);
+  const [cancelOrderId, setCancelOrderId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelReasonError, setCancelReasonError] = useState('');
+  const [cancellingOrder, setCancellingOrder] = useState(false);
+  const [downloadingAllFiles, setDownloadingAllFiles] = useState(false);
 
   const statusFilterLabel = useCallback(
     (filter: StatusFilter) => (filter === 'all' ? d.all : getOrderStatusLabel(filter, locale)),
@@ -284,20 +365,59 @@ export function OrdersManagement() {
     }
   };
 
-  const handleCancelOrder = async (orderId: string) => {
-    if (!window.confirm(d.cancelConfirm)) return;
+  const openCancelDialog = (orderId: string) => {
+    setCancelOrderId(orderId);
+    setCancelReason('');
+    setCancelReasonError('');
+  };
+
+  const closeCancelDialog = () => {
+    if (cancellingOrder) return;
+    setCancelOrderId(null);
+    setCancelReason('');
+    setCancelReasonError('');
+  };
+
+  const handleConfirmCancelOrder = async () => {
+    if (!cancelOrderId) return;
+    const reason = cancelReason.trim();
+    if (reason.length < 3) {
+      setCancelReasonError(d.cancelReasonRequired);
+      return;
+    }
+    setCancelReasonError('');
+    setCancellingOrder(true);
+    const orderId = cancelOrderId;
+    const notes =
+      locale === 'ar' ? `سبب الإلغاء: ${reason}` : `Cancellation reason: ${reason}`;
     try {
       if (useMockData) {
         setMockOrderCancelled(orderId);
       } else {
-        await dashboardApi.updateOrderStatus(orderId, 'cancelled');
+        await dashboardApi.updateOrderStatus(orderId, 'cancelled', notes);
       }
       await loadOrders();
       if (selectedOrder?.id === orderId) {
         setSelectedOrder(null);
       }
+      setCancelOrderId(null);
+      setCancelReason('');
+      setCancelReasonError('');
     } catch {
       setError(d.cancelFailed);
+    } finally {
+      setCancellingOrder(false);
+    }
+  };
+
+  const handleDownloadAllFiles = async (order: OrderDetail) => {
+    const files = collectOrderAttachments(order);
+    if (files.length === 0) return;
+    setDownloadingAllFiles(true);
+    try {
+      await downloadAllOrderAttachments(files, order.order_number);
+    } finally {
+      setDownloadingAllFiles(false);
     }
   };
 
@@ -510,7 +630,7 @@ export function OrdersManagement() {
               <tbody>
                 {orders.data.map((order) => {
                   const nextStatus = getNextOrderStatus(order.status);
-                  const isPending = order.status?.toLowerCase() === 'pending';
+                  const canCancel = canCancelOrderStatus(order.status);
                   return (
                     <tr key={order.id} onClick={() => void openOrderDetail(order.id)} className="orders-table__clickable">
                       <td>{order.order_number}</td>
@@ -557,12 +677,12 @@ export function OrdersManagement() {
                             </button>
                           );
                         })()}
-                        {isPending && (
+                        {canCancel && (
                           <button
                             type="button"
                             className="orders-status-icon orders-status-icon--cancel"
                             title={d.cancelOrder}
-                            onClick={() => void handleCancelOrder(order.id)}
+                            onClick={() => openCancelDialog(order.id)}
                             aria-label={d.cancelOrder}
                           >
                             <Ban size={18} />
@@ -619,12 +739,12 @@ export function OrdersManagement() {
                         </button>
                       );
                     })()}
-                    {selectedOrder.status?.toLowerCase() === 'pending' && (
+                    {canCancelOrderStatus(selectedOrder.status) && (
                       <button
                         type="button"
                         className="orders-status-icon orders-status-icon--cancel"
                         title={d.cancelOrder}
-                        onClick={() => void handleCancelOrder(selectedOrder.id)}
+                        onClick={() => openCancelDialog(selectedOrder.id)}
                         aria-label={d.cancelOrder}
                       >
                         <Ban size={20} />
@@ -804,13 +924,27 @@ export function OrdersManagement() {
                   )}
 
                   {/* Files */}
-                  {selectedOrder.files && selectedOrder.files.length > 0 && (
+                  {(() => {
+                    const attachments = collectOrderAttachments(selectedOrder);
+                    if (attachments.length === 0) return null;
+                    return (
                     <div className="detail-section">
-                      <h4><FileText size={16} /> {d.attachedFiles}</h4>
+                      <div className="detail-section__head">
+                        <h4><FileText size={16} /> {d.attachedFiles}</h4>
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-sm detail-files__download-all"
+                          disabled={downloadingAllFiles}
+                          onClick={() => void handleDownloadAllFiles(selectedOrder)}
+                        >
+                          <Download size={14} />
+                          {downloadingAllFiles ? d.downloadingFiles : d.downloadAllFiles}
+                        </button>
+                      </div>
                       <div className="detail-files">
-                        {selectedOrder.files.map((fileUrl, i) => {
-                          const name =
-                            (fileUrl.split('/').pop() || `file-${i + 1}`).split('?')[0] || `file-${i + 1}`;
+                        {attachments.map((file, i) => {
+                          const fileUrl = file.url;
+                          const name = file.name;
                           const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(name);
                           return (
                             <div key={i} className="detail-file">
@@ -828,7 +962,8 @@ export function OrdersManagement() {
                         })}
                       </div>
                     </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Notes */}
                   {selectedOrder.notes && (
@@ -934,6 +1069,56 @@ export function OrdersManagement() {
               </>
             )}
           </aside>
+        </div>
+      )}
+
+      {cancelOrderId && (
+        <div className="order-cancel-overlay" onClick={closeCancelDialog}>
+          <div
+            className="order-cancel-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="order-cancel-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="order-cancel-title">{d.cancelReasonTitle}</h3>
+            <label className="order-cancel-dialog__label" htmlFor="order-cancel-reason">
+              {d.cancelReasonLabel}
+            </label>
+            <textarea
+              id="order-cancel-reason"
+              className="order-cancel-dialog__input"
+              value={cancelReason}
+              onChange={(e) => {
+                setCancelReason(e.target.value);
+                if (cancelReasonError) setCancelReasonError('');
+              }}
+              placeholder={d.cancelReasonPlaceholder}
+              rows={4}
+              disabled={cancellingOrder}
+            />
+            {cancelReasonError && (
+              <p className="order-cancel-dialog__error">{cancelReasonError}</p>
+            )}
+            <div className="order-cancel-dialog__actions">
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={closeCancelDialog}
+                disabled={cancellingOrder}
+              >
+                {d.close}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => void handleConfirmCancelOrder()}
+                disabled={cancellingOrder}
+              >
+                {cancellingOrder ? d.saving : d.confirmCancel}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

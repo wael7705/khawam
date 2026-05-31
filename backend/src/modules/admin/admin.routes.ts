@@ -6,6 +6,7 @@ import {
   parseOneFile,
 } from '../../shared/upload/multipart-raw.js';
 import * as adminService from './admin.service.js';
+import { updateOrderStatusBodySchema } from './admin.schema.js';
 import { importLegacyServicesSeed } from '../services/services.service.js';
 
 const adminPreHandler = [authenticate, requireRole('مدير', 'موظف')];
@@ -446,14 +447,15 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       try {
         const { orderId } = request.params;
-        const body = request.body as { status: string; notes?: string };
-        if (!body.status) {
-          return reply.code(400).send({ detail: 'يجب تحديد status' });
+        const parsed = updateOrderStatusBodySchema.safeParse(request.body);
+        if (!parsed.success) {
+          const first = parsed.error.errors[0];
+          return reply.code(400).send({ detail: first?.message ?? 'بيانات غير صالحة' });
         }
         await adminService.updateOrderStatus(
           orderId,
-          body.status,
-          body.notes,
+          parsed.data.status,
+          parsed.data.notes?.trim(),
           request.user?.id,
         );
         return { success: true };
