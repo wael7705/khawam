@@ -2,33 +2,42 @@ import { describe, expect, it } from 'vitest';
 import {
   normalizeOllamaBaseUrl,
   resolveAssistantProvider,
+  resolveAssistantProviderChain,
   type AssistantProviderConfig,
 } from '../src/algorithms/assistant-provider.algorithm.js';
 
 const baseConfig: AssistantProviderConfig = {
   assistantProvider: 'auto',
   ollamaBaseUrl: 'http://127.0.0.1:11434',
-  ollamaModel: 'llama3.1:8b',
+  ollamaModel: 'qwen2.5:7b',
   geminiApiKey: undefined,
-  geminiModel: 'gemini-2.0-flash',
-  lovableApiKey: undefined,
+  geminiModel: 'gemini-2.5-flash',
   nodeEnv: 'test',
 };
 
 describe('assistant-provider.algorithm', () => {
-  it('auto prefers gemini when GEMINI_API_KEY is set', () => {
+  it('auto prefers gemini then ollama fallback', () => {
+    const chain = resolveAssistantProviderChain({
+      ...baseConfig,
+      geminiApiKey: 'test-key',
+    });
+    expect(chain.map((p) => p.kind)).toEqual(['gemini', 'ollama']);
+    expect(chain[0]?.modelId).toBe('gemini-2.5-flash');
+    expect(chain[1]?.modelId).toBe('qwen2.5:7b');
+  });
+
+  it('auto uses ollama only without gemini key', () => {
+    const chain = resolveAssistantProviderChain(baseConfig);
+    expect(chain).toHaveLength(1);
+    expect(chain[0]?.kind).toBe('ollama');
+  });
+
+  it('resolveAssistantProvider returns primary only', () => {
     const resolved = resolveAssistantProvider({
       ...baseConfig,
       geminiApiKey: 'test-key',
     });
     expect(resolved?.kind).toBe('gemini');
-    expect(resolved?.modelId).toBe('gemini-2.0-flash');
-  });
-
-  it('auto falls back to ollama without gemini key', () => {
-    const resolved = resolveAssistantProvider(baseConfig);
-    expect(resolved?.kind).toBe('ollama');
-    expect(resolved?.modelId).toBe('llama3.1:8b');
   });
 
   it('explicit ollama requires base url', () => {

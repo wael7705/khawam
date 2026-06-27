@@ -1,9 +1,10 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
-import { convertToModelMessages, streamText, type UIMessage } from 'ai';
+import { convertToModelMessages, generateText, streamText, type UIMessage } from 'ai';
 import {
   getAssistantDisabledMessage,
   normalizeOllamaBaseUrl,
   resolveAssistantProvider,
+  resolveAssistantProviderChain,
   type AssistantProviderConfig,
   type AssistantProviderKind,
   type ResolvedAssistantProvider,
@@ -11,7 +12,7 @@ import {
 import { config } from '../../config/index.js';
 import { getAssistantSystemPrompt } from './assistant.knowledge.service.js';
 
-const LOVABLE_MODEL = 'google/gemini-2.5-flash';
+type StreamModel = Parameters<typeof streamText>[0]['model'];
 
 function getProviderConfig(): AssistantProviderConfig {
   return {
@@ -20,24 +21,11 @@ function getProviderConfig(): AssistantProviderConfig {
     ollamaModel: config.OLLAMA_MODEL,
     geminiApiKey: config.GEMINI_API_KEY,
     geminiModel: config.GEMINI_MODEL,
-    lovableApiKey: config.LOVABLE_API_KEY,
     nodeEnv: config.NODE_ENV,
   };
 }
 
-function createLovableModel(apiKey: string): Parameters<typeof streamText>[0]['model'] {
-  const provider = createOpenAICompatible({
-    name: 'lovable-ai',
-    baseURL: 'https://ai.gateway.lovable.dev/v1',
-    headers: {
-      'Lovable-API-Key': apiKey,
-      'X-Lovable-AIG-SDK': 'vercel-ai-sdk',
-    },
-  });
-  return provider(LOVABLE_MODEL);
-}
-
-function createOllamaModel(baseUrl: string, modelId: string): Parameters<typeof streamText>[0]['model'] {
+function createOllamaModel(baseUrl: string, modelId: string): StreamModel {
   const safeBase = normalizeOllamaBaseUrl(baseUrl);
   const provider = createOpenAICompatible({
     name: 'ollama',
@@ -47,7 +35,7 @@ function createOllamaModel(baseUrl: string, modelId: string): Parameters<typeof 
   return provider(modelId);
 }
 
-function createGeminiModel(modelId: string): Parameters<typeof streamText>[0]['model'] {
+function createGeminiModel(modelId: string): StreamModel {
   const apiKey = config.GEMINI_API_KEY?.trim();
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY مفقود');
@@ -60,18 +48,24 @@ function createGeminiModel(modelId: string): Parameters<typeof streamText>[0]['m
   return provider(modelId);
 }
 
-function createModelForProvider(resolved: ResolvedAssistantProvider): Parameters<typeof streamText>[0]['model'] {
+function createModelForProvider(resolved: ResolvedAssistantProvider): StreamModel {
   if (resolved.kind === 'gemini') {
     return createGeminiModel(resolved.modelId);
   }
-  if (resolved.kind === 'ollama') {
-    return createOllamaModel(config.OLLAMA_BASE_URL, resolved.modelId);
-  }
-  const apiKey = config.LOVABLE_API_KEY?.trim();
-  if (!apiKey) {
-    throw new Error('LOVABLE_API_KEY مفقود');
-  }
-  return createLovableModel(apiKey);
+  return createOllamaModel(config.OLLAMA_BASE_URL, resolved.modelId);
+}
+
+async function probeProvider(
+  resolved: ResolvedAssistantProvider,
+  system: string,
+): Promise<void> {
+  const model = createModelForProvider(resolved);
+  await generateText({
+    model,
+    system,
+    prompt: 'ok',
+    maxOutputTokens: 8,
+  });
 }
 
 export function getResolvedAssistantProvider(): ResolvedAssistantProvider | null {
@@ -79,20 +73,26 @@ export function getResolvedAssistantProvider(): ResolvedAssistantProvider | null
 }
 
 export function isAssistantConfigured(): boolean {
-  return getResolvedAssistantProvider() !== null;
+  return resolveAssistantProviderChain(getProviderConfig()).length > 0;
 }
 
 export function getAssistantStatus(): {
   enabled: boolean;
   provider: AssistantProviderKind | null;
   model: string | null;
+  fallback: AssistantProviderKind | null;
+  fallbackModel: string | null;
   endpoint: string;
 } {
-  const resolved = getResolvedAssistantProvider();
+  const chain = resolveAssistantProviderChain(getProviderConfig());
+  const primary = chain[0] ?? null;
+  const backup = chain[1] ?? null;
   return {
-    enabled: resolved !== null,
-    provider: resolved?.kind ?? null,
-    model: resolved?.modelId ?? null,
+    enabled: chain.length > 0,
+    provider: primary?.kind ?? null,
+    model: primary?.modelId ?? null,
+    fallback: backup?.kind ?? null,
+    fallbackModel: backup?.modelId ?? null,
     endpoint: '/api/assistant/chat',
   };
 }
@@ -100,39 +100,44 @@ export function getAssistantStatus(): {
 export async function streamAssistantChat(
   messages: UIMessage[],
 ): Promise<Response> {
-  const resolved = getResolvedAssistantProvider();
-  if (!resolved) {
+  const chain = resolveAssistantProviderChain(getProviderConfig());
+  if (chain.length === 0) {
     return new Response(
       JSON.stringify({ error: getAssistantDisabledMessage(config.ASSISTANT_PROVIDER) }),
       { status: 503, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
-  let model: Parameters<typeof streamText>[0]['model'];
-  try {
-    model = createModelForProvider(resolved);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'فشل تهيئة مزود المساعد';
-    return new Response(JSON.stringify({ error: message }), {
-      status: 503,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
   const system = await getAssistantSystemPrompt();
+  const modelMessages = await convertToModelMessages(messages);
+  const errors: string[] = [];
 
-  try {
-    const result = streamText({
-      model,
-      system,
-      messages: await convertToModelMessages(messages),
-    });
-    return result.toUIMessageStreamResponse({ originalMessages: messages });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'فشل الاتصال بنموذج المساعد';
-    return new Response(JSON.stringify({ error: message }), {
-      status: 502,
-      headers: { 'Content-Type': 'application/json' },
-    });
+  for (const provider of chain) {
+    try {
+      if (chain.length > 1) {
+        await probeProvider(provider, system);
+      }
+
+      const model = createModelForProvider(provider);
+      const result = streamText({
+        model,
+        system,
+        messages: modelMessages,
+      });
+      return result.toUIMessageStreamResponse({ originalMessages: messages });
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : `فشل مزود ${provider.label}`;
+      errors.push(`${provider.label}: ${message}`);
+      console.error(`[assistant] ${provider.label} failed:`, message);
+    }
   }
+
+  return new Response(
+    JSON.stringify({
+      error: 'تعذر الاتصال بجميع نماذج المساعد',
+      details: errors,
+    }),
+    { status: 502, headers: { 'Content-Type': 'application/json' } },
+  );
 }

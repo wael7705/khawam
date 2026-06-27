@@ -1,4 +1,4 @@
-export type AssistantProviderKind = 'ollama' | 'gemini' | 'lovable';
+export type AssistantProviderKind = 'ollama' | 'gemini';
 
 export interface AssistantProviderConfig {
   assistantProvider: AssistantProviderKind | 'auto';
@@ -6,7 +6,6 @@ export interface AssistantProviderConfig {
   ollamaModel: string;
   geminiApiKey?: string;
   geminiModel: string;
-  lovableApiKey?: string;
   nodeEnv: string;
 }
 
@@ -53,72 +52,48 @@ function isGeminiConfigured(config: AssistantProviderConfig): boolean {
   return Boolean(config.geminiApiKey?.trim());
 }
 
-function isLovableConfigured(config: AssistantProviderConfig): boolean {
-  return Boolean(config.lovableApiKey?.trim());
+function buildGeminiProvider(config: AssistantProviderConfig): ResolvedAssistantProvider {
+  return {
+    kind: 'gemini',
+    modelId: config.geminiModel,
+    label: `gemini:${config.geminiModel}`,
+  };
 }
 
-function resolveAutoProvider(config: AssistantProviderConfig): ResolvedAssistantProvider | null {
-  if (isGeminiConfigured(config)) {
-    return {
-      kind: 'gemini',
-      modelId: config.geminiModel,
-      label: `gemini:${config.geminiModel}`,
-    };
+function buildOllamaProvider(config: AssistantProviderConfig): ResolvedAssistantProvider {
+  return {
+    kind: 'ollama',
+    modelId: config.ollamaModel,
+    label: `ollama:${config.ollamaModel}`,
+  };
+}
+
+/** ترتيب المحاولة: Gemini أولاً ثم Ollama كبديل */
+export function resolveAssistantProviderChain(
+  config: AssistantProviderConfig,
+): ResolvedAssistantProvider[] {
+  const chain: ResolvedAssistantProvider[] = [];
+
+  if (config.assistantProvider === 'gemini') {
+    if (isGeminiConfigured(config)) chain.push(buildGeminiProvider(config));
+    return chain;
   }
-  if (isOllamaConfigured(config)) {
-    return {
-      kind: 'ollama',
-      modelId: config.ollamaModel,
-      label: `ollama:${config.ollamaModel}`,
-    };
+
+  if (config.assistantProvider === 'ollama') {
+    if (isOllamaConfigured(config)) chain.push(buildOllamaProvider(config));
+    return chain;
   }
-  if (isLovableConfigured(config)) {
-    return {
-      kind: 'lovable',
-      modelId: 'google/gemini-2.5-flash',
-      label: 'lovable:google/gemini-2.5-flash',
-    };
-  }
-  return null;
+
+  // auto: gemini ثم ollama
+  if (isGeminiConfigured(config)) chain.push(buildGeminiProvider(config));
+  if (isOllamaConfigured(config)) chain.push(buildOllamaProvider(config));
+  return chain;
 }
 
 export function resolveAssistantProvider(
   config: AssistantProviderConfig,
 ): ResolvedAssistantProvider | null {
-  const explicit = config.assistantProvider;
-
-  if (explicit === 'auto') {
-    return resolveAutoProvider(config);
-  }
-
-  if (explicit === 'gemini') {
-    if (!isGeminiConfigured(config)) return null;
-    return {
-      kind: 'gemini',
-      modelId: config.geminiModel,
-      label: `gemini:${config.geminiModel}`,
-    };
-  }
-
-  if (explicit === 'ollama') {
-    if (!isOllamaConfigured(config)) return null;
-    return {
-      kind: 'ollama',
-      modelId: config.ollamaModel,
-      label: `ollama:${config.ollamaModel}`,
-    };
-  }
-
-  if (explicit === 'lovable') {
-    if (!isLovableConfigured(config)) return null;
-    return {
-      kind: 'lovable',
-      modelId: 'google/gemini-2.5-flash',
-      label: 'lovable:google/gemini-2.5-flash',
-    };
-  }
-
-  return null;
+  return resolveAssistantProviderChain(config)[0] ?? null;
 }
 
 export function getAssistantDisabledMessage(provider: AssistantProviderKind | 'auto'): string {
@@ -128,8 +103,5 @@ export function getAssistantDisabledMessage(provider: AssistantProviderKind | 'a
   if (provider === 'gemini') {
     return 'المساعد غير مفعّل: أضف GEMINI_API_KEY';
   }
-  if (provider === 'lovable') {
-    return 'المساعد غير مفعّل: أضف LOVABLE_API_KEY';
-  }
-  return 'المساعد غير مفعّل: أضف GEMINI_API_KEY أو شغّل Ollama أو LOVABLE_API_KEY';
+  return 'المساعد غير مفعّل: أضف GEMINI_API_KEY أو شغّل Ollama (qwen2.5:7b)';
 }

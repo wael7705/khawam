@@ -51,7 +51,14 @@ export async function streamAssistantReply(
   });
 
   if (!response.ok) {
-    const errText = await response.text();
+    let errText = await response.text();
+    try {
+      const parsed = JSON.parse(errText) as { error?: string; details?: string[] };
+      if (parsed.error) errText = parsed.error;
+      if (parsed.details?.length) errText += ` (${parsed.details.join(' | ')})`;
+    } catch {
+      // نص خام
+    }
     throw new Error(errText || `HTTP ${response.status}`);
   }
 

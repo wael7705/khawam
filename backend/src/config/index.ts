@@ -34,13 +34,12 @@ const envSchema = z.object({
   APPLE_TEAM_ID: z.string().optional(),
   APPLE_KEY_ID: z.string().optional(),
   APPLE_PRIVATE_KEY: z.string().optional(),
-  LOVABLE_API_KEY: z.string().optional(),
-  /** ollama | gemini | lovable | auto — الافتراضي auto: Gemini ثم Ollama ثم Lovable */
-  ASSISTANT_PROVIDER: z.enum(['auto', 'ollama', 'gemini', 'lovable']).default('auto'),
+  /** auto = gemini ثم ollama | gemini | ollama */
+  ASSISTANT_PROVIDER: z.enum(['auto', 'ollama', 'gemini']).default('auto'),
   OLLAMA_BASE_URL: z.string().default('http://127.0.0.1:11434'),
-  OLLAMA_MODEL: z.string().default('llama3.1:8b'),
+  OLLAMA_MODEL: z.string().default('qwen2.5:7b'),
   GEMINI_API_KEY: z.string().optional(),
-  GEMINI_MODEL: z.string().default('gemini-2.0-flash'),
+  GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
 });
 
 function loadConfig() {

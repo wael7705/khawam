@@ -1,20 +1,5 @@
-# انسخ الأسطر التالية (بدون هذا التعليق) والصقها في Raw Editor لخدمة khawam فقط
-# من لوحة Railway: اختر خدمة khawam (أيقونة GitHub) → Variables → Raw Editor → استبدل المحتوى أو الصق
-# نشر واحد: الواجهة والـ API من نفس الخدمة — FRONTEND_URL = PUBLIC_BASE_URL
-# NODE_OPTIONS يحدّ استهلاك الذاكرة ليبقى تحت حد Replica (مثلاً 512 MB)
-#
-# مطلوب: ربط خدمة Postgres بخدمة khawam وإضافة DATABASE_URL (عادةً يُضاف تلقائياً من Railway عند الربط).
-# بدون DATABASE_URL لا يبدأ السيرفر. يُفضّل عدم تعيين PORT يدوياً وترك Railway يحدده ديناميكياً.
-
-SECRET_KEY=khawam-pmrx.v2.KhawamPro.SecureKey.2025
-PUBLIC_BASE_URL=https://khawam-production.up.railway.app
-FRONTEND_URL=https://khawam-production.up.railway.app
-NODE_ENV=production
-PORT=8000
-NODE_OPTIONS=--max-old-space-size=384
-LOVABLE_API_KEY=
-ASSISTANT_PROVIDER=gemini
+ASSISTANT_PROVIDER=auto
 OLLAMA_BASE_URL=http://127.0.0.1:11434
-OLLAMA_MODEL=llama3.1:8b
+OLLAMA_MODEL=qwen2.5:7b
 GEMINI_API_KEY=
-GEMINI_MODEL=gemini-2.0-flash
+GEMINI_MODEL=gemini-2.5-flash

@@ -6,10 +6,16 @@ describe('Assistant API', () => {
     const app = await buildApp();
     const res = await app.inject({ method: 'GET', url: '/api/assistant/status' });
     expect(res.statusCode).toBe(200);
-    const body = res.json() as { enabled: boolean; endpoint: string; provider: string | null };
+    const body = res.json() as {
+      enabled: boolean;
+      endpoint: string;
+      provider: string | null;
+      fallback: string | null;
+    };
     expect(body.endpoint).toBe('/api/assistant/chat');
     expect(typeof body.enabled).toBe('boolean');
     expect('provider' in body).toBe(true);
+    expect('fallback' in body).toBe(true);
     await app.close();
   });
 
