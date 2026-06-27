@@ -22,6 +22,22 @@ services:
     networks:
       - khawam-production
 
+  pgbouncer-production:
+    image: edoburu/pgbouncer:1.22.1-p0
+    container_name: khawam-pgbouncer-production
+    restart: always
+    depends_on:
+      postgres-production:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-khawam_production}:${POSTGRES_PASSWORD}@postgres-production:5432/${POSTGRES_DB:-khawam_production}
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 100
+      DEFAULT_POOL_SIZE: 10
+      AUTH_TYPE: scram-sha-256
+    networks:
+      - khawam-production
+
   backend-production:
     build:
       context: .
@@ -32,12 +48,18 @@ services:
     ports:
       - "127.0.0.1:4081:8000"
     depends_on:
+      pgbouncer-production:
+        condition: service_started
       postgres-production:
         condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: 8000
-      DATABASE_URL: postgresql://${POSTGRES_USER:-khawam_production}:${POSTGRES_PASSWORD}@postgres-production:5432/${POSTGRES_DB:-khawam_production}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-khawam_production}:${POSTGRES_PASSWORD}@pgbouncer-production:5432/${POSTGRES_DB:-khawam_production}
+      DIRECT_DATABASE_URL: postgresql://${POSTGRES_USER:-khawam_production}:${POSTGRES_PASSWORD}@postgres-production:5432/${POSTGRES_DB:-khawam_production}
+      PGBOUNCER_ENABLED: "true"
+      DB_CONNECTION_LIMIT: "10"
+      QUEUE_POOL_MAX: "3"
       SECRET_KEY: ${SECRET_KEY}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://example.com}
       FRONTEND_URL: ${FRONTEND_URL:-https://example.com}

@@ -21,6 +21,22 @@ services:
     networks:
       - khawam-staging
 
+  pgbouncer-staging:
+    image: edoburu/pgbouncer:1.22.1-p0
+    container_name: khawam-pgbouncer-staging
+    restart: always
+    depends_on:
+      postgres-staging:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-khawam_staging}:${POSTGRES_PASSWORD}@postgres-staging:5432/${POSTGRES_DB:-khawam_staging}
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 100
+      DEFAULT_POOL_SIZE: 10
+      AUTH_TYPE: scram-sha-256
+    networks:
+      - khawam-staging
+
   backend-staging:
     build:
       context: .
@@ -31,12 +47,18 @@ services:
     ports:
       - "127.0.0.1:3081:8000"
     depends_on:
+      pgbouncer-staging:
+        condition: service_started
       postgres-staging:
         condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: 8000
-      DATABASE_URL: postgresql://${POSTGRES_USER:-khawam_staging}:${POSTGRES_PASSWORD}@postgres-staging:5432/${POSTGRES_DB:-khawam_staging}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-khawam_staging}:${POSTGRES_PASSWORD}@pgbouncer-staging:5432/${POSTGRES_DB:-khawam_staging}
+      DIRECT_DATABASE_URL: postgresql://${POSTGRES_USER:-khawam_staging}:${POSTGRES_PASSWORD}@postgres-staging:5432/${POSTGRES_DB:-khawam_staging}
+      PGBOUNCER_ENABLED: "true"
+      DB_CONNECTION_LIMIT: "10"
+      QUEUE_POOL_MAX: "3"
       SECRET_KEY: ${SECRET_KEY}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://staging.example.com}
       FRONTEND_URL: ${FRONTEND_URL:-https://staging.example.com}

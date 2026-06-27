@@ -2,6 +2,8 @@
 set -e
 cd /app/backend
 
+export DIRECT_DATABASE_URL="${DIRECT_DATABASE_URL:-$DATABASE_URL}"
+
 echo "[start] pre-db-push: drop legacy constraints (if present)..."
 pnpm exec prisma db execute --schema prisma/schema.prisma --file scripts/sql/pre-db-push-legacy-constraints.sql
 

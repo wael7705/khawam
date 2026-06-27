@@ -3,7 +3,7 @@ import { config } from './index.js';
 
 function createPrismaClient(): PrismaClient {
   const client = new PrismaClient({
-    datasourceUrl: config.DATABASE_URL,
+    datasourceUrl: config.databaseUrl,
     log: config.NODE_ENV === 'development'
       ? ['warn', 'error']
       : ['error'],

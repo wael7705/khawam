@@ -1,8 +1,20 @@
 import { z } from 'zod';
 import { join, resolve } from 'node:path';
+import { buildAppDatabaseUrl } from './database-url.js';
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
+  /** اتصال مباشر بـ Postgres (مهاجرات، seed، pg-boss). يُستخدم DATABASE_URL إن لم يُضبط. */
+  DIRECT_DATABASE_URL: z.string().min(1).optional(),
+  /** true عند التوجيه عبر PgBouncer (يضيف pgbouncer=true لـ Prisma). */
+  PGBOUNCER_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
+  /** حد اتصالات Prisma لكل نسخة تطبيق (مع PgBouncer يُفضّل 5–10). */
+  DB_CONNECTION_LIMIT: z.coerce.number().int().min(1).max(100).default(10),
+  /** حد اتصالات pg-boss (اتصال مباشر بـ Postgres). */
+  QUEUE_POOL_MAX: z.coerce.number().int().min(1).max(20).default(3),
   SECRET_KEY: z.string().min(8).default('dev-secret-key-change-me'),
   PORT: z.coerce.number().default(8000),
   PUBLIC_BASE_URL: z.string().default('http://localhost:8000'),
@@ -40,7 +52,19 @@ function loadConfig() {
     : railwayVolume
       ? join(railwayVolume, 'uploads')
       : join(process.cwd(), 'uploads');
-  return { ...data, uploadDir };
+  const directDatabaseUrl = data.DIRECT_DATABASE_URL ?? data.DATABASE_URL;
+  const databaseUrl = buildAppDatabaseUrl(
+    data.DATABASE_URL,
+    data.DB_CONNECTION_LIMIT,
+    data.PGBOUNCER_ENABLED,
+  );
+
+  return {
+    ...data,
+    uploadDir,
+    directDatabaseUrl,
+    databaseUrl,
+  };
 }
 
 export const config = loadConfig();

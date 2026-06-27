@@ -17,6 +17,14 @@ pnpm db:push  # للتطوير المحلي
 pnpm db:migrate  # للإنتاج
 ```
 
+### خطأ: Environment variable not found: DIRECT_DATABASE_URL
+- أضف في `.env`: `DIRECT_DATABASE_URL` بنفس قيمة `DATABASE_URL` محلياً
+- على Railway مع PgBouncer: `DIRECT_DATABASE_URL=${{Postgres.DATABASE_URL}}`
+
+### خطأ: prepared statement already exists (مع PgBouncer)
+- تأكد من `PGBOUNCER_ENABLED=true` (يضيف `pgbouncer=true` لـ Prisma)
+- مهاجرات Prisma و pg-boss يجب أن تستخدم `DIRECT_DATABASE_URL` وليس PgBouncer
+
 ## المصادقة
 
 ### خطأ: 401 Unauthorized

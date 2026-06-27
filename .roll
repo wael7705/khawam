@@ -32,6 +32,8 @@
 - NanoID للمعرفات (12 حرف)
 - كل عملية كتابة حساسة داخل transaction
 - لا SERIAL IDs
+- **PgBouncer** في الإنتاج: `DATABASE_URL` عبر المجمّع، `DIRECT_DATABASE_URL` مباشر لـ migrate/seed/pg-boss
+- **pg-boss** طابور مهام على Postgres (بدون Redis) — مهام الخلفية والجدولة
 
 ## IDs
 - NanoID بين 8-16 حرف
@@ -70,4 +72,4 @@
 - استخدام select بدل include حيث أمكن
 - pagination لكل قوائم البيانات
 - Cache-Control headers للملفات الثابتة
-- لا worker system (Node.js async كافٍ)
+- مهام الخلفية عبر pg-boss (PostgreSQL) — لا cron داخل العملية

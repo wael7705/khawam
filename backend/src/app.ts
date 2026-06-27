@@ -79,8 +79,19 @@ export async function buildApp() {
   await app.register(socketPlugin);
 
   // Health check (not rate-limited)
-  app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
-  app.get('/api/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
+  const healthHandler = async () => {
+    const { getQueueHealth } = await import('./queue/queue.service.js');
+    const queue = await getQueueHealth();
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      queue: queue.running ? 'ok' : 'stopped',
+      pgbouncer: config.PGBOUNCER_ENABLED,
+    };
+  };
+
+  app.get('/health', healthHandler);
+  app.get('/api/health', healthHandler);
 
   // API routes: rate limit applies only here (not to static files or health)
   await app.register(

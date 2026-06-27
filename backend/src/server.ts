@@ -1,7 +1,7 @@
 import { buildApp } from './app.js';
 import { config } from './config/index.js';
 import { connectDatabase, disconnectDatabase } from './config/database.js';
-import { startScheduledJobs, stopScheduledJobs } from './jobs/scheduler.js';
+import { startQueue, stopQueue } from './queue/queue.service.js';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
@@ -11,13 +11,13 @@ async function main(): Promise<void> {
   console.log('[server] main() started, PORT=%s', config.PORT);
   try {
     await connectDatabase();
+    await startQueue();
   } catch (err) {
-    console.error('Failed to connect to database:', err);
+    console.error('Failed to connect to database or queue:', err);
     process.exit(1);
   }
 
   const app = await buildApp();
-  startScheduledJobs();
 
   try {
     await app.listen({ port: config.PORT, host: '0.0.0.0' });
@@ -38,7 +38,7 @@ async function main(): Promise<void> {
     }, SHUTDOWN_TIMEOUT_MS);
 
     try {
-      stopScheduledJobs();
+      await stopQueue();
       await app.close();
       await disconnectDatabase();
       clearTimeout(timeoutId);
