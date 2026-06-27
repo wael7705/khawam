@@ -25,6 +25,13 @@ pnpm db:migrate  # للإنتاج
 - تأكد من `PGBOUNCER_ENABLED=true` (يضيف `pgbouncer=true` لـ Prisma)
 - مهاجرات Prisma و pg-boss يجب أن تستخدم `DIRECT_DATABASE_URL` وليس PgBouncer
 
+## مساعد خوام
+
+### المساعد يظهر لكن المحادثة لا تعمل
+- أضف `LOVABLE_API_KEY` في متغيرات خدمة khawam
+- تحقق من `GET /api/assistant/status` — يجب أن يكون `enabled: true`
+- تحقق من `GET /api/health` — `assistant` يجب أن يكون `ok` وليس `disabled`
+
 ## المصادقة
 
 ### خطأ: 401 Unauthorized

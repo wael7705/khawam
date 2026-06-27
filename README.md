@@ -169,6 +169,7 @@ git push origin main
 | `PGBOUNCER_ENABLED` | لا | `true` عند التوجيه عبر PgBouncer (يضيف `pgbouncer=true` لـ Prisma) |
 | `DB_CONNECTION_LIMIT` | لا | حد اتصالات Prisma لكل نسخة (افتراضي 10) |
 | `QUEUE_POOL_MAX` | لا | حد اتصالات pg-boss (افتراضي 3) |
+| `LOVABLE_API_KEY` | لا* | مفتاح Lovable AI Gateway لتفعيل **مساعد خوام** (*بدونها يظهر الويدجت لكن المحادثة معطّلة) |
 | `SECRET_KEY` | نعم | مفتاح سري قوي (مثلاً 32 حرف عشوائي) للمصادقة والجلسات |
 | `PORT` | لا | المنفذ (عادة Railway يضبطه تلقائياً) |
 | `PUBLIC_BASE_URL` | نعم | عنوان الـ API العام، مثال: `https://khawam-backend.up.railway.app` |
@@ -242,6 +243,15 @@ curl https://khawam-production.up.railway.app/api/health
 cd backend
 LOAD_BASE_URL=https://khawam-production.up.railway.app pnpm exec tsx scripts/load-smoke.ts
 ```
+
+### مساعد خوام (AI)
+
+ويدجت عائم في صفحات المتجر يجيب عن الخدمات والأعمال وخطوات الطلب. المعرفة تُبنى **لحظياً من قاعدة البيانات** (خدمات، أعمال، تسعير، خطوات workflow).
+
+- **API:** `POST /api/assistant/chat` (بث SSE)
+- **الحالة:** `GET /api/assistant/status`
+- **التفعيل:** أضف `LOVABLE_API_KEY` على خدمة khawam (من [dashboard.lovable.dev](https://dashboard.lovable.dev))
+- **المصدر الأصلي:** مستودع `khawam-growth-suite` — مُدمج داخل Fastify + React (بدون سيرفر منفصل)
 
 ### التحقق بعد النشر
 

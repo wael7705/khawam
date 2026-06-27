@@ -34,6 +34,7 @@ const envSchema = z.object({
   APPLE_TEAM_ID: z.string().optional(),
   APPLE_KEY_ID: z.string().optional(),
   APPLE_PRIVATE_KEY: z.string().optional(),
+  LOVABLE_API_KEY: z.string().optional(),
 });
 
 function loadConfig() {

@@ -32,6 +32,7 @@ import { WorksManagement } from './pages/dashboard/WorksManagement';
 import { Archive } from './pages/dashboard/Archive';
 import { Studio } from './pages/Studio';
 import { LoadingScreen } from './components/LoadingScreen';
+import { StoreAssistant } from './components/StoreAssistant';
 import './index.css';
 
 function PublicLayout() {
@@ -156,6 +157,7 @@ export default function App() {
           />
         </Routes>
         )}
+        {authReady && <StoreAssistant />}
       </BrowserRouter>
     </I18nProvider>
   );

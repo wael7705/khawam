@@ -22,6 +22,7 @@ import { analyticsRoutes } from './modules/analytics/analytics.routes.js';
 import { notificationsRoutes } from './modules/notifications/notifications.routes.js';
 import { savedLocationsRoutes } from './modules/saved-locations/saved-locations.routes.js';
 import { ordersUploadRoutes } from './modules/orders/orders-upload.routes.js';
+import { assistantRoutes } from './modules/assistant/assistant.routes.js';
 
 const UPLOAD_BODY_LIMIT = 55 * 1024 * 1024; // 55 MB (أكبر من حد الملف 50 MB)
 
@@ -81,12 +82,14 @@ export async function buildApp() {
   // Health check (not rate-limited)
   const healthHandler = async () => {
     const { getQueueHealth } = await import('./queue/queue.service.js');
+    const { isAssistantConfigured } = await import('./modules/assistant/assistant.service.js');
     const queue = await getQueueHealth();
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
       queue: queue.running ? 'ok' : 'stopped',
       pgbouncer: config.PGBOUNCER_ENABLED,
+      assistant: isAssistantConfigured() ? 'ok' : 'disabled',
     };
   };
 
@@ -107,7 +110,9 @@ export async function buildApp() {
             path === '/api/orders/upload-batch' ||
             path.startsWith('/api/studio/') ||
             path === '/api/admin/upload' ||
-            path.startsWith('/api/admin/upload/')
+            path.startsWith('/api/admin/upload/') ||
+            path === '/api/assistant/chat' ||
+            path === '/api/assistant/status'
           );
         },
       });
@@ -135,6 +140,7 @@ export async function buildApp() {
       await apiApp.register(workflowsRoutes, { prefix: '/workflows' });
       await apiApp.register(pricingRoutes, { prefix: '/' });
       await apiApp.register(analyticsRoutes, { prefix: '/analytics' });
+      await apiApp.register(assistantRoutes, { prefix: '/assistant' });
       await apiApp.register(notificationsRoutes, { prefix: '/ws' });
     },
     { prefix: '/api' },

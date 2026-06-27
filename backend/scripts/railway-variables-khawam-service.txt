@@ -12,3 +12,4 @@ FRONTEND_URL=https://khawam-production.up.railway.app
 NODE_ENV=production
 PORT=8000
 NODE_OPTIONS=--max-old-space-size=384
+LOVABLE_API_KEY=
