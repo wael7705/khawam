@@ -4,28 +4,8 @@ import { getServiceDisplayName, getOrderStatusLabel } from '../../lib/servicesCa
 import { getOrderStatusClass } from './MyOrderCard';
 import { OrderCinematicTimeline } from './OrderCinematicTimeline';
 import { buildWhatsAppUrl } from '../../lib/orderTracking';
+import { formatSpecValue, getDisplayableSpecEntries } from '../../lib/orderSpecDisplay';
 import type { Locale } from '../../lib/servicesCatalog';
-
-const SPEC_LABELS: Record<string, { ar: string; en: string }> = {
-  paper_size: { ar: 'قياس الورق', en: 'Paper Size' },
-  print_color: { ar: 'نوع الطباعة', en: 'Print Color' },
-  quantity: { ar: 'الكمية', en: 'Quantity' },
-  delivery_type: { ar: 'طريقة الاستلام', en: 'Delivery' },
-};
-
-function formatSpecValue(key: string, value: unknown, locale: string): string {
-  if (value === null || value === undefined || value === '') return '';
-  if (value === true) return locale === 'ar' ? 'نعم' : 'Yes';
-  if (key === 'delivery_type')
-    return value === 'delivery'
-      ? locale === 'ar'
-        ? 'توصيل'
-        : 'Delivery'
-      : locale === 'ar'
-        ? 'استلام من المحل'
-        : 'Self Pickup';
-  return String(value);
-}
 
 export interface MyOrderDetailDrawerLabels {
   service: string;
@@ -63,38 +43,16 @@ export function MyOrderDetailDrawer({
   const statusClass = getOrderStatusClass(order.status);
 
   const renderSpecs = (specs: Record<string, unknown>) => {
-    const skipKeys = [
-      'files',
-      'clothing_designs',
-      'service_id',
-      'customer_name',
-      'customer_whatsapp',
-      'customer_phone',
-      'shop_name',
-      'delivery_address',
-      'notes',
-      'total_pages',
-      'number_of_pages',
-      'dimensions_unit',
-      'unit',
-    ];
-    const entries = Object.entries(specs).filter(([k, v]) => {
-      if (skipKeys.includes(k)) return false;
-      if ((k === 'width' || k === 'height' || k === 'dimensions') && (v === 0 || v === null || v === undefined || v === '')) return false;
-      const formatted = formatSpecValue(k, v as string, locale);
-      return formatted !== '' && formatted !== '0';
-    });
+    const entries = getDisplayableSpecEntries(specs, locale);
     if (entries.length === 0) return null;
     return (
       <div className="my-orders-specs">
         <h4>{labels.specs}</h4>
         <div className="my-orders-specs__grid">
-          {entries.map(([k, v]) => (
-            <div key={k} className="my-orders-specs__item">
-              <span className="my-orders-specs__label">
-                {SPEC_LABELS[k]?.[locale === 'ar' ? 'ar' : 'en'] ?? k}
-              </span>
-              <span className="my-orders-specs__value">{formatSpecValue(k, v, locale)}</span>
+          {entries.map((entry) => (
+            <div key={entry.key} className="my-orders-specs__item">
+              <span className="my-orders-specs__label">{entry.label}</span>
+              <span className="my-orders-specs__value">{entry.value}</span>
             </div>
           ))}
         </div>

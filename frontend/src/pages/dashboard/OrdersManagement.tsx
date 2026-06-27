@@ -16,6 +16,7 @@ import {
   getNextOrderStatus,
   getOrderStatusActionLabel,
 } from '../../lib/servicesCatalog';
+import { getDisplayableSpecEntries, formatSpecValue } from '../../lib/orderSpecDisplay';
 import type { LucideIcon } from 'lucide-react';
 
 function getOrderStatusNextIcon(currentStatus: string, nextStatus: string): LucideIcon {
@@ -176,92 +177,6 @@ function buildShareText(orderNumber: string, customerName: string, address: stri
     `${lat},${lon}`,
   ].filter(Boolean);
   return parts.join('\n');
-}
-
-const SPEC_LABELS: Record<string, { ar: string; en: string }> = {
-  paper_size: { ar: 'قياس الورق', en: 'Paper Size' },
-  print_color: { ar: 'نوع الطباعة', en: 'Print Color' },
-  print_quality: { ar: 'جودة الطباعة', en: 'Quality' },
-  print_sides: { ar: 'طباعة الوجه', en: 'Sides' },
-  booklet: { ar: 'كتيب', en: 'Booklet' },
-  width: { ar: 'العرض', en: 'Width' },
-  height: { ar: 'الارتفاع', en: 'Height' },
-  dimensions: { ar: 'الأبعاد', en: 'Dimensions' },
-  dimensions_unit: { ar: 'وحدة الأبعاد', en: 'Dimensions unit' },
-  paper_type: { ar: 'نوع الورق', en: 'Paper Type' },
-  card_type: { ar: 'نوع البطاقة', en: 'Card Type' },
-  binding_type: { ar: 'نوع التجليد', en: 'Binding' },
-  binding_color: { ar: 'لون التجليد', en: 'Binding Color' },
-  text_color: { ar: 'لون الكتابة', en: 'Text Color' },
-  cover_print_type: { ar: 'نوع طباعة الغلاف', en: 'Cover Print' },
-  clothing_source: { ar: 'مصدر الملابس', en: 'Clothing Source' },
-  quantity: { ar: 'الكمية', en: 'Quantity' },
-  delivery_type: { ar: 'طريقة الاستلام', en: 'Delivery' },
-  digital_aspect_ratio: { ar: 'نسبة العرض للارتفاع', en: 'Aspect ratio' },
-  digital_aspect_anchor: { ar: 'مرجع التناسب', en: 'Aspect anchor' },
-  digital_color_mode: { ar: 'لون الطباعة (ديجيتال)', en: 'Digital print color' },
-  digital_custom_hex: { ar: 'لون مخصص (HEX)', en: 'Custom color (HEX)' },
-  uv_material_type: { ar: 'نوع مادة UV', en: 'UV substrate' },
-  uv_cardboard_weight_g: { ar: 'وزن الكرتون (غ/م²)', en: 'Cardboard weight (g/m²)' },
-  uv_material_other_text: { ar: 'وصف مادة أخرى', en: 'Other material note' },
-  uv_thickness_mm: { ar: 'سماكة المادة (مم)', en: 'Thickness (mm)' },
-};
-
-/** يحافظ على الواحدات (مم، سم، م) عند عرض الأبعاد */
-function formatSpecValue(
-  key: string,
-  value: unknown,
-  locale: string,
-  contextSpecs?: Record<string, unknown>,
-): string {
-  if (value === null || value === undefined || value === '' || value === false) return '';
-  if (value === true) return locale === 'ar' ? 'نعم' : 'Yes';
-  if (key === 'print_color') return value === 'bw' ? (locale === 'ar' ? 'أبيض وأسود' : 'B&W') : (locale === 'ar' ? 'ألوان' : 'Color');
-  if (key === 'print_sides') return value === 'single' ? (locale === 'ar' ? 'وجه واحد' : 'Single') : (locale === 'ar' ? 'وجهين' : 'Double');
-  if (key === 'delivery_type') return value === 'delivery' ? (locale === 'ar' ? 'توصيل' : 'Delivery') : (locale === 'ar' ? 'استلام من المحل' : 'Self Pickup');
-  if (key === 'clothing_source') return value === 'customer' ? (locale === 'ar' ? 'من العميل' : 'Customer') : (locale === 'ar' ? 'من المتجر' : 'Store');
-  if (key === 'digital_aspect_anchor') {
-    if (value === 'width') return locale === 'ar' ? 'حسب العرض' : 'From width';
-    if (value === 'height') return locale === 'ar' ? 'حسب الارتفاع' : 'From height';
-  }
-  if (key === 'digital_color_mode') {
-    const m = String(value);
-    const map: Record<string, { ar: string; en: string }> = {
-      silver: { ar: 'فضي', en: 'Silver' },
-      gold: { ar: 'ذهبي', en: 'Gold' },
-      black: { ar: 'أسود', en: 'Black' },
-      white: { ar: 'أبيض', en: 'White' },
-      file: { ar: 'ألوان الملف', en: 'As in file' },
-      custom: { ar: 'لون مخصص', en: 'Custom' },
-    };
-    const lab = map[m];
-    return lab ? (locale === 'ar' ? lab.ar : lab.en) : m;
-  }
-  if (key === 'uv_material_type') {
-    const m = String(value);
-    const map: Record<string, { ar: string; en: string }> = {
-      vinyl: { ar: 'فينيل', en: 'Vinyl' },
-      cardboard: { ar: 'كرتون', en: 'Cardboard' },
-      cardboard_reinforced: { ar: 'كرتون معجن', en: 'Reinforced cardboard' },
-      transparent: { ar: 'شفافية', en: 'Transparent' },
-      leather: { ar: 'جلد', en: 'Leather' },
-      fabric: { ar: 'قماش', en: 'Fabric' },
-      plex: { ar: 'بليكس', en: 'Plex' },
-      glass: { ar: 'بلور / زجاج', en: 'Glass' },
-      other: { ar: 'غير ذلك', en: 'Other' },
-    };
-    const lab = map[m];
-    return lab ? (locale === 'ar' ? lab.ar : lab.en) : m;
-  }
-  if (key === 'width' || key === 'height' || key === 'dimensions') {
-    if (typeof value === 'string') return value || '';
-    if (typeof value === 'number') {
-      if (value === 0) return ''; // لا نعرض الأبعاد عندما تكون غير مستخدمة (مثل خدمة طباعة المحاضرات)
-      const unit = (contextSpecs?.dimensions_unit as string) ?? (contextSpecs?.unit as string) ?? (locale === 'ar' ? 'سم' : 'cm');
-      return `${value} ${unit}`;
-    }
-  }
-  return String(value);
 }
 
 export function OrdersManagement() {
@@ -534,22 +449,16 @@ export function OrdersManagement() {
   };
 
   const renderSpecs = (specs: Record<string, unknown>) => {
-    const entries = Object.entries(specs).filter(([k, v]) => {
-      if (['files', 'clothing_designs', 'uploadedFileResults', 'service_id', 'customer_name', 'customer_whatsapp', 'customer_phone_extra', 'shop_name', 'delivery_address', 'notes', 'total_pages', 'number_of_pages', 'dimensions_unit', 'unit'].includes(k)) return false;
-      const formatted = formatSpecValue(k, v, locale, specs);
-      if (formatted === '' || formatted === '0') return false;
-      if ((k === 'width' || k === 'height' || k === 'dimensions') && (v === 0 || v === null || v === undefined || v === '')) return false;
-      return true;
-    });
+    const entries = getDisplayableSpecEntries(specs, locale);
     if (entries.length === 0) return null;
     return (
       <div className="detail-specs">
         <h4>{d.orderSpecs}</h4>
         <div className="detail-specs__grid">
-          {entries.map(([k, v]) => (
-            <div key={k} className="detail-specs__item">
-              <span className="detail-specs__label">{SPEC_LABELS[k]?.[locale === 'ar' ? 'ar' : 'en'] ?? k}</span>
-              <span className="detail-specs__value">{formatSpecValue(k, v, locale, specs)}</span>
+          {entries.map((entry) => (
+            <div key={entry.key} className="detail-specs__item">
+              <span className="detail-specs__label">{entry.label}</span>
+              <span className="detail-specs__value">{entry.value}</span>
             </div>
           ))}
         </div>

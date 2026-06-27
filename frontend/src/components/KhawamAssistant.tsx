@@ -6,6 +6,7 @@ import {
 } from '../lib/assistantStream';
 import { renderAssistantMarkdown } from '../lib/assistantMarkdown';
 import { AssistantLauncherAvatar } from './AssistantLauncherAvatar';
+import { AssistantTypingWave } from './AssistantTypingWave';
 import './KhawamAssistant.css';
 
 const SUGGESTIONS = [
@@ -152,10 +153,10 @@ export function KhawamAssistant() {
             {messages.map((m) => (
               <MessageBubble key={m.id} message={m} />
             ))}
-            {busy && messages[messages.length - 1]?.role === 'user' && (
-              <div className="khawam-assistant__typing">
-                <Loader2 size={14} className="khawam-assistant__spin" />
-                مساعد خوام يكتب...
+            {busy && (
+              <div className="khawam-assistant__typing" aria-live="polite">
+                <AssistantTypingWave />
+                <span>مساعد خوام يكتب...</span>
               </div>
             )}
             {error && (

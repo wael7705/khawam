@@ -19,6 +19,7 @@ import { useTranslation } from '../../i18n';
 import { ordersAPI, type UploadedFileResult } from '../../lib/api';
 import { isAllowedFile } from '../../lib/upload';
 import { getServiceShortName } from '../../lib/servicesCatalog';
+import { getWorkflowAllowedSpecKeys } from '../../lib/orderSpecDisplay';
 import { FileUploadStep } from './steps/FileUploadStep';
 import { PrintOptionsStep } from './steps/PrintOptionsStep';
 import { DimensionsStep } from './steps/DimensionsStep';
@@ -417,7 +418,7 @@ export function OrderWizard({
 
       const productName = getServiceShortName(service.id, locale);
       const allFileUrls = [...uploaded.map((f) => f.url), ...designResults.map((d) => d.url)];
-      const specifications: Record<string, unknown> = {
+      const rawSpecifications: Record<string, unknown> = {
         service_id: backendServiceId,
         quantity: orderData.quantity,
         paper_size: orderData.paper_size,
@@ -450,6 +451,20 @@ export function OrderWizard({
         uv_cardboard_weight_g: orderData.uv_cardboard_weight_g,
         uv_material_other_text: orderData.uv_material_other_text,
       };
+
+      const workflowKeys = getWorkflowAllowedSpecKeys(steps.map((s) => s.step_type));
+      const specifications: Record<string, unknown> = { service_id: backendServiceId };
+      for (const key of workflowKeys) {
+        const value = rawSpecifications[key];
+        if (value === null || value === undefined || value === '' || value === false) continue;
+        if (typeof value === 'number' && value === 0 && (key === 'width' || key === 'height' || key === 'number_of_pages')) {
+          continue;
+        }
+        specifications[key] = value;
+      }
+      if (designResults.length > 0) {
+        specifications.clothing_designs = designResults.map((d) => d.url);
+      }
 
       const payload: Record<string, unknown> = {
         service_id: backendServiceId,
@@ -493,7 +508,7 @@ export function OrderWizard({
       }
       void err;
     }
-  }, [orderData, service.id, service.slug, backendServiceId, locale, submitProgress, useDemoMode, customerId]);
+  }, [orderData, service.id, service.slug, backendServiceId, locale, submitProgress, useDemoMode, customerId, steps]);
 
   if (orderResult) {
     return <OrderSuccess orderNumber={orderResult.orderNumber} onClose={onClose} />;
