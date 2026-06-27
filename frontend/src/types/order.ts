@@ -51,6 +51,14 @@ export interface OrderDetail {
   items: OrderItemDetail[];
 }
 
+export interface OrderStatusHistoryItem {
+  id: string;
+  status: string;
+  notes?: string | null;
+  changed_by?: { id: string; name: string } | null;
+  created_at: string;
+}
+
 /** بيانات إعادة الطلب من GET /api/orders/:orderId/reorder-data */
 export interface ReorderData {
   service_id?: string;

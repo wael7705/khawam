@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { UIMessage } from 'ai';
 import { assistantChatBodySchema } from './assistant.schema.js';
-import { isAssistantConfigured, streamAssistantChat } from './assistant.service.js';
+import { getAssistantStatus, streamAssistantChat } from './assistant.service.js';
 
 async function pumpStream(response: Response, reply: FastifyReply): Promise<void> {
   reply.hijack();
@@ -31,10 +31,7 @@ async function pumpStream(response: Response, reply: FastifyReply): Promise<void
 }
 
 export async function assistantRoutes(app: FastifyInstance): Promise<void> {
-  app.get('/status', async () => ({
-    enabled: isAssistantConfigured(),
-    endpoint: '/api/assistant/chat',
-  }));
+  app.get('/status', async () => getAssistantStatus());
 
   app.post('/chat', async (request: FastifyRequest, reply: FastifyReply) => {
     const parsed = assistantChatBodySchema.safeParse(request.body);

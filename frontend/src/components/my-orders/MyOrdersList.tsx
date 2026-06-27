@@ -16,14 +16,15 @@ export function MyOrdersList({
   onViewDetails,
 }: MyOrdersListProps) {
   return (
-    <div className="my-orders__list">
-      {orders.map((order) => (
+    <div className="my-orders__list my-orders__list--cinematic">
+      {orders.map((order, index) => (
         <MyOrderCard
           key={order.id}
           order={order}
           locale={locale}
           viewDetailsLabel={viewDetailsLabel}
           onViewDetails={onViewDetails}
+          animationIndex={index}
         />
       ))}
     </div>

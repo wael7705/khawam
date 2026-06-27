@@ -1,4 +1,4 @@
-import { Search } from 'lucide-react';
+import { Search, SlidersHorizontal } from 'lucide-react';
 
 const STATUS_FILTERS = ['all', 'active', 'completed', 'cancelled'] as const;
 export type StatusFilter = (typeof STATUS_FILTERS)[number];
@@ -21,20 +21,26 @@ export function MyOrdersFilters({
   labels,
 }: MyOrdersFiltersProps) {
   return (
-    <div className="my-orders__controls">
-      <div className="my-orders__search">
-        <Search size={18} />
+    <div className="my-orders__controls my-orders__controls--hero">
+      <div className="my-orders__search my-orders__search--hero">
+        <Search size={20} className="my-orders__search-icon" />
         <input
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={labels.search}
+          aria-label={labels.search}
         />
       </div>
-      <div className="my-orders__tabs">
+      <div className="my-orders__tabs" role="tablist">
+        <span className="my-orders__tabs-label">
+          <SlidersHorizontal size={14} aria-hidden />
+        </span>
         {STATUS_FILTERS.map((s) => (
           <button
             key={s}
             type="button"
+            role="tab"
+            aria-selected={statusFilter === s}
             className={statusFilter === s ? 'my-orders__tab my-orders__tab--active' : 'my-orders__tab'}
             onClick={() => onStatusFilterChange(s)}
           >

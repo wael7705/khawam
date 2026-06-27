@@ -1,10 +1,10 @@
 import { X, FileText, Download, MapPin, Phone, User, Package, Truck, ExternalLink } from 'lucide-react';
-import type { OrderDetail } from '../../types/order';
+import type { OrderDetail, OrderStatusHistoryItem } from '../../types/order';
 import { getServiceDisplayName, getOrderStatusLabel } from '../../lib/servicesCatalog';
 import { getOrderStatusClass } from './MyOrderCard';
+import { OrderCinematicTimeline } from './OrderCinematicTimeline';
+import { buildWhatsAppUrl } from '../../lib/orderTracking';
 import type { Locale } from '../../lib/servicesCatalog';
-
-const WHATSAPP_NUMBER = '963999123456';
 
 const SPEC_LABELS: Record<string, { ar: string; en: string }> = {
   paper_size: { ar: 'قياس الورق', en: 'Paper Size' },
@@ -38,12 +38,15 @@ export interface MyOrderDetailDrawerLabels {
   whatsapp: string;
   openMap: string;
   reorder: string;
+  trackJourney: string;
+  noHistory: string;
 }
 
 interface MyOrderDetailDrawerProps {
   order: OrderDetail;
   locale: Locale;
   labels: MyOrderDetailDrawerLabels;
+  statusHistory: OrderStatusHistoryItem[];
   onClose: () => void;
   onReorder?: (orderId: string) => void;
 }
@@ -52,10 +55,12 @@ export function MyOrderDetailDrawer({
   order,
   locale,
   labels,
+  statusHistory,
   onClose,
   onReorder,
 }: MyOrderDetailDrawerProps) {
   const isCompleted = order.status?.toLowerCase() === 'completed';
+  const statusClass = getOrderStatusClass(order.status);
 
   const renderSpecs = (specs: Record<string, unknown>) => {
     const skipKeys = [
@@ -97,23 +102,39 @@ export function MyOrderDetailDrawer({
     );
   };
 
+  const whatsappMessage =
+    locale === 'ar'
+      ? `مرحباً، أتابع طلبي #${order.order_number}`
+      : `Hi, I'm following up on my order #${order.order_number}`;
+
   return (
     <>
-      <header className="my-orders-drawer__header">
+      <header className="my-orders-drawer__header my-orders-drawer__header--cinematic" data-status={statusClass}>
         <div>
           <h3>#{order.order_number}</h3>
-          <span
-            className={`my-orders__card-status my-orders__card-status--${getOrderStatusClass(order.status)}`}
-          >
+          <span className={`my-orders__card-status my-orders__card-status--${statusClass}`}>
             {getOrderStatusLabel(order.status, locale)}
           </span>
         </div>
-        <button type="button" className="my-orders-drawer__close" onClick={onClose}>
+        <button type="button" className="my-orders-drawer__close" onClick={onClose} aria-label="Close">
           <X size={20} />
         </button>
       </header>
 
       <div className="my-orders-drawer__body">
+        <div className="my-orders-drawer__timeline-panel">
+          <OrderCinematicTimeline status={order.status} locale={locale} variant="horizontal" />
+        </div>
+
+        <OrderCinematicTimeline
+          status={order.status}
+          locale={locale}
+          variant="history"
+          history={statusHistory}
+          journeyLabel={labels.trackJourney}
+          noHistoryLabel={labels.noHistory}
+        />
+
         {order.service_id && (
           <div className="my-orders-drawer__section">
             <h4>
@@ -239,20 +260,14 @@ export function MyOrderDetailDrawer({
           </button>
         )}
 
-        {(order.customer_whatsapp || order.customer_phone) && (
-          <a
-            href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-              locale === 'ar'
-                ? `مرحباً، أتابع طلبي #${order.order_number}`
-                : `Hi, I'm following up on my order #${order.order_number}`,
-            )}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-primary my-orders-drawer__whatsapp"
-          >
-            {labels.whatsapp}
-          </a>
-        )}
+        <a
+          href={buildWhatsAppUrl(whatsappMessage)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="my-orders-drawer__whatsapp"
+        >
+          {labels.whatsapp}
+        </a>
       </div>
     </>
   );

@@ -128,6 +128,7 @@ export default function App() {
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/portfolio/work/:id" element={<WorkDetailPage />} />
             <Route path="/my-orders" element={<MyOrders />} />
+            <Route path="/track-orders" element={<MyOrders />} />
             <Route path="/order/reorder/:orderId" element={<ReorderPage />} />
           </Route>
 

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { getAuthToken, setAuthToken, clearAuth } from './auth';
 import { UPLOAD_FIELD_NAME } from './upload';
+import type { OrderStatusHistoryItem } from '../types/order';
 
 const API_URL = import.meta.env.VITE_API_URL as string || 'http://localhost:8000/api';
 
@@ -206,6 +207,8 @@ export const ordersAPI = {
   getOrders: (params?: { status?: string; page?: number; limit?: number }) =>
     api.get<{ data: Array<Record<string, unknown>>; total: number; page: number; limit: number; totalPages: number }>('/orders/', { params }),
   getById: (orderId: string) => api.get<Record<string, unknown>>(`/orders/${orderId}`),
+  getStatusHistory: (orderId: string) =>
+    api.get<{ history: OrderStatusHistoryItem[] }>(`/orders/${orderId}/status-history`),
   getReorderData: (orderId: string) =>
     api.get<Record<string, unknown>>(`/orders/${orderId}/reorder-data`),
 };
