@@ -3,14 +3,17 @@ export interface AssistantCompanyInfo {
   website: string;
   whatsapp: string;
   whatsappDisplay: string;
+  whatsappUrl: string;
   email: string;
   facebook: string;
   instagram: string;
   address: string;
+  mapsUrl: string;
   hours: string;
   servicesPageUrl: string;
   portfolioPageUrl: string;
   orderPageUrl: string;
+  myOrdersPageUrl: string;
 }
 
 export interface AssistantServiceInfo {
@@ -32,11 +35,19 @@ export interface AssistantFaqItem {
   a: string;
 }
 
+/** سيناريوهات تدريبية: سؤال العميل + الرد المثالي */
+export interface AssistantTrainingScenario {
+  category: string;
+  userSays: string;
+  idealReply: string;
+}
+
 export interface AssistantKnowledge {
   company: AssistantCompanyInfo;
   services: AssistantServiceInfo[];
   portfolio: AssistantPortfolioItem[];
   orderWorkflow: string[];
   faq: AssistantFaqItem[];
+  trainingScenarios: AssistantTrainingScenario[];
   priceHints: string[];
 }

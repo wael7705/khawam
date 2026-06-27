@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from '../i18n/index';
 import { Phone, Mail, MapPin, Facebook, Send } from 'lucide-react';
+import { COMPANY_ADDRESS_AR, COMPANY_MAPS_URL } from '../lib/companyLocation';
 import './Footer.css';
 
 const CONTACT_PHONE = '963112134640';
@@ -24,7 +25,7 @@ const QUICK_LINKS = [
   { key: 'contact' as const, to: '/#contact' },
 ];
 
-const MAP_URL = 'https://maps.google.com/?q=33.509361,36.287889';
+const MAP_URL = COMPANY_MAPS_URL;
 
 export function Footer() {
   const { t } = useTranslation();
@@ -51,7 +52,7 @@ export function Footer() {
           </a>
           <a href={MAP_URL} target="_blank" rel="noopener noreferrer" className="footer__top-link">
             <MapPin size={18} />
-            <span>دمشق - البرامكة</span>
+            <span>{COMPANY_ADDRESS_AR}</span>
           </a>
           <div className="footer__social">
             <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
@@ -97,7 +98,7 @@ export function Footer() {
               <li>
                 <a href={MAP_URL} target="_blank" rel="noopener noreferrer">
                   <MapPin size={16} />
-                  <span>دمشق - البرامكة</span>
+                  <span>{COMPANY_ADDRESS_AR}</span>
                 </a>
               </li>
             </ul>

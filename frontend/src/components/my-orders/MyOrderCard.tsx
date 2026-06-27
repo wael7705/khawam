@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Package2 } from 'lucide-react';
 import type { OrderListItem } from '../../types/order';
 import { getServiceDisplayName, getOrderStatusLabel } from '../../lib/servicesCatalog';
 import { getStatusTheme, getProgressPercent } from '../../lib/orderTracking';
@@ -35,6 +35,7 @@ export function MyOrderCard({
   const statusClass = getOrderStatusClass(order.status);
   const theme = getStatusTheme(order.status);
   const progress = getProgressPercent(order.status);
+  const StatusIcon = theme.icon;
   const isRtl = locale === 'ar';
   const Chevron = isRtl ? ChevronLeft : ChevronRight;
 
@@ -54,15 +55,22 @@ export function MyOrderCard({
 
       <div className="my-orders__card-top">
         <div className="my-orders__card-id-wrap">
-          <Sparkles size={14} className="my-orders__card-spark" aria-hidden />
+          <Package2 size={15} className="my-orders__card-spark" aria-hidden />
           <span className="my-orders__card-id">#{order.order_number}</span>
         </div>
         <span
-          className={`my-orders__card-status my-orders__card-status--${statusClass}`}
-          style={{ '--pill-rgb': theme.rgb, '--pill-color': theme.color } as CSSProperties}
+          className={`my-orders__card-status my-orders__card-status--${statusClass} ${statusClass !== 'completed' && statusClass !== 'cancelled' ? 'my-orders__card-status--live' : ''}`}
         >
+          <StatusIcon size={13} strokeWidth={2.5} aria-hidden />
           {getOrderStatusLabel(order.status, locale)}
         </span>
+      </div>
+
+      <div className="my-orders__card-live-bar" aria-hidden>
+        <span
+          className="my-orders__card-live-fill"
+          style={{ width: `${progress}%` }}
+        />
       </div>
 
       <p className="my-orders__card-service">

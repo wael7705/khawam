@@ -112,6 +112,7 @@ export function OrderCinematicTimeline({
       aria-valuenow={currentIndex + 1}
       aria-valuemin={1}
       aria-valuemax={ORDER_STATUS_FLOW.length}
+      data-current={normalizedStatus}
       style={
         {
           '--track-accent': activeTheme.color,
@@ -121,7 +122,9 @@ export function OrderCinematicTimeline({
       }
     >
       <div className="order-cine-track__rail" aria-hidden>
-        <span className="order-cine-track__rail-fill" />
+        <span className="order-cine-track__rail-fill">
+          <span className="order-cine-track__traveler" aria-hidden />
+        </span>
       </div>
       <div className="order-cine-track__steps">
         {ORDER_STATUS_FLOW.map((stepStatus, index) => {
@@ -143,8 +146,22 @@ export function OrderCinematicTimeline({
               }
             >
               <span className="order-cine-track__node" title={getOrderStatusLabel(stepStatus, locale)}>
-                <Icon size={isCurrent ? 18 : 15} strokeWidth={2.2} />
-                {isCurrent ? <span className="order-cine-track__pulse" aria-hidden /> : null}
+                <Icon
+                  size={isCurrent ? 18 : 15}
+                  strokeWidth={2.2}
+                  className={
+                    isCurrent && stepStatus === 'processing'
+                      ? 'order-cine-track__icon-spin'
+                      : undefined
+                  }
+                />
+                {isCurrent ? (
+                  <>
+                    <span className="order-cine-track__pulse" aria-hidden />
+                    <span className="order-cine-track__ripple" aria-hidden />
+                  </>
+                ) : null}
+                {isDone ? <span className="order-cine-track__check-glow" aria-hidden /> : null}
               </span>
               <span className="order-cine-track__label">{getOrderStatusLabel(stepStatus, locale)}</span>
             </div>

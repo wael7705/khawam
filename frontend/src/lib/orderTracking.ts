@@ -1,4 +1,11 @@
-import { Clock, CheckCircle2, Cog, PackageCheck, XCircle, type LucideIcon } from 'lucide-react';
+import {
+  ClipboardList,
+  BadgeCheck,
+  Printer,
+  CircleCheckBig,
+  XCircle,
+  type LucideIcon,
+} from 'lucide-react';
 import { ORDER_STATUS_FLOW, type OrderFlowStatus } from './servicesCatalog';
 
 export const KHAWAM_WHATSAPP = '963112134640';
@@ -14,45 +21,46 @@ export interface StatusTheme {
 
 type OrderStatusKey = 'pending' | 'confirmed' | 'processing' | 'completed' | 'cancelled';
 
+/** ألوان الهوية: أبيض + تدرجات الأحمر (#DC2626 / #B91C1C) */
 export const ORDER_STATUS_THEMES: Record<OrderStatusKey, StatusTheme> = {
   pending: {
     key: 'pending',
-    color: '#F59E0B',
-    rgb: '245, 158, 11',
-    bg: 'rgba(245, 158, 11, 0.14)',
-    glow: 'rgba(245, 158, 11, 0.5)',
-    icon: Clock,
+    color: '#9CA3AF',
+    rgb: '156, 163, 175',
+    bg: '#F9FAFB',
+    glow: 'rgba(156, 163, 175, 0.35)',
+    icon: ClipboardList,
   },
   confirmed: {
     key: 'confirmed',
-    color: '#3B82F6',
-    rgb: '59, 130, 246',
-    bg: 'rgba(59, 130, 246, 0.14)',
-    glow: 'rgba(59, 130, 246, 0.5)',
-    icon: CheckCircle2,
+    color: '#F87171',
+    rgb: '248, 113, 113',
+    bg: '#FEF2F2',
+    glow: 'rgba(248, 113, 113, 0.45)',
+    icon: BadgeCheck,
   },
   processing: {
     key: 'processing',
-    color: '#8B5CF6',
-    rgb: '139, 92, 246',
-    bg: 'rgba(139, 92, 246, 0.14)',
-    glow: 'rgba(139, 92, 246, 0.5)',
-    icon: Cog,
+    color: '#DC2626',
+    rgb: '220, 38, 38',
+    bg: '#FEE2E2',
+    glow: 'rgba(220, 38, 38, 0.5)',
+    icon: Printer,
   },
   completed: {
     key: 'completed',
-    color: '#10B981',
-    rgb: '16, 185, 129',
-    bg: 'rgba(16, 185, 129, 0.14)',
-    glow: 'rgba(16, 185, 129, 0.5)',
-    icon: PackageCheck,
+    color: '#B91C1C',
+    rgb: '185, 28, 28',
+    bg: '#FEE2E2',
+    glow: 'rgba(185, 28, 28, 0.45)',
+    icon: CircleCheckBig,
   },
   cancelled: {
     key: 'cancelled',
-    color: '#EF4444',
-    rgb: '239, 68, 68',
-    bg: 'rgba(239, 68, 68, 0.14)',
-    glow: 'rgba(239, 68, 68, 0.5)',
+    color: '#DC2626',
+    rgb: '220, 38, 38',
+    bg: '#FEF2F2',
+    glow: 'rgba(220, 38, 38, 0.4)',
     icon: XCircle,
   },
 };

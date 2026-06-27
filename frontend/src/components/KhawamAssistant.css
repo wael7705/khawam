@@ -323,10 +323,73 @@
   color: #1f2937;
 }
 
-.khawam-assistant__bubble--assistant a {
+.khawam-assistant__bubble--assistant a:not(.khawam-assistant__gps-btn):not(.khawam-assistant__service-link):not(.khawam-assistant__whatsapp-link) {
   color: #e31e24;
   font-weight: 600;
   text-decoration: underline;
+}
+
+.khawam-assistant__service-link {
+  display: inline-flex;
+  align-items: center;
+  margin: 0.15rem 0.1rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(227, 30, 36, 0.1);
+  border: 1px solid rgba(227, 30, 36, 0.35);
+  color: #b91c1c !important;
+  text-decoration: none !important;
+  font-weight: 700;
+  font-size: 0.85rem;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.khawam-assistant__service-link:hover {
+  background: #e31e24;
+  color: #fff !important;
+  transform: translateY(-1px);
+}
+
+.khawam-assistant__whatsapp-link {
+  display: inline-flex;
+  align-items: center;
+  margin: 0.15rem 0.1rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(37, 211, 102, 0.12);
+  border: 1px solid rgba(37, 211, 102, 0.4);
+  color: #128c7e !important;
+  text-decoration: none !important;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.khawam-assistant__whatsapp-link:hover {
+  background: #25d366;
+  color: #fff !important;
+}
+
+.khawam-assistant__gps-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #e31e24 0%, #b91c1c 100%);
+  color: #fff !important;
+  text-decoration: none !important;
+  font-weight: 700;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  box-shadow: 0 4px 14px rgba(227, 30, 36, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.khawam-assistant__gps-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(227, 30, 36, 0.45);
+  color: #fff !important;
 }
 
 .khawam-assistant__bubble--assistant p {

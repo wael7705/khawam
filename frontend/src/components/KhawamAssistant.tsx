@@ -1,9 +1,10 @@
 import { Loader2, Send, X } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   streamAssistantReply,
   type AssistantMessage,
 } from '../lib/assistantStream';
+import { renderAssistantMarkdown } from '../lib/assistantMarkdown';
 import './KhawamAssistant.css';
 
 const ASSISTANT_LOGO = '/images/khawam-assistant.png';
@@ -11,8 +12,10 @@ const ASSISTANT_LOGO = '/images/khawam-assistant.png';
 const SUGGESTIONS = [
   'ما هي الخدمات المتوفرة؟',
   'كيف أطلب خدمة؟',
-  'أين أشاهد أعمالكم السابقة؟',
-  'كيف أتواصل معكم؟',
+  'أين موقعكم؟',
+  'كم يستغرق تنفيذ الطلب؟',
+  'كيف أتابع طلبي؟',
+  'هل عندكم توصيل؟',
 ];
 
 const WELCOME: AssistantMessage = {
@@ -21,24 +24,6 @@ const WELCOME: AssistantMessage = {
   text:
     'أهلاً بك في **خوّام للدعاية والإعلان** 👋\n\nأنا مساعد خوام، جاهز لمساعدتك في:\n- التعرّف على خدماتنا من المتجر\n- استعراض أعمالنا السابقة\n- شرح خطوات طلب أي خدمة\n- الإجابة عن استفساراتك العامة\n\nكيف يمكنني مساعدتك اليوم؟',
 };
-
-function renderSimpleMarkdown(text: string): ReactNode {
-  const parts = text.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g);
-  return parts.map((part, index) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={index}>{part.slice(2, -2)}</strong>;
-    }
-    const linkMatch = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(part);
-    if (linkMatch) {
-      return (
-        <a key={index} href={linkMatch[2]} target="_blank" rel="noopener noreferrer">
-          {linkMatch[1]}
-        </a>
-      );
-    }
-    return <span key={index}>{part}</span>;
-  });
-}
 
 export function KhawamAssistant() {
   const [open, setOpen] = useState(false);
@@ -249,7 +234,7 @@ function MessageBubble({ message }: { message: AssistantMessage }) {
   return (
     <div className="khawam-assistant__bubble-row khawam-assistant__bubble-row--assistant">
       <div className="khawam-assistant__bubble khawam-assistant__bubble--assistant">
-        {renderSimpleMarkdown(message.text)}
+        {renderAssistantMarkdown(message.text)}
       </div>
     </div>
   );

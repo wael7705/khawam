@@ -4,6 +4,9 @@ import { cache } from '../../shared/cache/memory-cache.js';
 import { resolveServiceOrderSlug } from '../../algorithms/assistant-slug.algorithm.js';
 import {
   ASSISTANT_KNOWLEDGE_CACHE_KEY,
+  ASSISTANT_TRAINING_SCENARIOS,
+  COMPANY_ADDRESS_AR,
+  COMPANY_MAPS_URL,
   DEFAULT_ORDER_WORKFLOW,
   STATIC_FAQ,
 } from './assistant.constants.js';
@@ -105,14 +108,17 @@ export async function loadAssistantKnowledge(): Promise<AssistantKnowledge> {
       website: siteUrl('/'),
       whatsapp: '+963112134640',
       whatsappDisplay: '+963 11 213 4640',
+      whatsappUrl: 'https://wa.me/963112134640',
       email: 'info@khawam.net',
       facebook: 'https://www.facebook.com/khawam.net',
       instagram: 'https://www.instagram.com/khawam.net',
-      address: 'دمشق، سوريا',
+      address: COMPANY_ADDRESS_AR,
+      mapsUrl: COMPANY_MAPS_URL,
       hours: 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً (الجمعة عطلة)',
       servicesPageUrl: siteUrl('/services'),
       portfolioPageUrl: siteUrl('/portfolio'),
       orderPageUrl: siteUrl('/services'),
+      myOrdersPageUrl: siteUrl('/my-orders'),
     },
     services: services.map((service) => {
       const slug = resolveServiceOrderSlug(service);
@@ -131,6 +137,7 @@ export async function loadAssistantKnowledge(): Promise<AssistantKnowledge> {
     })),
     orderWorkflow,
     faq: STATIC_FAQ,
+    trainingScenarios: ASSISTANT_TRAINING_SCENARIOS,
     priceHints,
   };
 
