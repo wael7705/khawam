@@ -32,7 +32,7 @@
 - NanoID للمعرفات (12 حرف)
 - كل عملية كتابة حساسة داخل transaction
 - لا SERIAL IDs
-- **PgBouncer** في الإنتاج: `DATABASE_URL` عبر المجمّع، `DIRECT_DATABASE_URL` مباشر لـ migrate/seed/pg-boss
+- **PgBouncer** اختياري (VPS/Docker عند الحاجة): على Railway يكفي `DB_CONNECTION_LIMIT` + `DIRECT_DATABASE_URL`
 - **pg-boss** طابور مهام على Postgres (بدون Redis) — مهام الخلفية والجدولة
 
 ## IDs
