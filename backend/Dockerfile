@@ -1,7 +1,7 @@
 FROM node:20-slim AS base
 
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/* \
-  && corepack enable && corepack prepare pnpm@8 --activate
+  && corepack enable && corepack prepare pnpm@10 --activate
 
 WORKDIR /app
 
@@ -22,7 +22,7 @@ RUN pnpm exec prisma generate \
 # ---- Frontend build ----
 FROM node:20-slim AS frontend-build
 
-RUN corepack enable && corepack prepare pnpm@8 --activate
+RUN corepack enable && corepack prepare pnpm@10 --activate
 
 WORKDIR /app
 

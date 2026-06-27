@@ -4,7 +4,7 @@
 
 FROM node:20-alpine AS base
 RUN apk add --no-cache openssl
-RUN corepack enable && corepack prepare pnpm@8 --activate
+RUN corepack enable && corepack prepare pnpm@10 --activate
 
 FROM base AS deps
 WORKDIR /app
@@ -23,7 +23,7 @@ RUN pnpm run build
 
 FROM node:20-alpine AS runner
 RUN apk add --no-cache openssl curl
-RUN corepack enable && corepack prepare pnpm@8 --activate
+RUN corepack enable && corepack prepare pnpm@10 --activate
 
 WORKDIR /app
 ENV NODE_ENV=production
