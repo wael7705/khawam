@@ -5,9 +5,8 @@ import {
   type AssistantMessage,
 } from '../lib/assistantStream';
 import { renderAssistantMarkdown } from '../lib/assistantMarkdown';
+import { AssistantLauncherAvatar } from './AssistantLauncherAvatar';
 import './KhawamAssistant.css';
-
-const ASSISTANT_LOGO = '/images/khawam-assistant.png';
 
 const SUGGESTIONS = [
   'ما هي الخدمات المتوفرة؟',
@@ -117,14 +116,7 @@ export function KhawamAssistant() {
           <span className="khawam-assistant__launcher-glow" aria-hidden />
           <span className="khawam-assistant__launcher-float">
             <span className="khawam-assistant__launcher-wiggle">
-              <img
-                src={ASSISTANT_LOGO}
-                alt=""
-                className="khawam-assistant__launcher-logo"
-                width={72}
-                height={72}
-                draggable={false}
-              />
+              <AssistantLauncherAvatar className="khawam-assistant__launcher-logo" size={68} />
             </span>
           </span>
           <span className="khawam-assistant__launcher-tooltip">مساعد خوام</span>
@@ -136,7 +128,7 @@ export function KhawamAssistant() {
           <div className="khawam-assistant__header">
             <div className="khawam-assistant__header-info">
               <div className="khawam-assistant__header-logo-wrap">
-                <img src={ASSISTANT_LOGO} alt="" className="khawam-assistant__header-logo" />
+                <AssistantLauncherAvatar className="khawam-assistant__header-logo" size={40} />
               </div>
               <div>
                 <div className="khawam-assistant__header-title">مساعد خوام</div>

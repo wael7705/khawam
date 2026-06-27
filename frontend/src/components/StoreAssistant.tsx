@@ -1,4 +1,5 @@
 import { useLocation } from 'react-router-dom';
+import '../lib/assistantImage';
 import { KhawamAssistant } from './KhawamAssistant';
 
 /** يظهر المساعد في صفحات المتجر العامة فقط (ليس لوحة التحكم). */

@@ -56,12 +56,53 @@
 }
 
 .khawam-assistant__launcher-logo {
-  width: 4.25rem;
-  height: 4.25rem;
-  object-fit: contain;
   filter: drop-shadow(0 10px 22px rgba(227, 30, 36, 0.38));
   user-select: none;
   pointer-events: none;
+}
+
+.khawam-assistant__avatar {
+  position: relative;
+  display: block;
+  flex-shrink: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.55),
+    0 8px 20px rgba(227, 30, 36, 0.28);
+}
+
+.khawam-assistant__avatar-core {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #ffffff 0%, #fee2e2 42%, #e31e24 100%);
+  color: #b91c1c;
+}
+
+.khawam-assistant__avatar-art {
+  position: absolute;
+  inset: 0;
+  background-size: contain;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transform: scale(0.96);
+  transition:
+    opacity 0.4s ease,
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.khawam-assistant__avatar--ready .khawam-assistant__avatar-art {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.khawam-assistant__avatar--ready .khawam-assistant__avatar-core {
+  opacity: 0;
+  transition: opacity 0.35s ease;
 }
 
 .khawam-assistant__launcher-tooltip {
@@ -233,10 +274,13 @@
 }
 
 .khawam-assistant__header-logo {
-  width: 2.5rem;
-  height: 2.5rem;
-  object-fit: contain;
   display: block;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.khawam-assistant__header-logo.khawam-assistant__avatar {
+  box-shadow: none;
 }
 
 .khawam-assistant__header-title {
