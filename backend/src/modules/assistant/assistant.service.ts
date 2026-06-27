@@ -1,5 +1,4 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { convertToModelMessages, streamText, type UIMessage } from 'ai';
 import {
   getAssistantDisabledMessage,
@@ -53,8 +52,12 @@ function createGeminiModel(modelId: string): Parameters<typeof streamText>[0]['m
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY مفقود');
   }
-  const provider = createGoogleGenerativeAI({ apiKey });
-  return provider(modelId) as unknown as Parameters<typeof streamText>[0]['model'];
+  const provider = createOpenAICompatible({
+    name: 'google-gemini',
+    baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+    apiKey,
+  });
+  return provider(modelId);
 }
 
 function createModelForProvider(resolved: ResolvedAssistantProvider): Parameters<typeof streamText>[0]['model'] {
