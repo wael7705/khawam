@@ -49,5 +49,4 @@ export interface AssistantKnowledge {
   orderWorkflow: string[];
   faq: AssistantFaqItem[];
   trainingScenarios: AssistantTrainingScenario[];
-  priceHints: string[];
 }

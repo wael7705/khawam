@@ -17,17 +17,11 @@ function siteUrl(path: string): string {
   return `${base}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
-function formatUnitPrice(value: unknown): string {
-  const num = Number(value);
-  if (!Number.isFinite(num)) return '';
-  return num.toLocaleString('ar-SY', { maximumFractionDigits: 0 });
-}
-
 export async function loadAssistantKnowledge(): Promise<AssistantKnowledge> {
   const cached = cache.get<AssistantKnowledge>(ASSISTANT_KNOWLEDGE_CACHE_KEY);
   if (cached) return cached;
 
-  const [services, portfolio, workflowSteps, pricingRules] = await Promise.all([
+  const [services, portfolio, workflowSteps] = await Promise.all([
     prisma.service.findMany({
       where: { isActive: true, isVisible: true },
       orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
@@ -57,27 +51,6 @@ export async function loadAssistantKnowledge(): Promise<AssistantKnowledge> {
       take: 8,
       select: { stepNameAr: true, stepDescriptionAr: true },
     }),
-    prisma.pricingRule.findMany({
-      where: {
-        isActive: true,
-        service: { isActive: true, isVisible: true },
-      },
-      orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
-      take: 20,
-      select: {
-        nameAr: true,
-        service: { select: { nameAr: true } },
-        ranges: {
-          take: 2,
-          orderBy: { displayOrder: 'asc' },
-          select: {
-            printMode: true,
-            sizeCode: true,
-            unitPrice: true,
-          },
-        },
-      },
-    }),
   ]);
 
   const orderWorkflow =
@@ -88,19 +61,6 @@ export async function loadAssistantKnowledge(): Promise<AssistantKnowledge> {
             : step.stepNameAr,
         )
       : DEFAULT_ORDER_WORKFLOW;
-
-  const priceHints: string[] = [];
-  for (const rule of pricingRules) {
-    for (const range of rule.ranges) {
-      const price = formatUnitPrice(range.unitPrice);
-      if (!price) continue;
-      priceHints.push(
-        `${rule.service.nameAr} / ${rule.nameAr} (${range.sizeCode}, ${range.printMode}): من ${price} ل.س للوحدة`,
-      );
-      if (priceHints.length >= 25) break;
-    }
-    if (priceHints.length >= 25) break;
-  }
 
   const knowledge: AssistantKnowledge = {
     company: {
@@ -138,7 +98,6 @@ export async function loadAssistantKnowledge(): Promise<AssistantKnowledge> {
     orderWorkflow,
     faq: STATIC_FAQ,
     trainingScenarios: ASSISTANT_TRAINING_SCENARIOS,
-    priceHints,
   };
 
   cache.set(ASSISTANT_KNOWLEDGE_CACHE_KEY, knowledge, 'services');

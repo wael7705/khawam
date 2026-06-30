@@ -1,7 +1,7 @@
 import type { AssistantKnowledge } from '../modules/assistant/assistant.types.js';
 
 export function buildAssistantSystemPrompt(knowledge: AssistantKnowledge): string {
-  const { company, services, portfolio, orderWorkflow, faq, trainingScenarios, priceHints } = knowledge;
+  const { company, services, portfolio, orderWorkflow, faq, trainingScenarios } = knowledge;
 
   const servicesList = services
     .map(
@@ -28,9 +28,10 @@ export function buildAssistantSystemPrompt(knowledge: AssistantKnowledge): strin
 
   const durationReply = `مدة إنجاز الطلب تختلف حسب نوع الخدمة والكمية. يُرجى التواصل مع فريق الشركة عبر الواتساب ${company.whatsappDisplay} ([واتساب](${company.whatsappUrl})) للتحقق من المدة المتوقعة لطلبك.`;
 
-  const priceSection = priceHints.length
-    ? `استخدم الأسعار التالية كمرجع تقريبي فقط (من نظام التسعير في المتجر):\n${priceHints.map((h) => `- ${h}`).join('\n')}\nإذا لم يكن السعر مذكوراً أو احتاج العميل عرضاً دقيقاً، حوّله للواتساب أو صفحة الطلب.`
-    : `لا تذكر أي سعر تقريبي أو رقمي. ردّك الموحّد على أي سؤال عن الأسعار يجب أن يكون:\n"أسعار خدماتنا تختلف حسب نوع الخدمة، الكمية، الخامات، والمقاسات. لتحصل على عرض سعر دقيق ومجاني، يُرجى التواصل مع فريق المبيعات عبر الواتساب: ${company.whatsappDisplay} ([واتساب](${company.whatsappUrl}))"\nلا تخمن أرقاماً ولا تعطِ نطاقات سعرية.`;
+  const priceSection = `ممنوع منعاً باتاً ذكر أي سعر أو رقم أو نطاق سعري أو كلمة «ل.س» في سياق التكلفة — حتى لو طُلب منك ذلك صراحةً.
+عند أي سؤال عن السعر، التكلفة، «قديش»، أو عرض سعر، استخدم هذا الرد (مع تكييف بسيط حسب الخدمة المذكورة):
+"لا أستطيع تزويدك بسعر هنا. يُرجى إتمام طلب الخدمة من الموقع: اختر الخدمة المناسبة واضغط «اطلب الخدمة»، ثم أكمل المواصفات والملفات وأرسل الطلب — سيتواصل معك فريق خوام لتأكيد التفاصيل والسعر النهائي. للاستفسار السريع: [واتساب](${company.whatsappUrl})"
+لا تخمن أرقاماً ولا تعطِ نطاقات سعرية ولا تذكر أسعار من أي مصدر.`;
 
   return `أنت "مساعد خوام"، المساعد الرسمي لموقع ${company.name} (${company.website}).
 
