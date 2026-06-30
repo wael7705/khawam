@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   BookMarked,
   BookOpen,
@@ -20,6 +21,7 @@ import { ordersAPI, type UploadedFileResult } from '../../lib/api';
 import { isAllowedFile } from '../../lib/upload';
 import { getServiceShortName } from '../../lib/servicesCatalog';
 import { getWorkflowAllowedSpecKeys } from '../../lib/orderSpecDisplay';
+import { isAuthenticated, getStoredUser } from '../../lib/auth';
 import { FileUploadStep } from './steps/FileUploadStep';
 import { PrintOptionsStep } from './steps/PrintOptionsStep';
 import { DimensionsStep } from './steps/DimensionsStep';
@@ -238,6 +240,9 @@ export function OrderWizard({
   onSwitchServiceSlug,
 }: OrderWizardProps) {
   const { locale } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const loginRedirect = encodeURIComponent(`${location.pathname}${location.search}`);
   const initialMerged: OrderData = {
     ...INITIAL_ORDER_DATA,
     ...(initialCustomerData && {
@@ -359,6 +364,12 @@ export function OrderWizard({
       setOrderResult({ orderNumber: 'DEMO-' + Date.now() });
       return;
     }
+    if (!isAuthenticated()) {
+      setSubmitError(
+        locale === 'ar' ? 'يجب تسجيل الدخول لإرسال الطلب' : 'Please log in to submit your order',
+      );
+      return;
+    }
     if (!backendServiceId) {
       setSubmitError(locale === 'ar' ? 'معرّف الخدمة غير متوفر.' : 'Service ID not available.');
       return;
@@ -468,7 +479,7 @@ export function OrderWizard({
 
       const payload: Record<string, unknown> = {
         service_id: backendServiceId,
-        ...(customerId && { customer_id: customerId }),
+        customer_id: getStoredUser()?.id,
         customer_name: orderData.customer_name || undefined,
         customer_whatsapp: orderData.customer_whatsapp || undefined,
         customer_phone: orderData.customer_phone_extra || orderData.customer_whatsapp || undefined,
@@ -503,6 +514,15 @@ export function OrderWizard({
       const progress = submitProgress;
       if (progress < 80) {
         setSubmitError(locale === 'ar' ? 'فشل رفع الملفات' : 'File upload failed');
+      } else if (
+        err &&
+        typeof err === 'object' &&
+        'response' in err &&
+        (err as { response?: { status?: number } }).response?.status === 401
+      ) {
+        setSubmitError(
+          locale === 'ar' ? 'يجب تسجيل الدخول لإرسال الطلب' : 'Please log in to submit your order',
+        );
       } else {
         setSubmitError(locale === 'ar' ? 'فشل في إرسال الطلب' : 'Failed to submit order');
       }
@@ -516,6 +536,7 @@ export function OrderWizard({
 
   const isLastStep = currentStep === steps.length - 1;
   const step = steps[currentStep];
+  const loggedIn = isAuthenticated();
 
   return (
     <div className="order-wizard">
@@ -584,6 +605,14 @@ export function OrderWizard({
       })()}
 
       {/* Navigation */}
+      {isLastStep && !loggedIn && (
+        <p className="wizard-auth-notice" role="status">
+          {locale === 'ar'
+            ? 'يجب تسجيل الدخول لإرسال الطلب. يمكنك إكمال المواصفات الآن ثم تسجيل الدخول.'
+            : 'You must log in to submit your order. You can finish the details now, then sign in.'}
+        </p>
+      )}
+
       <div className="wizard-nav">
         <button
           className="wizard-nav__btn wizard-nav__btn--secondary"
@@ -595,13 +624,23 @@ export function OrderWizard({
         </button>
 
         {isLastStep ? (
-          <button
-            className="wizard-nav__btn wizard-nav__btn--primary"
-            onClick={handleSubmit}
-            type="button"
-          >
-            {locale === 'ar' ? 'تأكيد الطلب' : 'Confirm Order'}
-          </button>
+          loggedIn ? (
+            <button
+              className="wizard-nav__btn wizard-nav__btn--primary"
+              onClick={handleSubmit}
+              type="button"
+            >
+              {locale === 'ar' ? 'تأكيد الطلب' : 'Confirm Order'}
+            </button>
+          ) : (
+            <button
+              className="wizard-nav__btn wizard-nav__btn--primary"
+              onClick={() => navigate(`/login?redirect=${loginRedirect}`)}
+              type="button"
+            >
+              {locale === 'ar' ? 'سجل دخول لإرسال الطلب' : 'Log in to submit order'}
+            </button>
+          )
         ) : (
           <button
             className="wizard-nav__btn wizard-nav__btn--primary"

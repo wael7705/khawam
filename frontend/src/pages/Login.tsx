@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from '../i18n/index';
 import { authAPI } from '../lib/api';
 import { storeAuth, getAuthErrorDetail } from '../lib/auth';
@@ -9,6 +9,12 @@ import './Login.css';
 export function Login() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = (() => {
+    const raw = searchParams.get('redirect');
+    if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return '/';
+    return raw;
+  })();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -37,12 +43,12 @@ export function Login() {
           role: payload.user.role,
         };
         storeAuth(token, user);
-        navigate(['مدير', 'موظف'].includes(user.role) ? '/dashboard' : '/');
+        navigate(['مدير', 'موظف'].includes(user.role) ? '/dashboard' : redirectTo);
       } else {
         const userRes = await authAPI.getMe();
         user = userRes.data as UserData;
         storeAuth(token, user);
-        navigate(['مدير', 'موظف'].includes(user.role) ? '/dashboard' : '/');
+        navigate(['مدير', 'موظف'].includes(user.role) ? '/dashboard' : redirectTo);
       }
     } catch (err: unknown) {
       setError(getAuthErrorDetail(err) || 'Login failed');

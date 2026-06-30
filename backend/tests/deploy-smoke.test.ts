@@ -53,10 +53,47 @@ describe('Deploy smoke', () => {
     expect(types).toContain('digital_print_color');
   });
 
+  it('POST /api/orders without auth returns 401', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/orders/',
+      payload: {
+        service_id: workflowServiceId,
+        items: [
+          {
+            product_name: 'Unauthorized test',
+            quantity: 1,
+            unit_price: 0,
+            specifications: {},
+            design_files: [],
+          },
+        ],
+        total_amount: 0,
+        final_amount: 0,
+      },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('admin login returns token', async () => {
+    const username = process.env.TEST_LOGIN_USERNAME ?? 'waeln4457@gmail.com';
+    const password = process.env.TEST_LOGIN_PASSWORD ?? 'w0966320114/s';
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { username, password },
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as { access_token?: string };
+    expect(body.access_token).toBeDefined();
+    adminToken = body.access_token as string;
+  });
+
   it('POST /api/orders creates order and returns id and order_number', async () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/orders/',
+      headers: { authorization: `Bearer ${adminToken}` },
       payload: {
         service_id: workflowServiceId,
         customer_name: 'Deploy smoke customer',
@@ -80,20 +117,6 @@ describe('Deploy smoke', () => {
     expect(body).toHaveProperty('order_number');
     createdOrderId = body.id;
     createdOrderNumber = body.order_number;
-  });
-
-  it('admin login returns token', async () => {
-    const username = process.env.TEST_LOGIN_USERNAME ?? 'waeln4457@gmail.com';
-    const password = process.env.TEST_LOGIN_PASSWORD ?? 'w0966320114/s';
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/auth/login',
-      payload: { username, password },
-    });
-    expect(res.statusCode).toBe(200);
-    const body = res.json() as { access_token?: string };
-    expect(body.access_token).toBeDefined();
-    adminToken = body.access_token as string;
   });
 
   it('GET /api/admin/orders/all shows the created order', async () => {

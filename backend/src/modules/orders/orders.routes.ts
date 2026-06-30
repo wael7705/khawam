@@ -1,23 +1,25 @@
 import type { FastifyInstance } from 'fastify';
-import { authenticate, optionalAuth } from '../../shared/middleware/auth.middleware.js';
+import { authenticate } from '../../shared/middleware/auth.middleware.js';
 import { isStaffRole } from '../../shared/types/index.js';
 import * as ordersService from './orders.service.js';
 
 /** مسارات رفع الملفات: في orders-upload.routes.ts على الجذر (بدون multipart حتى لا يُستهلك الجسم) */
 export async function ordersRoutes(app: FastifyInstance): Promise<void> {
-  app.post('/', { preHandler: [optionalAuth] }, async (request, reply) => {
+  app.post('/', { preHandler: [authenticate] }, async (request, reply) => {
     const body = request.body as Record<string, unknown>;
     const items = body.items as ordersService.CreateOrderItemInput[];
     if (!Array.isArray(items) || items.length === 0) {
       return reply.code(400).send({ detail: 'يجب إضافة عناصر للطلب' });
     }
 
+    const user = request.user!;
+
     const input: ordersService.CreateOrderInput = {
       service_id: body.service_id as string | undefined,
-      customer_id: body.customer_id as string | undefined,
-      customer_name: body.customer_name as string | undefined,
+      customer_id: user.id,
+      customer_name: (body.customer_name as string | undefined) ?? user.name,
       customer_phone: body.customer_phone as string | undefined,
-      customer_whatsapp: body.customer_whatsapp as string | undefined,
+      customer_whatsapp: (body.customer_whatsapp as string | undefined) ?? user.phone,
       shop_name: body.shop_name as string | undefined,
       items,
       total_amount: Number(body.total_amount) || 0,
@@ -39,7 +41,7 @@ export async function ordersRoutes(app: FastifyInstance): Promise<void> {
     };
 
     try {
-      const result = await ordersService.createOrder(input, request.user?.id);
+      const result = await ordersService.createOrder(input, user.id);
       return result;
     } catch (err: unknown) {
       const error = err as { statusCode?: number; message?: string };
